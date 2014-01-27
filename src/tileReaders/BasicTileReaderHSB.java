@@ -90,8 +90,8 @@ public class BasicTileReaderHSB {
 		}
 		
 		
-				input.tileImage.show();
-				input.tileImage.hide();
+//				input.tileImage.show();
+//				input.tileImage.hide();
 		
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
