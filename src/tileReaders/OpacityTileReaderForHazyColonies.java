@@ -304,7 +304,7 @@ public class OpacityTileReaderForHazyColonies {
 		double[] sumOfBrightnessXaxis = sumOfRows(tile);
 		double variance = StdStats.varp(sumOfBrightnessXaxis);
 		
-		System.out.println(variance);
+		//System.out.println(variance);
 		
 		if(variance<varianceThreshold){
 			return(true);

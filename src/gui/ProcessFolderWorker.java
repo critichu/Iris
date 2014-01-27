@@ -12,6 +12,7 @@ import javax.swing.SwingWorker;
 
 import profiles.BasicProfile;
 import profiles.BsubtilisHazyProfileHSB;
+import profiles.BsubtilisSporulationProfile;
 import profiles.CPRGProfile384;
 import profiles.ColorProfile;
 import profiles.ColorProfileHSB;
@@ -85,7 +86,12 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 				BsubtilisHazyProfileHSB bsubtilisHazyProfileHSB = new BsubtilisHazyProfileHSB();
 				bsubtilisHazyProfileHSB.analyzePicture(filename);			
 			}
-
+			
+			else if(profileName.equals("B.subtilis Sporulation (HSB)")){
+				BsubtilisSporulationProfile bsubtilisSporulationProfile = new BsubtilisSporulationProfile();
+				bsubtilisSporulationProfile.analyzePicture(filename);			
+			}
+			
 			else if(profileName.equals("Ecoli growth")){
 				EcoliGrowthProfile ecoliGrowthProfile = new EcoliGrowthProfile();
 				ecoliGrowthProfile.analyzePicture(filename);			

@@ -60,8 +60,9 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			"Stm growth",
 			"Ecoli growth",
 			"Ecoli opacity",
-			"B.subtilis Opacity (HSB)",
 			"Ecoli opacity 384",
+			"B.subtilis Opacity (HSB)",
+			"B.subtilis Sporulation (HSB)",
 			//"CPRG 384",
 			"Biofilm formation",
 			"Biofilm formation (HSB)",
@@ -86,7 +87,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * This string holds the commit id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "b7e0829";
+	public static String IrisBuild = "18562e9";
 	
 	
 	/**
