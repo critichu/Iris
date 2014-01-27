@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 import settings.ColorSettings;
 import tileReaderInputs.BasicTileReaderInput;
-import tileReaderInputs.ColorTileReaderInput2;
+import tileReaderInputs.ColorTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
 import tileReaders.BasicTileReaderHSB;
@@ -155,8 +155,8 @@ public class BsubtilisSporulationProfile extends Profile{
 //				grayscaleCroppedImage.hide();
 
 		//get a copy of the picture thresholded using a local algorithm
-		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
-		turnImageBW_Local_auto(BW_local_thresholded_picture);
+//		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
+//		turnImageBW_Local_auto(BW_local_thresholded_picture);
 
 		
 //				BW_local_thresholded_picture.show();
@@ -168,7 +168,7 @@ public class BsubtilisSporulationProfile extends Profile{
 		//
 
 		//5. segment the cropped picture
-		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
+		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 
@@ -247,12 +247,12 @@ public class BsubtilisSporulationProfile extends Profile{
 
 				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
 				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
-						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
-					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processThresholdedTile(
-							new ColorTileReaderInput2(colourCroppedImage, BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processTile(
+							new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 				}
 				else{
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
@@ -293,7 +293,17 @@ public class BsubtilisSporulationProfile extends Profile{
 		//7. output the results
 
 		//7.1 output the colony measurements as a text file
-		output.append("row\tcolumn\tcolony area size\tcircularity\tcolony color intensity\tbiofilm area size\tbiofilm color intensity\tbiofilm area ratio\tsize normalized color intensity\n");
+		output.append("row\t" +
+				"column\t" +
+				"colony size\t" +
+				"circularity\t" +
+//				"colony color intensity\t" +
+//				"biofilm area size\t" +
+//				"biofilm color intensity\t" +
+//				"biofilm area ratio\t" +
+				"sporulation score\n");
+		
+		
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -309,10 +319,10 @@ public class BsubtilisSporulationProfile extends Profile{
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(basicTileReaderOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", basicTileReaderOutputs[i][j].circularity) + "\t"
-						+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySum) + "\t"
-						+ Integer.toString(colourTileReaderOutputs[i][j].biofilmArea) + "\t"
-						+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
-						+ String.format("%.3f", biofilmAreaRatio) + "\t"
+						//+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySum) + "\t"
+						//+ Integer.toString(colourTileReaderOutputs[i][j].biofilmArea) + "\t"
+						//+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
+						//+ String.format("%.3f", biofilmAreaRatio) + "\t"
 						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\n");
 			}
 		}

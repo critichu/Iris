@@ -210,7 +210,15 @@ public class ColorProfile extends Profile{
 		//6. output the results
 
 		//6.1 output the colony measurements as a text file
-		output.append("row\tcolumn\tcolony area size\tcircularity\tcolony color intensity\tbiofilm area size\tbiofilm color intensity\tbiofilm area ratio\n");
+		output.append("row\t" +
+				"column\t" +
+				"colony size\t" +
+				"circularity\t" +
+				"colony color intensity\t" +
+				"biofilm area size\t" +
+				"biofilm color intensity\t" +
+				"biofilm area ratio\n");
+		
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns

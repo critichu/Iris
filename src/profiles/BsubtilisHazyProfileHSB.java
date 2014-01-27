@@ -251,7 +251,12 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		//7. output the results
 
 		//7.1 output the colony measurements as a text file
-		output.append("row\tcolumn\tsize\tcircularity\topacity\n");
+		output.append("row\t" +
+				"column\t" +
+				"size\t" +
+				"circularity\t" +
+				"opacity\n");
+		
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
