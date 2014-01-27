@@ -310,8 +310,8 @@ public class ColorProfileHSB extends Profile{
 						+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySum) + "\t"
 						+ Integer.toString(colourTileReaderOutputs[i][j].biofilmArea) + "\t"
 						+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
-						+ Integer.toString(colourTileReaderOutputs[i][j].relativeColorIntensity) + "\t"
-						+ String.format("%.3f", biofilmAreaRatio) + "\n");
+						+ String.format("%.3f", biofilmAreaRatio) + "\t"
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\n");
 			}
 		}
 
