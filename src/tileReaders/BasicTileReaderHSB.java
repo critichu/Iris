@@ -46,7 +46,7 @@ public class BasicTileReaderHSB {
 
 
 		//1. apply a threshold at the tile, using a local thresholding algorithm
-		//turnImageBW_Huang_auto(input.tileImage);
+		turnImageBW_Huang_auto(input.tileImage);
 		//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
 
 
@@ -88,6 +88,11 @@ public class BasicTileReaderHSB {
 
 			return(output);
 		}
+		
+		
+				input.tileImage.show();
+				input.tileImage.hide();
+		
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 

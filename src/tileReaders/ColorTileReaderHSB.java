@@ -93,12 +93,13 @@ public class ColorTileReaderHSB {
 		ColorTileReaderOutput output = new ColorTileReaderOutput();
 
 		//1. get the thresholded tile ready from the input
-		ImagePlus grayTile = input.thresholdedTileImage;
-		int width = grayTile.getWidth();
-		int height = grayTile.getHeight();
+		ImagePlus BW_tile = input.thresholdedTileImage;
+		turnImageBW_Huang_auto(BW_tile);
+//		int width = grayTile.getWidth();
+//		int height = grayTile.getHeight();
 
-//		grayTile.show();
-//		grayTile.hide();
+//		BW_tile.show();
+//		BW_tile.hide();
 		
 
 		//2.1 perform particle analysis on the thresholded tile
@@ -113,7 +114,7 @@ public class ColorTileReaderHSB {
 		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
 		ParticleAnalyzer.setRoiManager(manager);
 
-		particleAnalyzer.analyze(grayTile); //it gets the image processor internally
+		particleAnalyzer.analyze(BW_tile); //it gets the image processor internally
 
 		//2.2 pick the largest particle, the check if there is something in the tile has already been performed
 		int biggestParticleIndex = getBiggestParticleAreaIndex(resultsTable);
