@@ -67,6 +67,7 @@ public class ColorProfileHSB extends Profile{
 	 */
 	public void analyzePicture(String filename){
 
+
 		File file = new File(filename);
 		String justFilename = file.getName();
 
@@ -149,16 +150,16 @@ public class ColorProfileHSB extends Profile{
 
 		croppedImage.flush();
 
-//				grayscaleCroppedImage.show();
-//				grayscaleCroppedImage.hide();
+		//				grayscaleCroppedImage.show();
+		//				grayscaleCroppedImage.hide();
 
 		//get a copy of the picture thresholded using a local algorithm
 		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
 		turnImageBW_Local_auto(BW_local_thresholded_picture);
 
-		
-//				BW_local_thresholded_picture.show();
-//				BW_local_thresholded_picture.hide();
+
+		//				BW_local_thresholded_picture.show();
+		//				BW_local_thresholded_picture.hide();
 
 		//
 		//--------------------------------------------------
@@ -300,8 +301,8 @@ public class ColorProfileHSB extends Profile{
 				"biofilm color intensity\t" +
 				"biofilm area ratio\t" +
 				"size normalized color intensity\n");
-		
-		
+
+
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns

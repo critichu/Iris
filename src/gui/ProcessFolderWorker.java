@@ -18,6 +18,7 @@ import profiles.ColorProfile;
 import profiles.ColorProfileHSB;
 import profiles.ColorProfile_SimpleSegmentation;
 import profiles.EcoliGrowthProfile;
+import profiles.EcoliGrowthProfile384_HazyColonies;
 import profiles.EcoliOpacityProfile;
 import profiles.EcoliOpacityProfile384;
 import profiles.OpacityProfile;
@@ -101,6 +102,11 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 				EcoliOpacityProfile384 ecoliOpacityProfile384 = new EcoliOpacityProfile384();
 				ecoliOpacityProfile384.analyzePicture(filename);			
 			}
+			
+			else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
+				EcoliGrowthProfile384_HazyColonies ecoliGrowth384_hazy = new EcoliGrowthProfile384_HazyColonies();
+				ecoliGrowth384_hazy.analyzePicture(filename);			
+			}			
 			
 			else if(profileName.equals("CPRG 384")){
 				CPRGProfile384 cprgProfile384 = new CPRGProfile384();

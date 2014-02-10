@@ -3,6 +3,7 @@
  */
 package profiles;
 
+import fiji.threshold.Auto_Local_Threshold;
 import gui.IrisGUI;
 import ij.IJ;
 import ij.ImagePlus;
@@ -26,8 +27,9 @@ import java.util.ArrayList;
 
 import settings.BasicSettings;
 import tileReaderInputs.OpacityTileReaderInput;
+import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
-import tileReaders.OpacityTileReader;
+import tileReaders.OpacityTileReaderForHazyColonies;
 
 /**
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
@@ -35,18 +37,19 @@ import tileReaders.OpacityTileReader;
  * @author George Kritikos
  *
  */
-public class EcoliOpacityProfile384 extends Profile {
+public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "E.coli Opacity Profile for 384 plates";
+	public static String profileName = "E.coli Opacity Profile for 384 plates: special version for hazy colonies";
 
 
 	/**
 	 * this is a description of the profile that will be shown to the user on hovering the profile name 
 	 */
-	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes and opacities of E. coli on the UCSF screens";
+	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes and opacities of E. coli on the UCSF screens." +
+			"This vesion specializes in really translucent, just pinend, or irregularly shaped colonies";
 
 
 	/**
@@ -62,13 +65,13 @@ public class EcoliOpacityProfile384 extends Profile {
 	 * @param filename
 	 */
 	public void analyzePicture(String filename){
-		
-		
+
+
 		//0. initialize settings and open files for input and output
 		//since this is a 384 plate, make sure the settings are redefined to match our setup
 		settings.numberOfColumnsOfColonies = 24;
 		settings.numberOfRowsOfColonies = 16;
-		
+
 		//
 		//--------------------------------------------------
 		//
@@ -96,10 +99,10 @@ public class EcoliOpacityProfile384 extends Profile {
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
-		
-		
-		
-		
+
+
+
+
 		//
 		//--------------------------------------------------
 		//
@@ -151,12 +154,16 @@ public class EcoliOpacityProfile384 extends Profile {
 		//and the number of rows and columns, save the results in the settings object
 		calculateGridSpacing(settings, croppedImage);
 
-//		//change the settings so that the distance between the colonies can now be smaller
-//		settings.minimumDistanceBetweenRows = 40;
-//		//..or larger
-//		settings.maximumDistanceBetweenRows = 100;
+		//		//change the settings so that the distance between the colonies can now be smaller
+		//		settings.minimumDistanceBetweenRows = 40;
+		//		//..or larger
+		//		settings.maximumDistanceBetweenRows = 100;
 
 
+
+		//get a copy of the picture thresholded using a local algorithm
+		ImagePlus BW_local_thresholded_picture = croppedImage.duplicate();
+		turnImageBW_Local_auto(BW_local_thresholded_picture);
 
 
 
@@ -189,6 +196,9 @@ public class EcoliOpacityProfile384 extends Profile {
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			IJ.save(croppedImage, filename + ".grid.jpg");
+			
+			croppedImage.flush();
+			BW_local_thresholded_picture.flush();
 
 			return;
 		}
@@ -218,8 +228,9 @@ public class EcoliOpacityProfile384 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = OpacityTileReader.processTile(
-						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
+				readerOutputs[i][j] = OpacityTileReaderForHazyColonies.processTile(
+						new OpacityTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
 
 				//each generated tile image is cleaned up inside the tile reader
 			}
@@ -255,8 +266,8 @@ public class EcoliOpacityProfile384 extends Profile {
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
-						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].opacity) + "\n");
+						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\n");
+						
 			}
 		}
 
@@ -302,14 +313,14 @@ public class EcoliOpacityProfile384 extends Profile {
 	 */
 	private void calculateGridSpacing(BasicSettings settings_,
 			ImagePlus croppedImage) {
-		
+
 		int image_width = croppedImage.getWidth();
 		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
-		
+
 		//save the results directly to the settings object
 		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
 		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*4/3);
-		
+
 	}
 
 
@@ -320,7 +331,7 @@ public class EcoliOpacityProfile384 extends Profile {
 	 * @return
 	 */
 	private boolean checkRowsColumnsIncorrectGridding(
-			OpacityTileReaderOutput[][] readerOutputs) {
+			BasicTileReaderOutput[][] readerOutputs) {
 
 		int numberOfRows = readerOutputs.length;		
 		if(numberOfRows==0)
@@ -625,6 +636,22 @@ public class EcoliOpacityProfile384 extends Profile {
 		}
 
 		return(true); //operation succeeded
+	}
+	
+	
+	/**
+	 * This function will convert the given picture into black and white
+	 * using a fancy local thresholding algorithm, as described here:
+	 * @see http://www.dentistry.bham.ac.uk/landinig/software/autothreshold/autothreshold.html
+	 * @param 
+	 */
+	private static void turnImageBW_Local_auto(ImagePlus BW_croppedImage){
+		//use the mean algorithm with default values
+		//just use smaller radius (8 instead of default 15)
+		Auto_Local_Threshold.Mean(BW_croppedImage, 200, 0, 0, true);
+		//		BW_croppedImage.updateAndDraw();
+		//		BW_croppedImage.show();
+		//		BW_croppedImage.hide();
 	}
 
 
