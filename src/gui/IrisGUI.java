@@ -18,6 +18,9 @@ import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -52,7 +55,17 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 * This is the combo box used to select the profile
 	 */
 	public JComboBox comboBox;
-	
+
+
+	/**
+	 * these are added specially for the multithreading case
+	 */
+	public static boolean multiThreaded = false;
+	public static ExecutorService executorService;
+	public static List<Callable<Object>> todoThread;
+	public static int numberOfThreads = 4;
+
+
 	/**
 	 * This string array holds the names of all the profiles
 	 */
@@ -70,43 +83,78 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			//"Biofilm formation - Simple Grid",
 			//"Opacity",
 			//"Opacity (fixed grid)"
-			};
+	};
 
-	
+
 	/**
 	 * This is the name of the log file to be written. 
 	 * Iris opens it for appending on every invocation of the software, writing a header with the time.
 	 * It closes it after a run is done.
 	 */
 	public BufferedWriter logFile = null;
-	
+
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
 	public static String IrisVersion = "0.9.4";
-	
+
 	/**
 	 * This string holds the commit id of Iris versioning in Git
 	 */
 	public static String IrisBuild = "764d6af";
-	
-	
+
+
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					IrisGUI frame = new IrisGUI();
-					System.setProperty("apple.laf.useScreenMenuBar", "false");
-					frame.setResizable(false);
-					frame.setVisible(true);				
-				} catch (Exception e) {
-					e.printStackTrace();
+
+		if(args.length==0){//GUI version
+			EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					try {
+						IrisGUI frame = new IrisGUI();
+						
+						//this call tells the system to redirect the System.out and System.err outputs
+						//from the console to the textPane object
+						frame.redirectSystemStreams();
+						
+						System.setProperty("apple.laf.useScreenMenuBar", "false");
+						frame.setResizable(false);
+						frame.setVisible(true);				
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
+			});
+		}
+		else{ //command line version
+			if(args.length<2){
+				printUsage();
+				return;
 			}
-		});
+			
+			String profileName = args[0];
+			String folderLocation = args[1];
+			
+			IrisGUI this_ = new IrisGUI();
+			this_.comboBox.setSelectedItem(profileName);
+			
+			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker(this_);
+			processFolderWorker.directory = new File(folderLocation);
+
+			try {
+				processFolderWorker.doInBackground();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
+	public static void printUsage(){
+		System.out.println("Usage: Iris ProfileName FolderLocation\n");
+		System.out.println("Tip: call without any arguments to invoke GUI\n");
 	}
 
 	/**
@@ -128,11 +176,11 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 
 		textPane = new JTextPane()
 		{
-		    public boolean getScrollableTracksViewportWidth()
-		    {
-		        return getUI().getPreferredSize(this).width 
-		            <= getParent().getSize().width;
-		    }
+			public boolean getScrollableTracksViewportWidth()
+			{
+				return getUI().getPreferredSize(this).width 
+						<= getParent().getSize().width;
+			}
 		};
 		textPane.setEditable(false);
 		//textPane.setBounds(67, 36, 316, 208);
@@ -145,34 +193,33 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 
 		btnOpenFolder = new JButton("open folder");
 		btnOpenFolder.addActionListener(this);
-		
+
 		btnOpenFolder.setBounds(258, 6, 117, 29);
 		contentPane.add(btnOpenFolder);
-		
+
 		comboBox = new JComboBox(profileCollection);
 		comboBox.setSelectedIndex(0);
 		comboBox.setBounds(77, 7, 166, 27);
 		contentPane.add(comboBox);
-		
-		
+
+
+
+
 		
 
-		//this call tells the system to redirect the System.out and System.err outputs
-		//from the console to the textPane object
-		redirectSystemStreams();
-		
 		//make sure the log file is closed when the user closes the window
 		this.addWindowListener(new java.awt.event.WindowAdapter() {
-		    @Override
-		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-		        closeLog();
-		        System.exit(0);
-		    }
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				closeLog();
+				System.exit(0);
+			}
 		});
 
 	}
 
-	
+
+
 	/**
 	 * This function will create a unique log filename and open it for writing
 	 */
@@ -185,7 +232,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			this.logFile = null;
 		}
 	}
-	
+
 	/**
 	 * Does what it says in the box
 	 */
@@ -198,12 +245,12 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			//fail silently, because the standard error is redirected to this function
 		}
 	}	
-	
+
 	/**
 	 * Does what it says in the box
 	 */
 	public void closeLog(){
-		
+
 		try {
 			if(logFile!=null) 
 				this.logFile.close();
@@ -211,9 +258,9 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			System.err.println("Error writing log file");
 		}
 	}
-	
 
-	
+
+
 	/**
 	 * This function will create a unique filename, using the Iris version and the current time
 	 * @return
@@ -227,10 +274,10 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 * @return
 	 */
 	private final static String getDateTime(){
-	    DateFormat df = new SimpleDateFormat("yyyy.MM.dd_hh.mm.ss");
-	    return df.format(new Date());
+		DateFormat df = new SimpleDateFormat("yyyy.MM.dd_hh.mm.ss");
+		return df.format(new Date());
 	}
-	
+
 
 	//redirect the console output to the application's GUI
 	private void updateTextPane(final String text) {
@@ -252,7 +299,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			public void run() {
 				//first, append this entry to the log file
 				writeToLog(text);
-				
+
 				//then update the text pane
 				Document doc = textPane.getDocument();
 
@@ -319,10 +366,10 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 		if ("progress" == evt.getPropertyName()) {
-            int progress = (Integer) evt.getNewValue();
-            progressBar.setValue(progress);
+			int progress = (Integer) evt.getNewValue();
+			progressBar.setValue(progress);
 		}
-		
+
 	}
 
 	/* (non-Javadoc)
@@ -330,27 +377,27 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		
+
 		if(e.getSource()==btnOpenFolder){
-			
+
 			//make user select folder here
 			File directory = selectFolder();
-			
+
 			if(directory==null) //user didn't select a folder
 				return;
-			
+
 			//disable the open folder button, it will be enabled by ProcessFolderWorker, once it's done
 			btnOpenFolder.setEnabled(false);
 			progressBar.setValue(0);
-		
+
 			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker(IrisGUI.this);
 			processFolderWorker.addPropertyChangeListener(IrisGUI.this);
 			processFolderWorker.directory = directory;
-			
+
 			processFolderWorker.execute();
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -361,7 +408,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		//create the filechooser object
 		final JFileChooser fc = new JFileChooser();
 
-		
+
 		//make it show only folders
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 

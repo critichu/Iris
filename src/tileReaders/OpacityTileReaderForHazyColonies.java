@@ -72,9 +72,12 @@ public class OpacityTileReaderForHazyColonies {
 
 
 		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		ParticleAnalyzer.setRoiManager(manager);
-
-		particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
+		synchronized(input.settings){
+			
+			ParticleAnalyzer.setRoiManager(manager);
+			
+			particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
+		}
 		//
 		//--------------------------------------------------
 		//
@@ -94,7 +97,7 @@ public class OpacityTileReaderForHazyColonies {
 		//3.2 check to see if the tile was empty. If so, return a colony size of zero.
 		//Change for fuzzy colonies: first check out the variance of it's sum of brightnesses
 
-		
+
 
 		//if variance is more than 1, then the brightness sum said there's a colony there
 		//so there's has to be both variance less than 1 and other filters saying that there's no colony there
@@ -303,16 +306,16 @@ public class OpacityTileReaderForHazyColonies {
 		//sum up the pixel values (brightness) on the x axis
 		double[] sumOfBrightnessXaxis = sumOfRows(tile);
 		double variance = StdStats.varp(sumOfBrightnessXaxis);
-		
+
 		//System.out.println(variance);
-		
+
 		if(variance<varianceThreshold){
 			return(true);
 		}
 		return(false);
 	}
-	
-	
+
+
 
 	/**
 	 * This function uses the results table produced by the particle analyzer to
