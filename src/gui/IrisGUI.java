@@ -50,11 +50,11 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	private JPanel contentPane;
 	private JTextPane textPane;
 	public JProgressBar progressBar;
-	public JButton btnOpenFolder;
+	public static JButton btnOpenFolder;
 	/**
 	 * This is the combo box used to select the profile
 	 */
-	public JComboBox comboBox;
+	public static JComboBox comboBox;
 
 
 	/**
@@ -69,7 +69,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * This string array holds the names of all the profiles
 	 */
-	public String[] profileCollection = {
+	public static String[] profileCollection = {
 			"Stm growth",
 			"Ecoli growth",
 			"Ecoli opacity",
@@ -91,7 +91,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 * Iris opens it for appending on every invocation of the software, writing a header with the time.
 	 * It closes it after a run is done.
 	 */
-	public BufferedWriter logFile = null;
+	public static BufferedWriter logFile = null;
 
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
@@ -101,7 +101,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * This string holds the commit id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "764d6af";
+	public static String IrisBuild = "884d325";
 
 
 	/**
@@ -137,10 +137,12 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			String profileName = args[0];
 			String folderLocation = args[1];
 			
-			IrisGUI this_ = new IrisGUI();
-			this_.comboBox.setSelectedItem(profileName);
+			//IrisGUI this_ = new IrisGUI();
+			comboBox = new JComboBox(profileCollection);
+			//comboBox.setSelectedIndex(0);
+			comboBox.setSelectedItem(profileName);
 			
-			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker(this_);
+			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker();
 			processFolderWorker.directory = new File(folderLocation);
 
 			try {
@@ -217,29 +219,28 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		});
 
 	}
-
-
+	
 
 	/**
 	 * This function will create a unique log filename and open it for writing
 	 */
-	public void openLog(String path){		
+	public static void openLog(String path){		
 		String uniqueLogFilename = path + File.separator + getUniqueLogFilename();
 		try {
-			this.logFile = new BufferedWriter(new FileWriter(uniqueLogFilename));
+			IrisGUI.logFile = new BufferedWriter(new FileWriter(uniqueLogFilename));
 		} catch (IOException e) {
 			System.err.println("Could not open log file");
-			this.logFile = null;
+			IrisGUI.logFile = null;
 		}
 	}
 
 	/**
 	 * Does what it says in the box
 	 */
-	public void writeToLog(String text){
+	public static void writeToLog(String text){
 		try {
 			if(logFile!=null) 
-				this.logFile.write(text);
+				IrisGUI.logFile.write(text);
 		} catch (IOException e) {
 			//System.err.println("Error writing log file");
 			//fail silently, because the standard error is redirected to this function
@@ -249,11 +250,11 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * Does what it says in the box
 	 */
-	public void closeLog(){
+	public static void closeLog(){
 
 		try {
 			if(logFile!=null) 
-				this.logFile.close();
+				IrisGUI.logFile.close();
 		} catch (IOException e) {
 			System.err.println("Error writing log file");
 		}
@@ -390,7 +391,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			btnOpenFolder.setEnabled(false);
 			progressBar.setValue(0);
 
-			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker(IrisGUI.this);
+			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker();
 			processFolderWorker.addPropertyChangeListener(IrisGUI.this);
 			processFolderWorker.directory = directory;
 

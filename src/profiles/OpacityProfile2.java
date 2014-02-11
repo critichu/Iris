@@ -214,7 +214,7 @@ public class OpacityProfile2 extends Profile {
 		}
 		else{
 			//System.out.println("Done processing file " + filename + "\n\n");
-			System.out.println("...done processing!\n\n");
+			System.out.println("...done processing!");
 		}
 
 

@@ -5,12 +5,10 @@ package gui;
 
 import java.awt.Toolkit;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.swing.SwingWorker;
@@ -36,15 +34,15 @@ import profiles.OpacityProfile2;
 //public class ProcessFolderWorker extends SimpleSwingWorker {
 public class ProcessFolderWorker extends SwingWorker<String, String> {
 
-	public IrisGUI parentJFrame;
+	//public IrisGUI parentJFrame;
 	public File directory;
-	
 
 
 
-	public ProcessFolderWorker(IrisGUI parent){
-		parentJFrame = parent;
-	}
+
+//	public ProcessFolderWorker(IrisGUI parent){
+//		parentJFrame = parent;
+//	}
 
 
 	/**
@@ -55,10 +53,10 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 	protected String doInBackground() throws Exception {
 
 		//open the log file for writing
-		parentJFrame.openLog(directory.getAbsolutePath());
-		parentJFrame.writeToLog("--- Iris version " + IrisGUI.IrisVersion + " log file\tbuild "+IrisGUI.IrisBuild+" ---\n");
-		parentJFrame.writeToLog("-- Started processing files at "+ new Date() + " --\n");
-		parentJFrame.writeToLog("-----------------------------------------\n\n\n");
+		IrisGUI.openLog(directory.getAbsolutePath());
+		IrisGUI.writeToLog("--- Iris version " + IrisGUI.IrisVersion + " log file\tbuild "+IrisGUI.IrisBuild+" ---\n");
+		IrisGUI.writeToLog("-- Started processing files at "+ new Date() + " --\n");
+		IrisGUI.writeToLog("-----------------------------------------\n\n\n");
 
 
 		//get a list of the files in the directory, keeping only image files
@@ -68,207 +66,107 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		int max = filesInDirectory.length;
 
 
-		if(IrisGUI.multiThreaded){
+		//		if(IrisGUI.multiThreaded){}
+		//		
+		//		else //single-threaded case
+		//		{
 
-			IrisGUI.executorService = Executors.newFixedThreadPool(IrisGUI.numberOfThreads);
-			IrisGUI.todoThread = new ArrayList<Callable<Object>>();
+		for (File file : filesInDirectory) {
 
-			for (final File file : filesInDirectory) {
+			publish("Now processing file " + "\n");
 
-				//publish("Now processing file " + "\n");
-				IrisGUI.todoThread.add(new Callable<Object>() {
-					public Object call() {
-						String filename = file.getAbsolutePath();
+			String filename = file.getAbsolutePath();
 
-						try{
+			/**
+			 * Decide which profile to use, according to the profile name
+			 */
+			String profileName = (String)IrisGUI.comboBox.getSelectedItem();
 
-							/**
-							 * Decide which profile to use, according to the profile name
-							 */
-							String profileName = (String)parentJFrame.comboBox.getSelectedItem();
-
-							if(profileName.equals("Stm growth")){
-								BasicProfile basicProfile = new BasicProfile();
-								basicProfile.analyzePicture(filename);
-							}
-
-							else if(profileName.equals("Ecoli opacity")){
-								EcoliOpacityProfile ecoliOpacityProfile = new EcoliOpacityProfile();
-								ecoliOpacityProfile.analyzePicture(filename);			
-							}			
-
-							else if(profileName.equals("B.subtilis Opacity (HSB)")){
-								BsubtilisHazyProfileHSB bsubtilisHazyProfileHSB = new BsubtilisHazyProfileHSB();
-								bsubtilisHazyProfileHSB.analyzePicture(filename);			
-							}
-
-							else if(profileName.equals("B.subtilis Sporulation (HSB)")){
-								BsubtilisSporulationProfile bsubtilisSporulationProfile = new BsubtilisSporulationProfile();
-								bsubtilisSporulationProfile.analyzePicture(filename);			
-							}
-
-							else if(profileName.equals("Ecoli growth")){
-								EcoliGrowthProfile ecoliGrowthProfile = new EcoliGrowthProfile();
-								ecoliGrowthProfile.analyzePicture(filename);			
-							}
-
-							else if(profileName.equals("Ecoli opacity 384")){
-								EcoliOpacityProfile384 ecoliOpacityProfile384 = new EcoliOpacityProfile384();
-								ecoliOpacityProfile384.analyzePicture(filename);			
-							}
-
-							else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
-								EcoliGrowthProfile384_HazyColonies ecoliGrowth384_hazy = new EcoliGrowthProfile384_HazyColonies();
-								ecoliGrowth384_hazy.analyzePicture(filename);			
-							}			
-
-							else if(profileName.equals("CPRG 384")){
-								CPRGProfile384 cprgProfile384 = new CPRGProfile384();
-								cprgProfile384.analyzePicture(filename);			
-							}
-
-							else if(profileName.equals("Biofilm formation")){
-								ColorProfile colorProfile = new ColorProfile();
-								colorProfile.analyzePicture(filename);
-							}
-
-							else if(profileName.equals("Biofilm formation (HSB)")){
-								ColorProfileHSB colorProfileHSB = new ColorProfileHSB();
-								colorProfileHSB.analyzePicture(filename);
-							}
-
-							else if(profileName.equals("Biofilm formation - Simple Grid")){
-								ColorProfile_SimpleSegmentation colorProfile_simpleSegmentation = new ColorProfile_SimpleSegmentation();
-								colorProfile_simpleSegmentation.analyzePicture(filename);
-							}
-
-							else if(profileName.equals("Opacity")){
-								OpacityProfile opacityProfile = new OpacityProfile();
-								opacityProfile.analyzePicture(filename);
-							}
-
-							else if(profileName.equals("Opacity (fixed grid)")){
-								OpacityProfile2 opacityProfile2 = new OpacityProfile2();
-								opacityProfile2.analyzePicture(filename);
-							}
-
-							else{
-								System.err.println("Unknown profile name: \"" + profileName +"\"");
-							}
-
-							//publish("...done! " + "\n\n\n");
-
-							//i++;
-							//setProgress(Math.min(i*100/max, 100));
-						}
-						catch(Exception e1){
-							System.err.println("could not process file " + filename);
-							e1.printStackTrace();
-						}
-						return null;
-					}
-				});
+			if(profileName.equals("Stm growth")){
+				BasicProfile basicProfile = new BasicProfile();
+				basicProfile.analyzePicture(filename);
 			}
+
+			else if(profileName.equals("Ecoli opacity")){
+				EcoliOpacityProfile ecoliOpacityProfile = new EcoliOpacityProfile();
+				ecoliOpacityProfile.analyzePicture(filename);			
+			}			
+
+			else if(profileName.equals("B.subtilis Opacity (HSB)")){
+				BsubtilisHazyProfileHSB bsubtilisHazyProfileHSB = new BsubtilisHazyProfileHSB();
+				bsubtilisHazyProfileHSB.analyzePicture(filename);			
+			}
+
+			else if(profileName.equals("B.subtilis Sporulation (HSB)")){
+				BsubtilisSporulationProfile bsubtilisSporulationProfile = new BsubtilisSporulationProfile();
+				bsubtilisSporulationProfile.analyzePicture(filename);			
+			}
+
+			else if(profileName.equals("Ecoli growth")){
+				EcoliGrowthProfile ecoliGrowthProfile = new EcoliGrowthProfile();
+				ecoliGrowthProfile.analyzePicture(filename);			
+			}
+
+			else if(profileName.equals("Ecoli opacity 384")){
+				EcoliOpacityProfile384 ecoliOpacityProfile384 = new EcoliOpacityProfile384();
+				ecoliOpacityProfile384.analyzePicture(filename);			
+			}
+
+			else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
+				EcoliGrowthProfile384_HazyColonies ecoliGrowth384_hazy = new EcoliGrowthProfile384_HazyColonies();
+				ecoliGrowth384_hazy.analyzePicture(filename);			
+			}			
+
+			else if(profileName.equals("CPRG 384")){
+				CPRGProfile384 cprgProfile384 = new CPRGProfile384();
+				cprgProfile384.analyzePicture(filename);			
+			}
+
+			else if(profileName.equals("Biofilm formation")){
+				ColorProfile colorProfile = new ColorProfile();
+				colorProfile.analyzePicture(filename);
+			}
+
+			else if(profileName.equals("Biofilm formation (HSB)")){
+				ColorProfileHSB colorProfileHSB = new ColorProfileHSB();
+				colorProfileHSB.analyzePicture(filename);
+			}
+
+			else if(profileName.equals("Biofilm formation - Simple Grid")){
+				ColorProfile_SimpleSegmentation colorProfile_simpleSegmentation = new ColorProfile_SimpleSegmentation();
+				colorProfile_simpleSegmentation.analyzePicture(filename);
+			}
+
+			else if(profileName.equals("Opacity")){
+				OpacityProfile opacityProfile = new OpacityProfile();
+				opacityProfile.analyzePicture(filename);
+			}
+
+			else if(profileName.equals("Opacity (fixed grid)")){
+				OpacityProfile2 opacityProfile2 = new OpacityProfile2();
+				opacityProfile2.analyzePicture(filename);
+			}
+
+			else{
+				System.err.println("Unknown profile name: \"" + profileName +"\"");
+			}
+
 			
-			waitForThreads(IrisGUI.todoThread);
-		}
-		
-		else //single-threaded case
-		{
+			i++;
+			int progress = Math.min(i*100/max, 100);
+			setProgress(progress);
+			System.out.println(i + " / " + max + "\t(" + progress +"% done)" +  "\n\n");
+			
+			publish("...done! " + "\n\n\n");
 
-			for (File file : filesInDirectory) {
-
-				publish("Now processing file " + "\n");
-
-				String filename = file.getAbsolutePath();
-
-				/**
-				 * Decide which profile to use, according to the profile name
-				 */
-				String profileName = (String)parentJFrame.comboBox.getSelectedItem();
-
-				if(profileName.equals("Stm growth")){
-					BasicProfile basicProfile = new BasicProfile();
-					basicProfile.analyzePicture(filename);
-				}
-
-				else if(profileName.equals("Ecoli opacity")){
-					EcoliOpacityProfile ecoliOpacityProfile = new EcoliOpacityProfile();
-					ecoliOpacityProfile.analyzePicture(filename);			
-				}			
-
-				else if(profileName.equals("B.subtilis Opacity (HSB)")){
-					BsubtilisHazyProfileHSB bsubtilisHazyProfileHSB = new BsubtilisHazyProfileHSB();
-					bsubtilisHazyProfileHSB.analyzePicture(filename);			
-				}
-
-				else if(profileName.equals("B.subtilis Sporulation (HSB)")){
-					BsubtilisSporulationProfile bsubtilisSporulationProfile = new BsubtilisSporulationProfile();
-					bsubtilisSporulationProfile.analyzePicture(filename);			
-				}
-
-				else if(profileName.equals("Ecoli growth")){
-					EcoliGrowthProfile ecoliGrowthProfile = new EcoliGrowthProfile();
-					ecoliGrowthProfile.analyzePicture(filename);			
-				}
-
-				else if(profileName.equals("Ecoli opacity 384")){
-					EcoliOpacityProfile384 ecoliOpacityProfile384 = new EcoliOpacityProfile384();
-					ecoliOpacityProfile384.analyzePicture(filename);			
-				}
-
-				else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
-					EcoliGrowthProfile384_HazyColonies ecoliGrowth384_hazy = new EcoliGrowthProfile384_HazyColonies();
-					ecoliGrowth384_hazy.analyzePicture(filename);			
-				}			
-
-				else if(profileName.equals("CPRG 384")){
-					CPRGProfile384 cprgProfile384 = new CPRGProfile384();
-					cprgProfile384.analyzePicture(filename);			
-				}
-
-				else if(profileName.equals("Biofilm formation")){
-					ColorProfile colorProfile = new ColorProfile();
-					colorProfile.analyzePicture(filename);
-				}
-
-				else if(profileName.equals("Biofilm formation (HSB)")){
-					ColorProfileHSB colorProfileHSB = new ColorProfileHSB();
-					colorProfileHSB.analyzePicture(filename);
-				}
-
-				else if(profileName.equals("Biofilm formation - Simple Grid")){
-					ColorProfile_SimpleSegmentation colorProfile_simpleSegmentation = new ColorProfile_SimpleSegmentation();
-					colorProfile_simpleSegmentation.analyzePicture(filename);
-				}
-
-				else if(profileName.equals("Opacity")){
-					OpacityProfile opacityProfile = new OpacityProfile();
-					opacityProfile.analyzePicture(filename);
-				}
-
-				else if(profileName.equals("Opacity (fixed grid)")){
-					OpacityProfile2 opacityProfile2 = new OpacityProfile2();
-					opacityProfile2.analyzePicture(filename);
-				}
-
-				else{
-					System.err.println("Unknown profile name: \"" + profileName +"\"");
-				}
-
-				publish("...done! " + "\n\n\n");
-
-				i++;
-				setProgress(Math.min(i*100/max, 100));
-			}
-
+			
 		}
 
 
 		return(null);
 	}
-	
-	
+
+
 	/**
 	 * This method will wait for all threads to finish execution before carrying on
 	 */
@@ -314,14 +212,14 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		}
 
 		Toolkit.getDefaultToolkit().beep();
-		parentJFrame.btnOpenFolder.setEnabled(true);
+		IrisGUI.btnOpenFolder.setEnabled(true);
 
 		System.out.println("\n\n\n\nDone processing all files\n\n");
 
 		//close the log file
-		parentJFrame.writeToLog("\n\n-----------------------------------------\n");
-		parentJFrame.writeToLog("-- Done processing all files at "+ new Date() + " --\n");
-		parentJFrame.closeLog();
+		IrisGUI.writeToLog("\n\n-----------------------------------------\n");
+		IrisGUI.writeToLog("-- Done processing all files at "+ new Date() + " --\n");
+		IrisGUI.closeLog();
 
 	}
 
