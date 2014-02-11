@@ -80,7 +80,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			/**
 			 * Decide which profile to use, according to the profile name
 			 */
-			String profileName = (String)IrisGUI.comboBox.getSelectedItem();
+			String profileName = IrisGUI.getCurrentlySelectedProfile();
 
 			if(profileName.equals("Stm growth")){
 				BasicProfile basicProfile = new BasicProfile();

@@ -54,7 +54,9 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * This is the combo box used to select the profile
 	 */
-	public static JComboBox comboBox;
+	public static JComboBox comboBox = null;
+	
+	public static String selectedProfile;
 
 
 	/**
@@ -70,19 +72,19 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 * This string array holds the names of all the profiles
 	 */
 	public static String[] profileCollection = {
-			"Stm growth",
-			"Ecoli growth",
-			"Ecoli opacity",
-			"Ecoli opacity 384",
-			"Ecoli growth 384 - hazy colonies",
-			"B.subtilis Opacity (HSB)",
-			"B.subtilis Sporulation (HSB)",
-			//"CPRG 384",
-			"Biofilm formation",
-			"Biofilm formation (HSB)",
-			//"Biofilm formation - Simple Grid",
-			//"Opacity",
-			//"Opacity (fixed grid)"
+		"Stm growth",
+		"Ecoli growth",
+		"Ecoli opacity",
+		"Ecoli opacity 384",
+		"Ecoli growth 384 - hazy colonies",
+		"B.subtilis Opacity (HSB)",
+		"B.subtilis Sporulation (HSB)",
+		//"CPRG 384",
+		"Biofilm formation",
+		"Biofilm formation (HSB)",
+		//"Biofilm formation - Simple Grid",
+		//"Opacity",
+		//"Opacity (fixed grid)"
 	};
 
 
@@ -101,7 +103,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * This string holds the commit id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "884d325";
+	public static String IrisBuild = "4d1de75";
 
 
 	/**
@@ -114,11 +116,11 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 				public void run() {
 					try {
 						IrisGUI frame = new IrisGUI();
-						
+
 						//this call tells the system to redirect the System.out and System.err outputs
 						//from the console to the textPane object
 						frame.redirectSystemStreams();
-						
+
 						System.setProperty("apple.laf.useScreenMenuBar", "false");
 						frame.setResizable(false);
 						frame.setVisible(true);				
@@ -133,15 +135,15 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 				printUsage();
 				return;
 			}
-			
-			String profileName = args[0];
+
+			selectedProfile = args[0];
 			String folderLocation = args[1];
-			
+
 			//IrisGUI this_ = new IrisGUI();
-			comboBox = new JComboBox(profileCollection);
+			//comboBox = new JComboBox(profileCollection);
 			//comboBox.setSelectedIndex(0);
-			comboBox.setSelectedItem(profileName);
-			
+			//comboBox.setSelectedItem(profileName);
+
 			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker();
 			processFolderWorker.directory = new File(folderLocation);
 
@@ -150,13 +152,25 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
+
 		}
 	}
-	
+
 	public static void printUsage(){
 		System.out.println("Usage: Iris ProfileName FolderLocation\n");
 		System.out.println("Tip: call without any arguments to invoke GUI\n");
+	}
+
+
+	/**
+	 * In case we're running in console mode, the combobox will be null
+	 * @return
+	 */
+	public static String getCurrentlySelectedProfile(){
+		if(comboBox!=null)
+			return((String)comboBox.getSelectedItem());
+		else
+			return(selectedProfile);
 	}
 
 	/**
@@ -207,7 +221,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 
 
 
-		
+
 
 		//make sure the log file is closed when the user closes the window
 		this.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -219,7 +233,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		});
 
 	}
-	
+
 
 	/**
 	 * This function will create a unique log filename and open it for writing
