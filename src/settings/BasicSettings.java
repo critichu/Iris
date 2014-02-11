@@ -3,16 +3,13 @@
  */
 package settings;
 
-import java.awt.EventQueue;
 import java.io.Serializable;
-
-import javax.swing.JFrame;
 
 /**
  * @author george
  *
  */
-public class BasicSettings extends Settings implements Serializable{
+public class BasicSettings /*extends Settings*/ implements Serializable{
 
 	/**
 	 * 
@@ -71,8 +68,8 @@ public class BasicSettings extends Settings implements Serializable{
 	 * Create the frame.
 	 */
 	public BasicSettings() {
-		setBounds(100, 100, 450, 300);
-		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+//		setBounds(100, 100, 450, 300);
+//		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
 	}
 

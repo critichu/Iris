@@ -24,7 +24,6 @@ import java.util.Collections;
 
 import profiles.BasicProfile;
 import settings.BasicSettings;
-import settings.Settings;
 
 /**
  * @author george
@@ -299,7 +298,7 @@ public class RisingTideDemo {
 	 * @param croppedImage
 	 * @param roi
 	 */
-	private static int getTileArea_autoBackground(ImagePlus croppedImage, Roi roi, Settings settings) {
+	private static int getTileArea_autoBackground(ImagePlus croppedImage, Roi roi, BasicSettings settings) {
 		
 		//1. first, get the tile image by copying it off the input picture (the grayscaled and cropped original input image)
 		croppedImage.setRoi(roi);

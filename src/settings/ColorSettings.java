@@ -5,8 +5,6 @@ package settings;
 
 import java.io.Serializable;
 
-import javax.swing.JFrame;
-
 /**
  * @author George Kritikos
  *
@@ -34,7 +32,7 @@ public class ColorSettings extends BasicSettings implements Serializable{
 	 */
 	public ColorSettings() {
 		super();
-		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+//		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
 	}
 }
