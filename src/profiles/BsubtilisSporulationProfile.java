@@ -34,6 +34,7 @@ import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
 import tileReaders.BasicTileReaderHSB;
 import tileReaders.ColorTileReaderHSB;
+import utils.Toolbox;
 
 /**
  * This profile is created to quantify the B. subtilis sporulation defect phenotype
@@ -100,7 +101,7 @@ public class BsubtilisSporulationProfile extends Profile{
 		double imageAngle = calculateImageRotation(originalImage);
 
 		//create a copy of the original image and rotate it, then clear the original picture
-		ImagePlus rotatedImage = rotateImage(originalImage, imageAngle);
+		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
 		originalImage.flush();
 
 		//output how much the image needed to be rotated
@@ -399,7 +400,7 @@ public class BsubtilisSporulationProfile extends Profile{
 
 		for(double angle = initialAngle; angle<=finalAngle; angle+=angleIncrements){
 			//3.1 rotate the b/w picture
-			ImagePlus rotatedImage = rotateImage(imageSubset, angle);			
+			ImagePlus rotatedImage = Toolbox.rotateImage(imageSubset, angle);			
 
 			//3.2 calculate sums of rows and columns
 			ArrayList<Integer> sumOfColumns = sumOfColumns(rotatedImage);

@@ -35,6 +35,7 @@ import tileReaderOutputs.CPRGTileReaderOutput;
 import tileReaders.BasicTileReader;
 import tileReaders.CPRGColorTileReader;
 import tileReaders.CPRGColorTileReaderHSV;
+import utils.Toolbox;
 
 /**
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
@@ -118,7 +119,7 @@ public class CPRGProfile384 extends Profile {
 		duplicate.flush();
 
 		//create a copy of the original image and rotate it, then clear the original picture
-		ImagePlus rotatedImage = rotateImage(originalImage, imageAngle);
+		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
 		originalImage.flush();
 
 		//output how much the image needed to be rotated
@@ -991,7 +992,7 @@ public class CPRGProfile384 extends Profile {
 
 		for(double angle = initialAngle; angle<=finalAngle; angle+=angleIncrements){
 			//3.1 rotate the b/w picture
-			ImagePlus rotatedImage = rotateImage(imageSubset, angle);			
+			ImagePlus rotatedImage = Toolbox.rotateImage(imageSubset, angle);			
 
 			//3.2 calculate sums of rows and columns
 			ArrayList<Integer> sumOfColumns = sumOfColumns(rotatedImage);
