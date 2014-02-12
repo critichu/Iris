@@ -21,7 +21,7 @@ import profiles.ColorProfile;
 import profiles.ColorProfileHSB;
 import profiles.ColorProfile_SimpleSegmentation;
 import profiles.EcoliGrowthProfile;
-import profiles.EcoliGrowthProfile384_HazyColonies;
+import profiles.EcoliGrowthProfile384_HazyColonies_old;
 import profiles.EcoliOpacityProfile;
 import profiles.EcoliOpacityProfile384;
 import profiles.OpacityProfile;
@@ -113,8 +113,8 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			}
 
 			else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
-				EcoliGrowthProfile384_HazyColonies ecoliGrowth384_hazy = new EcoliGrowthProfile384_HazyColonies();
-				ecoliGrowth384_hazy.analyzePicture(filename);			
+				EcoliGrowthProfile384_HazyColonies_old ecoliGrowth384_hazy_old = new EcoliGrowthProfile384_HazyColonies_old();
+				ecoliGrowth384_hazy_old.analyzePicture(filename);			
 			}			
 
 			else if(profileName.equals("CPRG 384")){
