@@ -486,7 +486,8 @@ public class OpacityTileReaderForHazyColonies_old {
 
 		//get the area and perimeter of the biggest particle
 		int largestParticleArea = Math.round(areas[indexOfMax]);
-		int largestParticlePerimeter = 0;//HACK TO SEE IF IT'S THE PERIMETER THAT MAKES THE DIFFERENCE= Math.round(perimeters[indexOfMax]);
+		//int largestParticlePerimeter = 0;//HACK TO SEE IF IT'S THE PERIMETER THAT MAKES THE DIFFERENCE= Math.round(perimeters[indexOfMax]);
+		int largestParticlePerimeter = Math.round(perimeters[indexOfMax]);
 
 		return(largestParticleArea+largestParticlePerimeter);
 	}
