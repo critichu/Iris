@@ -1,6 +1,7 @@
 package ij.gui;
-import ij.IJ;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 
 /** This is an xtension of GenericDialog that is non-model.
  *	@author Johannes Schindelin

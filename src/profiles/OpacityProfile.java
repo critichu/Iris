@@ -20,6 +20,7 @@ import settings.BasicSettings;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.OpacityTileReader;
+import utils.Toolbox;
 
 /**
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
@@ -133,7 +134,7 @@ public class OpacityProfile extends Profile {
 
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -183,7 +184,7 @@ public class OpacityProfile extends Profile {
 
 			//calculate and save grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -223,7 +224,7 @@ public class OpacityProfile extends Profile {
 		if(settings.saveGridImage){
 			//calculate grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
 	}

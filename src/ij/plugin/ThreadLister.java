@@ -1,7 +1,9 @@
 package ij.plugin;
-import java.io.*;
-import ij.*;
-import ij.text.*;
+import ij.IJ;
+import ij.text.TextWindow;
+
+import java.io.CharArrayWriter;
+import java.io.PrintWriter;
 
 /**
 * Displays thread information in a text window.

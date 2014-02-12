@@ -41,7 +41,7 @@ public class SimpleImageSegmenter {
 		//set up an output object
 		BasicImageSegmenterOutput output = new BasicImageSegmenterOutput();
 		
-		//IJ.save(croppedImage, "dummy1234.jpg");
+		//Toolbox.savePicture(croppedImage, "dummy1234.jpg");
 		
 		//1. copy original picture
 		//since this pipeline needs a black and white version of the picture

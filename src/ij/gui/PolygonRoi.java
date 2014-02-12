@@ -1,12 +1,22 @@
 package ij.gui;
-import ij.*;
-import ij.process.*;
-import ij.measure.*;
-import ij.plugin.frame.*;
-import java.awt.*;
-import java.awt.image.*;
-import java.awt.geom.*;
-import java.awt.event.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.measure.Calibration;
+import ij.measure.SplineFitter;
+import ij.plugin.frame.LineWidthAdjuster;
+import ij.plugin.frame.Recorder;
+import ij.process.FloatPolygon;
+import ij.process.ImageProcessor;
+import ij.process.PolygonFiller;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.geom.GeneralPath;
 
 /** This class represents a polygon region of interest or polyline of interest. */
 public class PolygonRoi extends Roi {

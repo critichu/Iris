@@ -189,7 +189,7 @@ public class EcoliOpacityProfile384 extends Profile {
 
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -239,7 +239,7 @@ public class EcoliOpacityProfile384 extends Profile {
 
 			//calculate and save grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			///HACK for Alex: removing the next return statement will make Iris print out the result even though the gridding failed  
 			//return;
@@ -278,7 +278,7 @@ public class EcoliOpacityProfile384 extends Profile {
 		if(settings.saveGridImage){
 			//calculate grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
 	}

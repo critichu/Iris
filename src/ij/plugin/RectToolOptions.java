@@ -1,7 +1,16 @@
 package ij.plugin;
-import ij.*;
-import ij.gui.*;
-import java.awt.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.DialogListener;
+import ij.gui.GenericDialog;
+import ij.gui.NonBlockingGenericDialog;
+import ij.gui.Roi;
+import ij.gui.Toolbar;
+
+import java.awt.AWTEvent;
+import java.awt.Color;
 
 /** This plugin implements the rounded rectangle tool dialog box. */
 public class RectToolOptions implements PlugIn, DialogListener {

@@ -198,7 +198,7 @@ public class BsubtilisSporulationProfile extends Profile{
 			ImagePlus croppedImageSegmented = grayscaleCroppedImage.duplicate();
 
 			RisingTideSegmenter.paintSegmentedImage(croppedImageSegmented, segmentationOutput); //calculate grid image
-			IJ.save(croppedImageSegmented, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImageSegmented, filename + ".grid.jpg");
 
 			croppedImageSegmented.flush();
 			grayscaleCroppedImage.flush();
@@ -280,7 +280,7 @@ public class BsubtilisSporulationProfile extends Profile{
 			ImagePlus croppedImageSegmented = grayscaleCroppedImage.duplicate();
 
 			ColonyBreathing.paintSegmentedImage(croppedImageSegmented, segmentationOutput); //calculate grid image
-			IJ.save(croppedImageSegmented, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImageSegmented, filename + ".grid.jpg");
 
 			croppedImageSegmented.flush();
 			grayscaleCroppedImage.flush();
@@ -348,7 +348,7 @@ public class BsubtilisSporulationProfile extends Profile{
 
 			//RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			ColonyBreathing.paintSegmentedImage(grayscaleCroppedImage, segmentationOutput); ///
-			IJ.save(grayscaleCroppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(grayscaleCroppedImage, filename + ".grid.jpg");
 
 			grayscaleCroppedImage.flush();
 		}

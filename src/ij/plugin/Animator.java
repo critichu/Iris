@@ -1,7 +1,12 @@
 package ij.plugin;
-import ij.*;
-import ij.gui.*;
-import ij.process.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.ImageWindow;
+import ij.gui.StackWindow;
 import ij.measure.Calibration;
 
 /** This plugin animates stacks. */

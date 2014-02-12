@@ -191,7 +191,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -241,7 +241,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 
 			//calculate and save grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -286,7 +286,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		if(settings.saveGridImage){
 			//calculate grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
 	}

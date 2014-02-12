@@ -1,12 +1,16 @@
 package ij.plugin; 
-import ij.*; 
-import ij.gui.GenericDialog; 
-import ij.process.*;
-import ij.plugin.filter.*; 
-import ij.measure.Measurements;
-import java.lang.*; 
-import java.awt.*; 
-import java.awt.event.*; 
+import ij.CompositeImage;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+
 import java.util.Arrays;
 
 /** This plugin performs a z-projection of the input stack. Type of

@@ -1,14 +1,23 @@
 package ij.plugin;
-import ij.*;
+import ij.CompositeImage;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Macro;
+import ij.Menus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.macro.Interpreter;
-import ij.process.*;
-import ij.gui.*;
-import java.awt.*;
-import ij.measure.*;
-import java.awt.event.*;
-import java.util.*;
-import java.lang.*;
-import ij.plugin.filter.*;
+import ij.measure.Calibration;
+import ij.process.ImageProcessor;
+
+import java.awt.Checkbox;
+import java.awt.Choice;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.Vector;
 
 /** This plugin, which concatenates two or more images or stacks,
  *  implements the Image/Stacks/Tools/Concatenate command.

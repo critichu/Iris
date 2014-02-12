@@ -1,12 +1,19 @@
 package ij.plugin.filter;
-import ij.*;
-import ij.gui.GenericDialog;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Macro;
+import ij.Prefs;
 import ij.gui.DialogListener;
+import ij.gui.GenericDialog;
 import ij.gui.Roi;
-import ij.process.*;
 import ij.plugin.ContrastEnhancer;
-import java.awt.*;
-import java.awt.event.*;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+
+import java.awt.AWTEvent;
+import java.awt.Rectangle;
 import java.util.Arrays;
 
 /** This plugin implements the Mean, Minimum, Maximum, Variance, Median, Open Maxima, Close Maxima,

@@ -8,14 +8,16 @@
  @author Johannes Schindelin
  */
 package ij.plugin;
-import ij.*;
-import ij.process.*;
-import ij.gui.*;
-import java.awt.*;
+import ij.IJ;
+import ij.ImagePlus;
 import ij.io.SaveDialog;
-import java.io.*;
-import java.util.*;
-import java.awt.image.*;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class PNM_Writer implements PlugIn {
 

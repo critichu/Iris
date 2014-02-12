@@ -23,6 +23,7 @@ import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
 import tileReaders.BasicTileReader;
 import tileReaders.ColorTileReader;
+import utils.Toolbox;
 
 /**
  * @author George Kritikos
@@ -135,7 +136,7 @@ public class ColorProfile_SimpleSegmentation extends Profile{
 
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -199,7 +200,7 @@ public class ColorProfile_SimpleSegmentation extends Profile{
 
 			//calculate and save grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			
 			//HACK for Lucia, normally the next line is not commented
@@ -262,7 +263,7 @@ public class ColorProfile_SimpleSegmentation extends Profile{
 		if(settings.saveGridImage){
 			//calculate grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
 	}

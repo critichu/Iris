@@ -1,18 +1,33 @@
 package ij.gui;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import ij.*;
-import ij.process.*;
-import ij.measure.*;
-import ij.plugin.frame.Recorder;
-import ij.plugin.filter.Analyzer;
-import ij.plugin.filter.ThresholdToSelection;
-import ij.plugin.RectToolOptions;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.Undo;
+import ij.WindowManager;
 import ij.macro.Interpreter;
-import ij.io.RoiDecoder;
+import ij.measure.Calibration;
+import ij.plugin.RectToolOptions;
+import ij.plugin.filter.ThresholdToSelection;
+import ij.plugin.frame.Recorder;
+import ij.process.Blitter;
+import ij.process.FloatPolygon;
+import ij.process.ImageProcessor;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Event;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 
 /** A rectangular region of interest and superclass for the other ROI classes. */
 public class Roi extends Object implements Cloneable, java.io.Serializable {
