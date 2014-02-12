@@ -5,11 +5,11 @@ package tileReaders;
 
 import ij.ImagePlus;
 import ij.gui.Roi;
+import ij.gui.ShapeRoi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
-import ij.plugin.filter.ParticleAnalyzer;
-import ij.plugin.frame.RoiManager;
+import ij.plugin.filter.ThresholdToSelection;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
@@ -18,6 +18,7 @@ import ij.process.ImageStatistics;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import utils.StdStats;
+import utils.Toolbox;
 
 /**
  * @author George Kritikos
@@ -53,7 +54,8 @@ public class OpacityTileReaderForHazyColonies {
 
 
 		//1. apply a threshold at the tile, using the Otsu algorithm
-		turnImageBW_Otsu_auto(input.tileImage);
+		///turnImageBW_Otsu_auto(input.tileImage);
+		Roi[] roiList = getParticlesAsRoiList(grayscaleTileCopy);
 
 		//
 		//--------------------------------------------------
@@ -63,28 +65,29 @@ public class OpacityTileReaderForHazyColonies {
 		//2. perform particle analysis on the thresholded tile
 
 		//create the results table, where the results of the particle analysis will be shown
-		ResultsTable resultsTable = new ResultsTable();
+		///ResultsTable resultsTable = new ResultsTable();
 
 		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER, 
-				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
-				resultsTable, 5, Integer.MAX_VALUE);
+		///ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE,//+ParticleAnalyzer.ADD_TO_MANAGER, 
+		///		Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+		///		resultsTable, 5, Integer.MAX_VALUE);
 
 
-		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		synchronized(input.settings){
-			
-			ParticleAnalyzer.setRoiManager(manager);
-			
-			particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
-		}
+		//RoiManager manager = RoiManager.getInstance();//new RoiManager(true);//we do this so that the RoiManager window will not pop up
+		///synchronized(input.settings){
+
+		///ParticleAnalyzer.setRoiManager(manager);
+
+		///	particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
+
+		///}
 		//
 		//--------------------------------------------------
 		//
 		//
 
 		//3.1 check if the returned results table is empty
-		if(resultsTable.getCounter()==0){
+		if(roiList.length==0){///if(resultsTable.getCounter()==0){
 			output.emptyResulsTable = true; // this is highly abnormal
 			output.colonySize = 0;//return a colony size of zero
 
@@ -114,18 +117,20 @@ public class OpacityTileReaderForHazyColonies {
 		}
 
 
+
+
 		//3.3 if there was a colony there, return the area of the biggest particle
 		//this should also clear away contaminations, because normally the contamination
 		//area will be smaller than the colony area, so the contamination will never be reported
-		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
-		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		int indexOfBiggestParticle = getIndexOfBiggestParticle(input.tileImage, roiList);
+		output.colonySize = getBiggestParticleAreaPlusPerimeter(input.tileImage, roiList, indexOfBiggestParticle);
+		///output.circularity = getBiggestParticleCircularity(roiList, indexOfBiggestParticle);
 
 
 		//3.4 get the opacity of the colony
 		//for this, we need the Roi (region of interest) that corresponds to the colony
 		//so as to exclude the brightness of any contaminations
-		Roi colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
+		Roi colonyRoi = roiList[indexOfBiggestParticle];
 
 		output.opacity = getBiggestParticleOpacicity(grayscaleTileCopy, colonyRoi);
 
@@ -145,6 +150,28 @@ public class OpacityTileReaderForHazyColonies {
 		//TODO: still there is no way to filter out contaminations in case the tile is empty
 		//this should be straight forward to do, since the center of mass (see ResultsTable) of the contamination
 		//should be very far from the center of the tile
+
+	}
+
+
+	/**
+	 * All this just to avoid dealing with the particle analyzer
+	 * @param imp
+	 * @return
+	 */
+	public static Roi[] getParticlesAsRoiList(ImagePlus imp){
+
+		ImageProcessor ip = imp.getProcessor();
+
+		int threshold = ip.getAutoThreshold();
+		//ip.setThreshold(threshold, threshold, ImageProcessor.NO_LUT_UPDATE);
+		ip.setAutoThreshold(Method.Otsu, true, ImageProcessor.BLACK_AND_WHITE_LUT);
+		ThresholdToSelection tts = new ThresholdToSelection();
+		Roi roi2 = tts.convert(ip);
+		imp.setRoi(roi2);
+
+		ShapeRoi shapeRoi = new ShapeRoi(roi2);
+		return(shapeRoi.getRois());
 
 	}
 
@@ -448,6 +475,33 @@ public class OpacityTileReaderForHazyColonies {
 	}
 
 
+	private static int getIndexOfBiggestParticle(ImagePlus img, Roi[] roiList){
+		//get the areas of all the particles the particle analyzer has found
+		//float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
+		//for (Roi roi : roiList) {
+
+		float[] areas = new float[roiList.length];
+
+		for (int i = 0; i < roiList.length; i++) {
+			//areas[i] = (float) roiList[i].getImage().getStatistics().area;
+
+
+			ImageProcessor ip = img.getProcessor(); 
+			ip.setRoi(roiList[i]); 
+			ImageStatistics stats = ImageStatistics.getStatistics(ip, 
+					Measurements.MEAN, img.getCalibration()); 
+			areas[i] = (float) stats.area; 
+		}
+
+		//}
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = getIndexOfMaximumElement(areas);
+
+		return(indexOfMax);
+	}
+
+
 	/**
 	 * Returns the area of the biggest particle in the results table
 	 */
@@ -475,20 +529,14 @@ public class OpacityTileReaderForHazyColonies {
 	 * shape (such as colonies that form a biofilm), this could add much more than just an outer layer of pixels,
 	 * thus overcorrecting the stringency of the thresholding algorithm. 
 	 */
-	private static int getBiggestParticleAreaPlusPerimeter(ResultsTable resultsTable, int indexOfBiggestParticle) {
-
-		//get the areas and perimeters of all the particles the particle analyzer has found
-		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
-		float perimeters[] = resultsTable.getColumn(resultsTable.getColumnIndex("Perim."));
-
-		//get the index of the biggest particle (in area in pixels)
-		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
+	private static int getBiggestParticleAreaPlusPerimeter(ImagePlus imp, Roi[] roiList, int indexOfBiggestParticle) {
 
 		//get the area and perimeter of the biggest particle
-		int largestParticleArea = Math.round(areas[indexOfMax]);
-		int largestParticlePerimeter = Math.round(perimeters[indexOfMax]);
+		int largestParticleArea = Math.round(Toolbox.getRoiArea(imp, roiList[indexOfBiggestParticle]));
+		//int largestParticlePerimeter = Math.round(perimeters[indexOfMax]);
 
-		return(largestParticleArea+largestParticlePerimeter);
+		//return(largestParticleArea+largestParticlePerimeter);
+		return(largestParticleArea);
 	}
 
 
@@ -516,7 +564,7 @@ public class OpacityTileReaderForHazyColonies {
 	 */
 	private static int getIndexOfMaximumElement(float[] areas) {
 		int index = -1;
-		float max = -Float.MAX_VALUE;
+		double max = -Float.MAX_VALUE;
 
 		for (int i = 0; i < areas.length; i++) {
 			if(areas[i]>max){

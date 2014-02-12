@@ -30,6 +30,7 @@ import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.OpacityTileReaderForHazyColonies;
+import utils.Toolbox;
 
 /**
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
@@ -112,7 +113,7 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 		double imageAngle = calculateImageRotation(originalImage);
 
 		//create a copy of the original image and rotate it, then clear the original picture
-		ImagePlus rotatedImage = rotateImage(originalImage, imageAngle);
+		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
 		originalImage.flush();
 
 		//output how much the image needed to be rotated
@@ -195,7 +196,8 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			//IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 			
 			croppedImage.flush();
 			BW_local_thresholded_picture.flush();
@@ -249,7 +251,8 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
 			//calculate and save grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			//IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			///HACK for Alex: removing the next return statement will make Iris print out the result even though the gridding failed  
 			//return;
@@ -288,7 +291,8 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 		if(settings.saveGridImage){
 			//calculate grid image
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			IJ.save(croppedImage, filename + ".grid.jpg");
+			//IJ.save(croppedImage, filename + ".grid.jpg");
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
 	}
@@ -444,7 +448,7 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
 		for(double angle = initialAngle; angle<=finalAngle; angle+=angleIncrements){
 			//3.1 rotate the b/w picture
-			ImagePlus rotatedImage = rotateImage(imageSubset, angle);			
+			ImagePlus rotatedImage = Toolbox.rotateImage(imageSubset, angle);			
 
 			//3.2 calculate sums of rows and columns
 			ArrayList<Integer> sumOfColumns = sumOfColumns(rotatedImage);
