@@ -16,6 +16,7 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 
 import java.io.File;
@@ -131,6 +132,9 @@ public class BasicProfile extends Profile {
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		
+		//let colonies breathe
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -154,7 +158,7 @@ public class BasicProfile extends Profile {
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -203,7 +207,7 @@ public class BasicProfile extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -244,7 +248,7 @@ public class BasicProfile extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
