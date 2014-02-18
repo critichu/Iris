@@ -18,6 +18,7 @@ import ij.process.ImageStatistics;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import utils.StdStats;
+import utils.Toolbox;
 
 /**
  * @author George Kritikos
@@ -28,7 +29,7 @@ public class OpacityTileReaderForHazyColonies_old {
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
 	 */
-	public static double varianceThreshold = 5000;
+	public static double varianceThreshold = 3e6;//5000;
 
 	/**
 	 * This tile reader gets the size of the colony in pixels, as well as the sum of it's brightness.
@@ -53,7 +54,9 @@ public class OpacityTileReaderForHazyColonies_old {
 
 
 		//1. apply a threshold at the tile, using the Otsu algorithm
-		turnImageBW_Otsu_auto(input.tileImage);
+		Toolbox.turnImageBW_RenyiEntropy_auto(input.tileImage);
+//		input.tileImage.show();
+//		input.tileImage.hide();
 
 		//
 		//--------------------------------------------------
@@ -101,7 +104,8 @@ public class OpacityTileReaderForHazyColonies_old {
 
 		//if variance is more than 1, then the brightness sum said there's a colony there
 		//so there's has to be both variance less than 1 and other filters saying that there's no colony there
-		if(isTileEmpty_simple(input.tileImage)) {// && isTileEmpty(resultsTable, input.tileImage)){
+		//if(isTileEmpty(resultsTable, input.tileImage)){
+		if(isTileEmpty_simple(input.tileImage)){
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
 			output.circularity = 0;
@@ -246,53 +250,7 @@ public class OpacityTileReaderForHazyColonies_old {
 
 
 
-	/**
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the Otsu algorithm. 
-	 * This function does not return the threshold
-	 * @param 
-	 */
-	private static void turnImageBW_Otsu_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.Otsu, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
-
-
-	/**
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the Huang algorithm
-	 * This function does not return the threshold
-	 * @param 
-	 */
-	private static void turnImageBW_Huang_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.Huang, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
-
-
-	/**
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the Minimum algorithm
-	 * This function does not return the threshold
-	 * @param 
-	 */
-	private static void turnImageBW_Minimum_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.Minimum, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
-
-
-	/**
-	 * @deprecated: see Evernote note on how this algorithm performs on overgrown colonies
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the MinError algorithm
-	 * This function does not return the threshold
-	 * @param
-	 */
-	private static void turnImageBW_MinError_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.MinError, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
+	
 
 
 	/**

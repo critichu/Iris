@@ -14,6 +14,7 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
+import utils.Toolbox;
 
 /**
  * @author George Kritikos
@@ -34,6 +35,7 @@ public class BasicTileReader {
 
 
 		//1. apply a threshold at the tile, using the Otsu algorithm
+		ImagePlus originalTileImage = input.tileImage.duplicate();
 		turnImageBW_Otsu_auto(input.tileImage);
 
 
@@ -59,17 +61,19 @@ public class BasicTileReader {
 			output.colonySize = 0;//return a colony size of zero
 
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
-
+			originalTileImage.flush();
+			
 			return(output);
 		}
 
 		//3.2 check to see if the tile was empty. If so, return a colony size of zero
-		if(isTileEmpty(resultsTable, input.tileImage)){
+		if(isTileEmpty(resultsTable, originalTileImage)){
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
 
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
-
+			originalTileImage.flush();
+			
 			return(output);
 		}
 
@@ -81,6 +85,9 @@ public class BasicTileReader {
 		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		
+		originalTileImage.flush();
+		
 		return(output);//returns the biggest result
 
 
@@ -187,6 +194,8 @@ public class BasicTileReader {
 		float circularities[] = resultsTable.getColumn(resultsTable.getColumnIndex("Circ."));//get the circularities of all the particles
 		float aspect_ratios[] = resultsTable.getColumn(resultsTable.getColumnIndex("AR"));//get the aspect ratios of all the particles
 
+		int threshold = Toolbox.getThreshold(tile, Method.Otsu);
+		
 		/**
 		 * Penalty is a number given to this tile if some of it's attributes (e.g. circularity of biggest particle)
 		 * are borderline to being considered that of an empty tile.
@@ -208,11 +217,23 @@ public class BasicTileReader {
 		if(numberOfParticles>40){
 			return(true);//it's empty
 		}
-
 		//borderline to empty tile
 		if(numberOfParticles>15){
 			penalty++;
 		}
+		
+		//check low the thresholding algorithm had to get in order to detect something
+		//most tiles are around 128-131, under 100 it's certainly empty.
+		//under 120 it starts getting kind of fishy..
+		if(threshold<100){
+			return(true);//it's empty
+		}
+		
+		if(threshold<120){
+			penalty++;
+		}
+
+
 
 		//for the following, we only check the largest particle
 		//which is the one who would be reported either way if we decide that this spot is not empty

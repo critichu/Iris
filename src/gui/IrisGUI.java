@@ -103,7 +103,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * This string holds the commit id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "fab84c8";
+	public static String IrisBuild = "6c55e4c";
 
 
 	/**
