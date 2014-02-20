@@ -38,6 +38,6 @@ public class PicturesFilenameFilter implements FilenameFilter {
 		}
 		return(false);
 	}
-
+	
 }
 

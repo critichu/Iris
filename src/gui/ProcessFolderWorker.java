@@ -54,7 +54,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 		//open the log file for writing
 		IrisGUI.openLog(directory.getAbsolutePath());
-		IrisGUI.writeToLog("--- Iris version " + IrisGUI.IrisVersion + " log file\tbuild "+IrisGUI.IrisBuild+" ---\n");
+		IrisGUI.writeToLog("--- Iris version " + IrisFrontend.IrisVersion + " log file\tbuild "+IrisFrontend.IrisBuild+" ---\n");
 		IrisGUI.writeToLog("-- Started processing files at "+ new Date() + " --\n");
 		IrisGUI.writeToLog("-----------------------------------------\n\n\n");
 
@@ -65,92 +65,8 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		int i=0;
 		int max = filesInDirectory.length;
 
-
-		//		if(IrisGUI.multiThreaded){}
-		//		
-		//		else //single-threaded case
-		//		{
-
 		for (File file : filesInDirectory) {
-
-			publish("Now processing file " + "\n");
-
-			String filename = file.getAbsolutePath();
-
-			/**
-			 * Decide which profile to use, according to the profile name
-			 */
-			String profileName = IrisGUI.getCurrentlySelectedProfile();
-
-			if(profileName.equals("Stm growth")){
-				BasicProfile basicProfile = new BasicProfile();
-				basicProfile.analyzePicture(filename);
-			}
-
-			else if(profileName.equals("Ecoli opacity")){
-				EcoliOpacityProfile ecoliOpacityProfile = new EcoliOpacityProfile();
-				ecoliOpacityProfile.analyzePicture(filename);			
-			}			
-
-			else if(profileName.equals("B.subtilis Opacity (HSB)")){
-				BsubtilisHazyProfileHSB bsubtilisHazyProfileHSB = new BsubtilisHazyProfileHSB();
-				bsubtilisHazyProfileHSB.analyzePicture(filename);			
-			}
-
-			else if(profileName.equals("B.subtilis Sporulation (HSB)")){
-				BsubtilisSporulationProfile bsubtilisSporulationProfile = new BsubtilisSporulationProfile();
-				bsubtilisSporulationProfile.analyzePicture(filename);			
-			}
-
-			else if(profileName.equals("Ecoli growth")){
-				EcoliGrowthProfile ecoliGrowthProfile = new EcoliGrowthProfile();
-				ecoliGrowthProfile.analyzePicture(filename);			
-			}
-
-			else if(profileName.equals("Ecoli opacity 384")){
-				EcoliOpacityProfile384 ecoliOpacityProfile384 = new EcoliOpacityProfile384();
-				ecoliOpacityProfile384.analyzePicture(filename);			
-			}
-
-			else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
-				EcoliGrowthProfile384_HazyColonies_old ecoliGrowth384_hazy_old = new EcoliGrowthProfile384_HazyColonies_old();
-				ecoliGrowth384_hazy_old.analyzePicture(filename);			
-			}			
-
-			else if(profileName.equals("CPRG 384")){
-				CPRGProfile384 cprgProfile384 = new CPRGProfile384();
-				cprgProfile384.analyzePicture(filename);			
-			}
-
-			else if(profileName.equals("Biofilm formation")){
-				ColorProfile colorProfile = new ColorProfile();
-				colorProfile.analyzePicture(filename);
-			}
-
-			else if(profileName.equals("Biofilm formation (HSB)")){
-				ColorProfileHSB colorProfileHSB = new ColorProfileHSB();
-				colorProfileHSB.analyzePicture(filename);
-			}
-
-			else if(profileName.equals("Biofilm formation - Simple Grid")){
-				ColorProfile_SimpleSegmentation colorProfile_simpleSegmentation = new ColorProfile_SimpleSegmentation();
-				colorProfile_simpleSegmentation.analyzePicture(filename);
-			}
-
-			else if(profileName.equals("Opacity")){
-				OpacityProfile opacityProfile = new OpacityProfile();
-				opacityProfile.analyzePicture(filename);
-			}
-
-			else if(profileName.equals("Opacity (fixed grid)")){
-				OpacityProfile2 opacityProfile2 = new OpacityProfile2();
-				opacityProfile2.analyzePicture(filename);
-			}
-
-			else{
-				System.err.println("Unknown profile name: \"" + profileName +"\"");
-			}
-
+			processSingleFile(file);
 			
 			i++;
 			int progress = Math.min(i*100/max, 100);
@@ -158,8 +74,6 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			System.out.println(i + " / " + max + "\t(" + progress +"% done)" +  "\n\n");
 			
 			publish("...done! " + "\n\n\n");
-
-			
 		}
 
 
@@ -167,13 +81,98 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 	}
 
 
+	public static void processSingleFile(File file){
+
+
+		//publish("Now processing file " + "\n");
+		System.out.println("Now processing file " + "\n");
+
+		String filename = file.getAbsolutePath();
+
+		/**
+		 * Decide which profile to use, according to the profile name
+		 */
+		String profileName = IrisFrontend.selectedProfile;
+
+		if(profileName.equals("Stm growth")){
+			BasicProfile basicProfile = new BasicProfile();
+			basicProfile.analyzePicture(filename);
+		}
+
+		else if(profileName.equals("Ecoli opacity")){
+			EcoliOpacityProfile ecoliOpacityProfile = new EcoliOpacityProfile();
+			ecoliOpacityProfile.analyzePicture(filename);			
+		}			
+
+		else if(profileName.equals("B.subtilis Opacity (HSB)")){
+			BsubtilisHazyProfileHSB bsubtilisHazyProfileHSB = new BsubtilisHazyProfileHSB();
+			bsubtilisHazyProfileHSB.analyzePicture(filename);			
+		}
+
+		else if(profileName.equals("B.subtilis Sporulation (HSB)")){
+			BsubtilisSporulationProfile bsubtilisSporulationProfile = new BsubtilisSporulationProfile();
+			bsubtilisSporulationProfile.analyzePicture(filename);			
+		}
+
+		else if(profileName.equals("Ecoli growth")){
+			EcoliGrowthProfile ecoliGrowthProfile = new EcoliGrowthProfile();
+			ecoliGrowthProfile.analyzePicture(filename);			
+		}
+
+		else if(profileName.equals("Ecoli opacity 384")){
+			EcoliOpacityProfile384 ecoliOpacityProfile384 = new EcoliOpacityProfile384();
+			ecoliOpacityProfile384.analyzePicture(filename);			
+		}
+
+		else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
+			EcoliGrowthProfile384_HazyColonies_old ecoliGrowth384_hazy_old = new EcoliGrowthProfile384_HazyColonies_old();
+			ecoliGrowth384_hazy_old.analyzePicture(filename);			
+		}			
+
+		else if(profileName.equals("CPRG 384")){
+			CPRGProfile384 cprgProfile384 = new CPRGProfile384();
+			cprgProfile384.analyzePicture(filename);			
+		}
+
+		else if(profileName.equals("Biofilm formation")){
+			ColorProfile colorProfile = new ColorProfile();
+			colorProfile.analyzePicture(filename);
+		}
+
+		else if(profileName.equals("Biofilm formation (HSB)")){
+			ColorProfileHSB colorProfileHSB = new ColorProfileHSB();
+			colorProfileHSB.analyzePicture(filename);
+		}
+
+		else if(profileName.equals("Biofilm formation - Simple Grid")){
+			ColorProfile_SimpleSegmentation colorProfile_simpleSegmentation = new ColorProfile_SimpleSegmentation();
+			colorProfile_simpleSegmentation.analyzePicture(filename);
+		}
+
+		else if(profileName.equals("Opacity")){
+			OpacityProfile opacityProfile = new OpacityProfile();
+			opacityProfile.analyzePicture(filename);
+		}
+
+		else if(profileName.equals("Opacity (fixed grid)")){
+			OpacityProfile2 opacityProfile2 = new OpacityProfile2();
+			opacityProfile2.analyzePicture(filename);
+		}
+
+		else{
+			System.err.println("Unknown profile name: \"" + profileName +"\"");
+		}
+	
+	}
+	
+	
 	/**
 	 * This method will wait for all threads to finish execution before carrying on
 	 */
 	private static void waitForThreads(List<Callable<Object>> todoIndex_) {
 		List<Future<Object>> listOfFutures = null;
 		try {
-			listOfFutures = IrisGUI.executorService.invokeAll(todoIndex_);
+			listOfFutures = IrisFrontend.executorService.invokeAll(todoIndex_);
 
 			for (Future<Object> future : listOfFutures) {
 				future.get();
@@ -185,7 +184,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		}
 
 		//wait for all futures to finish executing
-		IrisGUI.executorService.shutdown();
+		IrisFrontend.executorService.shutdown();
 
 	}
 

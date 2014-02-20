@@ -3,7 +3,7 @@
  */
 package profiles;
 
-import gui.IrisGUI;
+import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -72,7 +72,7 @@ public class EcoliGrowthProfile extends Profile {
 		StringBuffer output = new StringBuffer();
 		output.append("Iris output\n");
 		output.append("Profile: " + profileName + "\n");
-		output.append("Iris version: " + IrisGUI.IrisVersion + ", revision id: " + IrisGUI.IrisBuild + "\n");
+		output.append("Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
 		output.append(filename+"\n");
 
 

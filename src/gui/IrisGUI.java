@@ -18,9 +18,6 @@ import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -56,36 +53,36 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 */
 	public static JComboBox comboBox = null;
 	
-	public static String selectedProfile;
+	//public static String selectedProfile;
 
 
 	/**
 	 * these are added specially for the multithreading case
 	 */
-	public static boolean multiThreaded = false;
-	public static ExecutorService executorService;
-	public static List<Callable<Object>> todoThread;
-	public static int numberOfThreads = 4;
+	//public static boolean multiThreaded = false;
+	//public static ExecutorService executorService;
+//	public static List<Callable<Object>> todoThread;
+//	public static int numberOfThreads = 4;
 
 
-	/**
-	 * This string array holds the names of all the profiles
-	 */
-	public static String[] profileCollection = {
-		"Stm growth",
-		"Ecoli growth",
-		"Ecoli opacity",
-		"Ecoli opacity 384",
-		"Ecoli growth 384 - hazy colonies",
-		"B.subtilis Opacity (HSB)",
-		"B.subtilis Sporulation (HSB)",
-		//"CPRG 384",
-		"Biofilm formation",
-		"Biofilm formation (HSB)",
-		//"Biofilm formation - Simple Grid",
-		//"Opacity",
-		//"Opacity (fixed grid)"
-	};
+//	/**
+//	 * This string array holds the names of all the profiles
+//	 */
+//	public static String[] profileCollection = {
+//		"Stm growth",
+//		"Ecoli growth",
+//		"Ecoli opacity",
+//		"Ecoli opacity 384",
+//		"Ecoli growth 384 - hazy colonies",
+//		"B.subtilis Opacity (HSB)",
+//		"B.subtilis Sporulation (HSB)",
+//		//"CPRG 384",
+//		"Biofilm formation",
+//		"Biofilm formation (HSB)",
+//		//"Biofilm formation - Simple Grid",
+//		//"Opacity",
+//		//"Opacity (fixed grid)"
+//	};
 
 
 	/**
@@ -98,12 +95,12 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4";
+	//public static String IrisVersion = "0.9.4.18";
 
 	/**
 	 * This string holds the commit id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "6c55e4c";
+	//public static String IrisBuild = "55e1fd9";
 
 
 	/**
@@ -130,31 +127,31 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 				}
 			});
 		}
-		else{ //command line version
-			
-			if(args.length<2){
-				printUsage();
-				return;
-			}
-
-			selectedProfile = args[0];
-			String folderLocation = args[1];
-
-			//IrisGUI this_ = new IrisGUI();
-			//comboBox = new JComboBox(profileCollection);
-			//comboBox.setSelectedIndex(0);
-			//comboBox.setSelectedItem(profileName);
-
-			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker();
-			processFolderWorker.directory = new File(folderLocation);
-
-			try {
-				processFolderWorker.doInBackground();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-		}
+//		else{ //command line version
+//			
+//			if(args.length<2){
+//				printUsage();
+//				return;
+//			}
+//
+//			IrisFrontend.selectedProfile = args[0];
+//			String folderLocation = args[1];
+//
+//			//IrisGUI this_ = new IrisGUI();
+//			//comboBox = new JComboBox(profileCollection);
+//			//comboBox.setSelectedIndex(0);
+//			//comboBox.setSelectedItem(profileName);
+//
+//			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker();
+//			processFolderWorker.directory = new File(folderLocation);
+//
+//			try {
+//				processFolderWorker.doInBackground();
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//
+//		}
 	}
 
 	public static void printUsage(){
@@ -171,14 +168,14 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		if(comboBox!=null)
 			return((String)comboBox.getSelectedItem());
 		else
-			return(selectedProfile);
+			return(IrisFrontend.selectedProfile);
 	}
 
 	/**
 	 * Create the frame.
 	 */
 	public IrisGUI() {
-		this.setTitle("Iris v"+IrisVersion);
+		this.setTitle("Iris v"+IrisFrontend.IrisVersion);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
@@ -214,9 +211,10 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		btnOpenFolder.setBounds(258, 6, 117, 29);
 		contentPane.add(btnOpenFolder);
 
-		comboBox = new JComboBox(profileCollection);
+		comboBox = new JComboBox(IrisFrontend.profileCollection);
 		comboBox.setSelectedIndex(0);
 		comboBox.setBounds(77, 7, 166, 27);
+		comboBox.addActionListener(this);
 		contentPane.add(comboBox);
 
 
@@ -282,7 +280,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 * @return
 	 */
 	public static String getUniqueLogFilename() {
-		return("iris_v"+IrisVersion+"_"+getDateTime()+".log");
+		return("iris_v"+IrisFrontend.IrisVersion+"_"+getDateTime()+".log");
 	}
 
 	/**
@@ -412,6 +410,11 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 
 			processFolderWorker.execute();
 
+			return;
+		}
+		if(e.getSource()==comboBox){
+			
+	        IrisFrontend.selectedProfile = (String) comboBox.getSelectedItem();
 		}
 
 	}
