@@ -95,12 +95,12 @@ public class RisingTideSegmenter {
 		//7. check whether the rows and columns are too closely spaced, continue in case of incorrectly spaced columns
 		//there will be no iris file written in the end, just an entry in the log message. 
 		//We just need to output any Rois (see step 8), so that a grid file can be written for debugging purposes.
-		if(!checkTileSpacing(minimaBagRows, settings)){
+		if(!checkTileSpacing(minimaBagRows, settings, input)){
 			output.errorOccurred = true;
 			output.incorrectRowSpacing = true;
 			//return(output);
 		}
-		if(!checkTileSpacing(minimaBagColumns, settings)){
+		if(!checkTileSpacing(minimaBagColumns, settings, input)){
 			output.errorOccurred = true;
 			output.incorrectColumnSpacing = true;
 			//return(output);
@@ -475,9 +475,10 @@ public class RisingTideSegmenter {
 	 * -no other colonies to prohibit placing the grid closer to the boundary of the image 
 	 * 
 	 * @param minimaBagRows
+	 * @param input 
 	 * @return false if the distances are not OK, true if they are OK
 	 */
-	private static boolean checkTileSpacing(ArrayList<Integer> minimaBagRows, BasicSettings settings) {
+	private static boolean checkTileSpacing(ArrayList<Integer> minimaBagRows, BasicSettings settings, BasicImageSegmenterInput input) {
 		
 		//false means something went wrong
 		
@@ -490,7 +491,7 @@ public class RisingTideSegmenter {
 			
 			//check if the distance is too small
 			if(distance<settings.minimumDistanceBetweenRows){
-				System.err.println("\ttoo small distance encountered: " + distance);
+				System.err.println(input.imageToSegment.getTitle() + ":\ttoo small distance encountered: " + distance);
 				return(false);
 			}
 			
@@ -500,8 +501,8 @@ public class RisingTideSegmenter {
 				//but this is typical for outer rows/columns, so check if this is the case
 				if(i==0 || i==minimaBagRows.size()-2)
 					continue;
-				
-				System.err.println("\ttoo big distance encountered: " + distance);
+				//System.err.println();
+				System.err.println(input.imageToSegment.getTitle() + ":\ttoo big distance encountered: " + distance);
 				//return(false);
 				return(true);
 			}

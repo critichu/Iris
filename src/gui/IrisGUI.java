@@ -9,15 +9,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -85,12 +80,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 //	};
 
 
-	/**
-	 * This is the name of the log file to be written. 
-	 * Iris opens it for appending on every invocation of the software, writing a header with the time.
-	 * It closes it after a run is done.
-	 */
-	public static BufferedWriter logFile = null;
+	
 
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
@@ -226,7 +216,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		this.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-				closeLog();
+				IrisFrontend.closeLog();
 				System.exit(0);
 			}
 		});
@@ -234,63 +224,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	}
 
 
-	/**
-	 * This function will create a unique log filename and open it for writing
-	 */
-	public static void openLog(String path){		
-		String uniqueLogFilename = path + File.separator + getUniqueLogFilename();
-		try {
-			IrisGUI.logFile = new BufferedWriter(new FileWriter(uniqueLogFilename));
-		} catch (IOException e) {
-			System.err.println("Could not open log file");
-			IrisGUI.logFile = null;
-		}
-	}
-
-	/**
-	 * Does what it says in the box
-	 */
-	public static void writeToLog(String text){
-		try {
-			if(logFile!=null) 
-				IrisGUI.logFile.write(text);
-		} catch (IOException e) {
-			//System.err.println("Error writing log file");
-			//fail silently, because the standard error is redirected to this function
-		}
-	}	
-
-	/**
-	 * Does what it says in the box
-	 */
-	public static void closeLog(){
-
-		try {
-			if(logFile!=null) 
-				IrisGUI.logFile.close();
-		} catch (IOException e) {
-			System.err.println("Error writing log file");
-		}
-	}
-
-
-
-	/**
-	 * This function will create a unique filename, using the Iris version and the current time
-	 * @return
-	 */
-	public static String getUniqueLogFilename() {
-		return("iris_v"+IrisFrontend.IrisVersion+"_"+getDateTime()+".log");
-	}
-
-	/**
-	 * This function will return the date and time in a format that can be used to create a unique filename.
-	 * @return
-	 */
-	private final static String getDateTime(){
-		DateFormat df = new SimpleDateFormat("yyyy.MM.dd_hh.mm.ss");
-		return df.format(new Date());
-	}
+	
 
 
 	//redirect the console output to the application's GUI
@@ -312,7 +246,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				//first, append this entry to the log file
-				writeToLog(text);
+				IrisFrontend.writeToLog(text);
 
 				//then update the text pane
 				Document doc = textPane.getDocument();

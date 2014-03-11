@@ -24,6 +24,7 @@ import profiles.EcoliGrowthProfile;
 import profiles.EcoliGrowthProfile384_HazyColonies_old;
 import profiles.EcoliOpacityProfile;
 import profiles.EcoliOpacityProfile384;
+import profiles.MorphologyProfileCandida96;
 import profiles.OpacityProfile;
 import profiles.OpacityProfile2;
 
@@ -40,9 +41,9 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 
 
-//	public ProcessFolderWorker(IrisGUI parent){
-//		parentJFrame = parent;
-//	}
+	//	public ProcessFolderWorker(IrisGUI parent){
+	//		parentJFrame = parent;
+	//	}
 
 
 	/**
@@ -53,10 +54,10 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 	protected String doInBackground() throws Exception {
 
 		//open the log file for writing
-		IrisGUI.openLog(directory.getAbsolutePath());
-		IrisGUI.writeToLog("--- Iris version " + IrisFrontend.IrisVersion + " log file\tbuild "+IrisFrontend.IrisBuild+" ---\n");
-		IrisGUI.writeToLog("-- Started processing files at "+ new Date() + " --\n");
-		IrisGUI.writeToLog("-----------------------------------------\n\n\n");
+		IrisFrontend.openLog(directory.getAbsolutePath());
+		IrisFrontend.writeToLog("--- Iris version " + IrisFrontend.IrisVersion + " log file\tbuild "+IrisFrontend.IrisBuild+" ---\n");
+		IrisFrontend.writeToLog("-- Started processing files at "+ new Date() + " --\n");
+		IrisFrontend.writeToLog("-----------------------------------------\n\n\n");
 
 
 		//get a list of the files in the directory, keeping only image files
@@ -67,15 +68,20 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 		for (File file : filesInDirectory) {
 			processSingleFile(file);
-			
+
 			i++;
 			int progress = Math.min(i*100/max, 100);
 			setProgress(progress);
 			System.out.println(i + " / " + max + "\t(" + progress +"% done)" +  "\n\n");
-			
+
 			publish("...done! " + "\n\n\n");
 		}
 
+		//IrisFrontend.closeLog();
+		//close the log file
+		IrisFrontend.writeToLog("\n\n-----------------------------------------\n");
+		IrisFrontend.writeToLog("-- Done processing all files at "+ new Date() + " --\n");
+		IrisFrontend.closeLog();
 
 		return(null);
 	}
@@ -85,7 +91,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 
 		//publish("Now processing file " + "\n");
-		System.out.println("Now processing file " + "\n");
+		//System.out.println("Now processing file " + "\n");
 
 		String filename = file.getAbsolutePath();
 
@@ -159,13 +165,19 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			opacityProfile2.analyzePicture(filename);
 		}
 
+		else if(profileName.equals("Morphology Profile [Candida 96-plates]")){
+			MorphologyProfileCandida96 morphologyProfile = new MorphologyProfileCandida96();
+			morphologyProfile.analyzePicture(filename);
+		}
+
+
 		else{
 			System.err.println("Unknown profile name: \"" + profileName +"\"");
 		}
-	
+
 	}
-	
-	
+
+
 	/**
 	 * This method will wait for all threads to finish execution before carrying on
 	 */
@@ -216,9 +228,9 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		System.out.println("\n\n\n\nDone processing all files\n\n");
 
 		//close the log file
-		IrisGUI.writeToLog("\n\n-----------------------------------------\n");
-		IrisGUI.writeToLog("-- Done processing all files at "+ new Date() + " --\n");
-		IrisGUI.closeLog();
+		IrisFrontend.writeToLog("\n\n-----------------------------------------\n");
+		IrisFrontend.writeToLog("-- Done processing all files at "+ new Date() + " --\n");
+		IrisFrontend.closeLog();
 
 	}
 

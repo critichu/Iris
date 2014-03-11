@@ -12,6 +12,7 @@ import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
@@ -31,7 +32,7 @@ public class MorphologyTileReader {
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
 	 */
-	public static double varianceThreshold = 5000;
+	public static double varianceThreshold = 1e6;
 	
 	/**
 	 * This is the radius of the innermost circle scanning for morphology changes
@@ -49,6 +50,12 @@ public class MorphologyTileReader {
 	 * in order for it to be considered as a structural element of the colony
 	 */
 	public static int minimumBrightnessStep = 5;  //this is an empirically defined good value for the Candida 96-plate readout
+	
+	
+	/**
+	 * The tile measurement will stop after this amount of circles
+	 */
+	public static int maximumNumberOfCircles = 50;
 	
 	/**
 	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how
@@ -75,8 +82,10 @@ public class MorphologyTileReader {
 
 
 		//1. apply a threshold at the tile, using the Otsu algorithm
-		turnImageBW_Otsu_auto(input.tileImage);
+		turnImageBW_Otsu_auto(input.tileImage);		
 
+//		input.tileImage.show();
+//		input.tileImage.hide();
 		//
 		//--------------------------------------------------
 		//
@@ -88,7 +97,8 @@ public class MorphologyTileReader {
 		ResultsTable resultsTable = new ResultsTable();
 
 		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER, 
+		//this version includes flood filling for holes; this is necessary given the weird morphology of candida colonies
+		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
 				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
 				resultsTable, 5, Integer.MAX_VALUE);
 
@@ -142,7 +152,7 @@ public class MorphologyTileReader {
 		//this should also clear away contaminations, because normally the contamination
 		//area will be smaller than the colony area, so the contamination will never be reported
 		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
+		output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 
 		//this will give us that the circles will not start in an awkward location, even in cases where
@@ -153,9 +163,22 @@ public class MorphologyTileReader {
 		//for this, we need the Roi (region of interest) that corresponds to the colony
 		//so as to exclude the brightness of any contaminations
 		Roi colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
+		grayscaleTileCopy.setRoi(colonyRoi);
+		//ImagePlus blah = Toolbox.cropImage(copyOfTileImage, colonyRoi);
+		
+//		copyOfTileImage.show();
+//		copyOfTileImage.hide();
 
-		output.morphologyScore = getBiggestParticleMorphologyScore(input.tileImage, colonyRoi, colonyCenter);
+		ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, colonyRoi, colonyCenter);
 
+		//get the sum of the elevation counts for all circles except the previous circle
+		//that one is likely to get high elevation counts 
+		//just because colony edges tend to be really bright compared to the background
+		output.morphologyScore = sumElevationCounts(elevationCounts, 1);
+		if(elevationCounts.size()-1<=0) 
+			output.normalizedMorphologyScore = 0; 
+		else
+			output.normalizedMorphologyScore = output.morphologyScore / (elevationCounts.size()-1);
 
 
 
@@ -176,34 +199,90 @@ public class MorphologyTileReader {
 	 * @param colonyRoi
 	 * @return
 	 */
-	private static int getBiggestParticleMorphologyScore(ImagePlus grayscale_image, Roi colonyRoi, Point colonyCenter){
+	private static ArrayList<Integer> getBiggestParticleElevationCounts(ImagePlus grayscale_image, Roi colonyRoi, Point colonyCenter){
 		
 		//This variable will become true, once the current outmost circle has gone out of
 		//colony bounds
-		boolean lastCircleOutOfBounds = false;
-		
+		//boolean lastCircleOutOfBounds = false;
+				
 		int number_of_circles = 0;
 		
-		ArrayList<Double> elevationSums = new ArrayList<Double>();
+		ArrayList<Integer> elevationCounts = new ArrayList<Integer>();
 		
 		
-		
-		while(!lastCircleOutOfBounds){
+		//for every circle
+		while(number_of_circles<maximumNumberOfCircles){
 
 			int radius = initialRadius + number_of_circles * radiusStep;
 			
 			//first of all, we need to get the coordinates of the circle
 			ArrayList<Point> circleCoordinates = getCircleCoordinates(colonyCenter, radius);
+			ArrayList<Integer> meanPixelValues = new ArrayList<Integer>(); 
 			
 			//now, we need to traverse these circle coordinates to get the brightness elevations
 			for (Point point : circleCoordinates) {
-				
+				//first, check if the point is out of bounds
+				if(!colonyRoi.contains(point.x, point.y)){
+					//grayscale_image.show();
+					//grayscale_image.hide();
+					
+					//if it was found to be out of bounds,
+					//return the sum of the elevation counts for all circles except the previous
+					//the current one is never saved, but also the one before is likely to get high elevation counts 
+					//just because colony edges tend to be really bright compared to the background
+					//return(sumElevationCounts(elevationCounts, 1));
+					return(elevationCounts);
+				}
+				meanPixelValues.add(getBrightnessAverage9pixels(grayscale_image, point));
 			}
 			
+			elevationCounts.add(countBrightnessChanges(meanPixelValues, minimumBrightnessStep));
+			
+			number_of_circles++;
 		}
 
-		return(0);
+		//return the sum of the elevation counts for all circles except the last one
+		//return(sumElevationCounts(elevationCounts, 1));
+		return(elevationCounts);
 
+	}
+
+	
+	/**
+	 * This function just sums the elements of the given ArrayList, ignoring the last circlesToIgnore elements
+	 * @param elevationCounts
+	 * @param circlesToIgnore
+	 * @return
+	 */
+	private static int sumElevationCounts(ArrayList<Integer> elevationCounts, int circlesToIgnore){
+		int sum = 0;
+		for (int i = 0; i < elevationCounts.size() - circlesToIgnore; i++) {
+			sum += elevationCounts.get(i);
+		}
+	
+		return(sum);
+	}
+	
+	
+	/**
+	 * This function will get a sequence of measurements and count the times there's a difference
+	 * greater or equal to threshold, when subtracting a measurement from it's previous
+	 * @param series
+	 * @param threshold
+	 * @return
+	 */
+	private static int countBrightnessChanges(ArrayList<Integer> series, int threshold){
+		
+		int changesOverThreshold = 0;
+		
+		for (int i = 0; i < series.size()-1; i++) {
+			int difference = Math.abs(series.get(i+1) - series.get(i));
+			if(difference>threshold){
+				changesOverThreshold++;
+			}
+		}
+		
+		return(changesOverThreshold);
 	}
 	
 	
@@ -214,8 +293,36 @@ public class MorphologyTileReader {
 	 * @param pixelToGet
 	 * @return
 	 */
-	private static int getBrightnessAverage9pixels(ImagePlus grayscale_image, Roi colonyRoi, Point pixelToGet){
-		return(0);
+	private static int getBrightnessAverage9pixels(ImagePlus grayscale_image, Point pixelToGet){
+						
+		//count the number of pixels actually retrieved and added to the sum		
+		int pixelsAdded = 0;
+		int sumOfPixelIntensity = 0;
+		
+		ByteProcessor grayscale_image_ip = (ByteProcessor) grayscale_image.getProcessor();  
+		
+		for (int x = -1; x <= 1; x++) {
+			for (int y = -1; y <= 1; y++) {
+				int pixelIntensity = 0;
+				try{
+					pixelIntensity = grayscale_image_ip.getPixel(pixelToGet.x + x, pixelToGet.y + y);					
+				}
+				catch(Exception e){
+					continue;
+				}
+				
+				if(pixelIntensity==0){
+					continue;//because getPixel() gives a zero if the requested pixel coordinates are out of bounds
+				}
+				
+				//all went all right, we add up the pixel intensity and increase the pixelsAdded counter
+				pixelsAdded++;
+				sumOfPixelIntensity += pixelIntensity;				
+			}
+		}
+		
+		
+		return (int) (Math.round( (double)sumOfPixelIntensity / (double)pixelsAdded ));
 	}
 
 
@@ -535,10 +642,6 @@ public class MorphologyTileReader {
 
 		//get the areas of all the particles the particle analyzer has found
 		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
-
-		//get the index of the biggest particle (in area in pixels)
-		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
-
 
 		int largestParticleArea = Math.round(areas[indexOfBiggestParticle]);
 

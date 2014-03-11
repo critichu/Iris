@@ -3,12 +3,12 @@
  */
 package imageCroppers;
 
-import java.awt.Rectangle;
-import java.util.ArrayList;
-
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageConverter;
+
+import java.awt.Rectangle;
+import java.util.ArrayList;
 
 /**
  *This class provides methods to crop the original picture so as to keep only the colonies.
@@ -16,6 +16,31 @@ import ij.process.ImageConverter;
  *
  */
 public class GenericImageCropper {
+	
+	/**
+	 * the margin in which to look for the start of the first/last columns
+	 */
+	public static int plateBorderSearchAreaColumns = 100;
+	
+	/**
+	 * the margin in which to look for the start of the first/last rows
+	 */
+	public static int plateBorderSearchAreaRows = 50;
+	
+	
+	/**
+	 * how many rows/columns that were found to be above the average to skip before reporting that this is the plate border
+	 */
+	public static int skip = 20;
+	
+	
+	/**
+	 * These values correspond to the fraction of the in-plate image that will be used as
+	 * boundaries within which a search for a minimum will be performed.
+	 */
+	public static double searchStart = 0.035;
+	public static double searchEnd = 0.065;
+	
 
 	/**
 	 * This method will detect the plate (plastic) borders, by detecting the first foreground sum of row/column.
@@ -55,12 +80,7 @@ public class GenericImageCropper {
 	 */
 	private static Roi findCropBorders(ImagePlus originalImage) {
 		
-		/**
-		 * These values correspond to the fraction of the in-plate image that will be used as
-		 * boundaries within which a search for a minimum will be performed.
-		 */
-		double searchStart = 0.035;
-		double searchEnd = 0.065;
+		
 		
 		//1. get the plate's plastic borders
 		Roi plasticPlateBorders = findPlatePlasticBorders(originalImage);
@@ -150,16 +170,16 @@ public class GenericImageCropper {
 		int height = originalImage.getHeight();
 		
 		//define from where to where to get the sums of brightness (in the sawtooth pattern)
-		int columnsStartArea = width/2 - 100;
-		int columnsEndArea = width/2 + 100;
+		int columnsStartArea = width/2 - plateBorderSearchAreaColumns;
+		int columnsEndArea = width/2 + plateBorderSearchAreaColumns;
 		//get the sublist of those sums
 		ArrayList<Integer> sublistColumns = new ArrayList<Integer>(sumOfColumns.subList(columnsStartArea, columnsEndArea));
 		//get their mean
 		int meanOfCenterColumns = (int)Math.round(getMean(sublistColumns));
 		
 		//define from where to where to get the sums of brightness (in the sawtooth pattern)
-		int rowsStartArea = height/2 - 50;
-		int rowsEndArea = height/2 + 50;
+		int rowsStartArea = height/2 - plateBorderSearchAreaRows;
+		int rowsEndArea = height/2 + plateBorderSearchAreaRows;
 		//get the sublist of those sums
 		ArrayList<Integer> sublistRows = new ArrayList<Integer>(sumOfRows.subList(rowsStartArea, rowsEndArea));
 		//get their mean
@@ -169,10 +189,7 @@ public class GenericImageCropper {
 		ArrayList<Integer> indicesOfColumnsSumsAboveMean = getIndicesAboveMean(sumOfColumns, meanOfCenterColumns);
 		ArrayList<Integer> indicesOfRowsSumsAboveMean = getIndicesAboveMean(sumOfRows, meanOfCenterRows);
 		
-		/**
-		 * how many rows/columns that were found to be above the average to skip before reporting that this is the plate border
-		 */
-		int skip = 20;
+		
 		
 		//get the 20th from left and the 20th from the right
 		int indexOfLeftBorder = indicesOfColumnsSumsAboveMean.get(skip);

@@ -68,6 +68,7 @@ public class BasicProfile extends Profile {
 		String justFilename = file.getName();
 
 		System.out.println("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
+		//IrisFrontend.writeToLog("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
 
 		//initialize results file output
 		StringBuffer output = new StringBuffer();

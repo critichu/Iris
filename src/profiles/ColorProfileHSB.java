@@ -73,7 +73,8 @@ public class ColorProfileHSB extends Profile{
 		String justFilename = file.getName();
 
 		System.out.println("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
-
+		//IrisFrontend.writeToLog("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
+		
 		//initialize results file output
 		StringBuffer output = new StringBuffer();
 		output.append("Iris output\n");
@@ -84,7 +85,7 @@ public class ColorProfileHSB extends Profile{
 
 		//1. open the image file, and check if it was opened correctly
 		ImagePlus originalImage = IJ.openImage(filename);
-
+		
 		//check that file was opened successfully
 		if(originalImage==null){
 			//TODO: warn the user that the file was not opened successfully
@@ -111,7 +112,7 @@ public class ColorProfileHSB extends Profile{
 
 		//3. crop the plate to keep only the colonies
 		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
-
+		
 		//flush the original pictures, we won't be needing them anymore
 		rotatedImage.flush();
 		originalImage.flush();
@@ -146,9 +147,9 @@ public class ColorProfileHSB extends Profile{
 		cp.getHSB(hSource,sSource,bSource);
 
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
-		croppedImage = new ImagePlus("", bpBri);
+		croppedImage = new ImagePlus(croppedImage.getTitle(), bpBri);
 		ImagePlus grayscaleCroppedImage  = croppedImage.duplicate();
-
+		grayscaleCroppedImage.setTitle(croppedImage.getTitle());
 		croppedImage.flush();
 
 		//				grayscaleCroppedImage.show();
@@ -156,7 +157,11 @@ public class ColorProfileHSB extends Profile{
 
 		//get a copy of the picture thresholded using a local algorithm
 		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
+		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
 		turnImageBW_Local_auto(BW_local_thresholded_picture);
+		
+		@SuppressWarnings("unused")
+		//blah = BW_local_thresholded_picture.getTitle();
 
 
 		//				BW_local_thresholded_picture.show();
@@ -175,7 +180,7 @@ public class ColorProfileHSB extends Profile{
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
 
-			System.err.println("\nColor profile: unable to process picture " + justFilename);
+			System.err.println("\n"+ profileName +" profile: unable to process picture " + justFilename);
 
 			System.err.print("Image segmentation algorithm failed:\n");
 

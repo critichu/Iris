@@ -13,6 +13,16 @@ import ij.gui.Roi;
  */
 public abstract class NaiveImageCropper {
 	
+	
+	/**
+	 * this ROI is designed to keep just the colonies, given a picture from
+	 * the Sympatico picture taking robot (with the Canon T3i Rebel camera).
+	 * ROI is defined as: left, top, width, height in pixels
+	 * left and top are measured from the top left pixel of the picture
+	 * width and height are measured from the ROI starting point (left, top)
+	 */
+	public static Roi keepOnlyColoniesROI = new Roi(590, 380, 4130, 2730);
+	
 	/**
 	 * This method will naively crop the plate in a hard-coded manner.
 	 * It copies the area of interest (580, 380, 4080, 2730) to the internal clipboard.
@@ -23,12 +33,13 @@ public abstract class NaiveImageCropper {
 	public static ImagePlus cropPlate(ImagePlus originalImage){
 		//crop the plate so that we keep only the colonies
 		//Roi keepOnlyColoniesROI = new Roi(580, 380, 4080, 2730);
-		Roi keepOnlyColoniesROI = new Roi(590, 380, 4130, 2730);
+		
 		originalImage.setRoi(keepOnlyColoniesROI);
 		originalImage.copy(false);//copy to the internal clipboard
 		
 		//copy to a new picture
 		ImagePlus croppedImage = ImagePlus.getClipboard();
+		croppedImage.setTitle(originalImage.getTitle());
 		return(croppedImage);
 
 	}

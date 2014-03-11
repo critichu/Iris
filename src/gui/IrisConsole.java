@@ -3,13 +3,10 @@
  */
 package gui;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.OutputStream;
+import java.io.PrintStream;
 
 /**
  * 
@@ -18,15 +15,7 @@ import java.util.Date;
  */
 public class IrisConsole {
 
-	
 
-	/**
-	 * This is the name of the log file to be written. 
-	 * Iris opens it for appending on every invocation of the software, writing a header with the time.
-	 * It closes it after a run is done.
-	 */
-	public static BufferedWriter logFile = null;
-	
 	/**
 	 * Launch the application.
 	 */
@@ -41,7 +30,8 @@ public class IrisConsole {
 		IrisFrontend.selectedProfile = args[0];
 		String folderLocation = args[1];
 
-		
+
+		redirectSystemStreams();
 
 
 		//distinguish between whole-folder input and single-file input
@@ -67,7 +57,7 @@ public class IrisConsole {
 					e.printStackTrace();
 				}
 			}
-			
+
 		}
 
 	}
@@ -91,61 +81,40 @@ public class IrisConsole {
 
 
 
-	/**
-	 * This function will create a unique log filename and open it for writing
-	 */
-	public static void openLog(String path){		
-		String uniqueLogFilename = path + File.separator + getUniqueLogFilename();
-		try {
-			IrisConsole.logFile = new BufferedWriter(new FileWriter(uniqueLogFilename));
-		} catch (IOException e) {
-			System.err.println("Could not open log file");
-			IrisConsole.logFile = null;
-		}
-	}
+	
+
 
 	/**
-	 * Does what it says in the box
+	 * Calling this function will redirect the standard error to also write the error to the log file
 	 */
-	public static void writeToLog(String text){
-		try {
-			if(logFile!=null) 
-				IrisConsole.logFile.write(text);
-		} catch (IOException e) {
-			//System.err.println("Error writing log file");
-			//fail silently, because the standard error is redirected to this function
-		}
-	}	
+	private static void redirectSystemStreams() {
 
-	/**
-	 * Does what it says in the box
-	 */
-	public static void closeLog(){
+		OutputStream err = new OutputStream() {
+			@Override
+			public void write(final int b) throws IOException {
+				updateLog_err(String.valueOf((char) b));
+			}
 
-		try {
-			if(logFile!=null) 
-				IrisConsole.logFile.close();
-		} catch (IOException e) {
-			System.err.println("Error writing log file");
-		}
+			@Override
+			public void write(byte[] b, int off, int len) throws IOException {
+				updateLog_err(new String(b, off, len));
+			}
+
+			@Override
+			public void write(byte[] b) throws IOException {
+				write(b, 0, b.length);
+			}
+		};
+
+		System.setErr(new PrintStream(err, true));
 	}
 
 
+	private static void updateLog_err(final String text) {
+		//first, append this entry to the log file
+		IrisFrontend.writeToLog(text);
+		//also write it to the standard output
+		System.out.println(text);
 
-	/**
-	 * This function will create a unique filename, using the Iris version and the current time
-	 * @return
-	 */
-	public static String getUniqueLogFilename() {
-		return("iris_v"+IrisFrontend.IrisVersion+"_"+getDateTime()+".log");
-	}
-
-	/**
-	 * This function will return the date and time in a format that can be used to create a unique filename.
-	 * @return
-	 */
-	private final static String getDateTime(){
-		DateFormat df = new SimpleDateFormat("yyyy.MM.dd_hh.mm.ss");
-		return df.format(new Date());
 	}
 }
