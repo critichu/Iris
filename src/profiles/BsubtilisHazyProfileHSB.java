@@ -29,7 +29,6 @@ import settings.BasicSettings;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.OpacityTileReaderForBsuColonies;
-import tileReaders.OpacityTileReaderForHazyColonies_old;
 import utils.Toolbox;
 
 /**
@@ -214,7 +213,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		//
 
 		//6. analyze each tile
-		OpacityTileReaderForHazyColonies_old.varianceThreshold = 5000;
+		//OpacityTileReaderForHazyColonies_old.varianceThreshold = 3e6;
 
 		//create an array of measurement outputs
 		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
