@@ -6,13 +6,11 @@ package profiles;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.Roi;
 import ij.process.ImageConverter;
-import imageCroppers.NaiveImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
-import imageSegmenters.RisingTideSegmenter;
+import imageSegmenters.SimpleImageSegmenter;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -86,17 +84,21 @@ public class MorphologyProfileCandida96 extends Profile {
 		//
 
 
-		//4. rotate the whole image
-		double imageAngle = Toolbox.calculateImageRotation(originalImage);
-
-		//create a copy of the original image and rotate it, then clear the original picture
-		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
+		//2. rotate the whole image
+//		double imageAngle = Toolbox.calculateImageRotation(originalImage);
+//
+//		//create a copy of the original image and rotate it, then clear the original picture
+//		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
+//		originalImage.flush();
+//
+//		//output how much the image needed to be rotated
+//		if(imageAngle!=0){
+//			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
+//		}
+		
+		
+		ImagePlus rotatedImage = originalImage.duplicate();
 		originalImage.flush();
-
-		//output how much the image needed to be rotated
-		if(imageAngle!=0){
-			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
-		}
 
 
 		//
@@ -105,13 +107,18 @@ public class MorphologyProfileCandida96 extends Profile {
 		//
 
 
-		//2. crop the plate to keep only the colonies
-		NaiveImageCropper.keepOnlyColoniesROI = new Roi(480, 520/*580*/, 3330, 2220);
-		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+		//3. crop the plate to keep only the colonies
+		//NaiveImageCropper.keepOnlyColoniesROI = new Roi(480, 520/*580*/, 3330, 2220);
+		//ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+//		GenericImageCropper.plateBorderSearchAreaRows = 50;
+//		GenericImageCropper.plateBorderSearchAreaColumns = 100;
+//		GenericImageCropper.searchStart = 0.035;
+//		GenericImageCropper.searchEnd = 0.065;
+//		GenericImageCropper.skip = 20;
+//		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
 
-//		croppedImage.show();
-//		croppedImage.hide();
 		
+		ImagePlus croppedImage = rotatedImage.duplicate(); //it's already rotated
 		//flush the rotated picture, we won't be needing it anymore
 		rotatedImage.flush();
 
@@ -123,7 +130,7 @@ public class MorphologyProfileCandida96 extends Profile {
 		//
 		//
 
-		//3. pre-process the picture (i.e. make it grayscale)
+		//4. pre-process the picture (i.e. make it grayscale)
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -134,14 +141,16 @@ public class MorphologyProfileCandida96 extends Profile {
 		//
 
 
-		//4. segment the cropped picture
+		//5. segment the cropped picture
 		//first change the settings, to get a 96 plate segmentation
 		settings.numberOfRowsOfColonies = 8;
 		settings.numberOfColumnsOfColonies = 12;
+		SimpleImageSegmenter.offset = 30;
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
 
 		//let the tile boundaries "breathe"
+		ColonyBreathing.breathingSpace = 20;
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		
 //		ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
@@ -190,7 +199,7 @@ public class MorphologyProfileCandida96 extends Profile {
 		//
 		//
 
-		//5. analyze each tile
+		//6. analyze each tile
 
 		//create an array of measurement outputs
 		MorphologyTileReaderOutput [][] readerOutputs = new MorphologyTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -217,19 +226,24 @@ public class MorphologyProfileCandida96 extends Profile {
 			System.err.print("Image segmentation algorithm failed:\n");
 			System.err.println("\ttoo many empty rows/columns");
 
+			/*
+			 * HACK: just carry on outputting an iris file, since we know that there's pictures with many
+			 * empty spots 
+			 * 
 			//calculate and save grid image
 			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
+			*/
 		}
 
 
 
 
-		//6. output the results
+		//7. output the results
 
-		//6.1 output the colony measurements as a text file
+		//7.1 output the colony measurements as a text file
 		output.append("row\tcolumn\tsize\tcircularity\tmorphology score\tnormalized morphology score\n");
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -255,7 +269,7 @@ public class MorphologyProfileCandida96 extends Profile {
 
 
 
-		//6.2 save any intermediate picture files, if requested
+		//7.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image

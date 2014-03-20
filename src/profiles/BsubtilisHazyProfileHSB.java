@@ -28,7 +28,8 @@ import java.util.ArrayList;
 import settings.BasicSettings;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.OpacityTileReaderOutput;
-import tileReaders.OpacityTileReaderForHazyColonies;
+import tileReaders.OpacityTileReaderForBsuColonies;
+import tileReaders.OpacityTileReaderForHazyColonies_old;
 import utils.Toolbox;
 
 /**
@@ -148,7 +149,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		cp.getHSB(hSource,sSource,bSource);
 
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
-		croppedImage = new ImagePlus("", bpBri);
+		croppedImage = new ImagePlus(croppedImage.getTitle(), bpBri);
 
 
 		//
@@ -213,6 +214,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		//
 
 		//6. analyze each tile
+		OpacityTileReaderForHazyColonies_old.varianceThreshold = 5000;
 
 		//create an array of measurement outputs
 		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -221,7 +223,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = OpacityTileReaderForHazyColonies.processTile(
+				readerOutputs[i][j] = OpacityTileReaderForBsuColonies.processTile(
 						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//each generated tile image is cleaned up inside the tile reader
@@ -243,7 +245,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
-			return;
+			//return;
 		}
 
 

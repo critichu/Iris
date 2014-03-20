@@ -19,7 +19,7 @@ import settings.BasicSettings;
 public class SimpleImageSegmenter {
 	
 	/**this is used for image padding, so that we leave some space before the colonies actually start*/
-	private static int offset = 20; //20 is actually used for UCSF E.coli experiments (e.g. CPRG)
+	public static int offset = 20; //20 is actually used for UCSF E.coli experiments (e.g. CPRG)
 
 	
 	

@@ -26,17 +26,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import settings.BasicSettings;
-import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
-import tileReaders.OpacityTileReaderForHazyColonies;
 import utils.Toolbox;
 
 /**
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
  * 
  * @author George Kritikos
- *
+ * @deprecated: this profile is replaced by EcoliGrowthProfile384_HazyColonies_old. Ironic, no?
  */
 public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
@@ -231,8 +229,8 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
-				readerOutputs[i][j] = OpacityTileReaderForHazyColonies.processTile(
-						new OpacityTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+//				readerOutputs[i][j] = OpacityTileReaderForHazyColonies.processTile(
+//						new OpacityTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
 
 				//each generated tile image is cleaned up inside the tile reader
 			}
