@@ -30,10 +30,13 @@ import java.util.ArrayList;
 import settings.ColorSettings;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput2;
+import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
+import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.BasicTileReaderHSB;
 import tileReaders.ColorTileReaderHSB;
+import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
 /**
@@ -243,7 +246,8 @@ public class ColorProfileHSB extends Profile{
 
 		//create an array of measurement outputs
 		BasicTileReaderOutput [][] basicTileReaderOutputs = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
-		ColorTileReaderOutput [][] colourTileReaderOutputs = new ColorTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];	
+		ColorTileReaderOutput [][] colourTileReaderOutputs = new ColorTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		OpacityTileReaderOutput [][] opacityTileReaderOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -256,13 +260,24 @@ public class ColorProfileHSB extends Profile{
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
+					//colour
 					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processThresholdedTile(
 							new ColorTileReaderInput2(colourCroppedImage, BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+					
+					//opacity -- to check if colony darkness correlates with colour information
+					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
+							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					
 				}
 				else{
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
 					colourTileReaderOutputs[i][j].biofilmArea=0;
 					colourTileReaderOutputs[i][j].colorIntensitySum=0;
+					
+					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
+					opacityTileReaderOutputs[i][j].colonySize=0;
+					opacityTileReaderOutputs[i][j].circularity=0;
+					opacityTileReaderOutputs[i][j].opacity=0;
 				}
 
 
@@ -306,7 +321,8 @@ public class ColorProfileHSB extends Profile{
 				"biofilm area size\t" +
 				"biofilm color intensity\t" +
 				"biofilm area ratio\t" +
-				"size normalized color intensity\n");
+				"size normalized color intensity\t" +
+				"opacity\n");
 
 
 		//for all rows
@@ -328,7 +344,8 @@ public class ColorProfileHSB extends Profile{
 						+ Integer.toString(colourTileReaderOutputs[i][j].biofilmArea) + "\t"
 						+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
 						+ String.format("%.3f", biofilmAreaRatio) + "\t"
-						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\n");
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\t" 
+						+ Integer.toString(opacityTileReaderOutputs[i][j].opacity) + "\n");
 			}
 		}
 

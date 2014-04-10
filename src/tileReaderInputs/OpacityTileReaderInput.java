@@ -27,8 +27,8 @@ public class OpacityTileReaderInput extends BasicTileReaderInput {
 	 * @param roi_
 	 * @param settings_
 	 */
-	public OpacityTileReaderInput(ImagePlus tileImage_, Roi roi_, BasicSettings settings_) {
-		super(tileImage_, roi_, settings_);
+	public OpacityTileReaderInput(ImagePlus croppedImage_, Roi roi_, BasicSettings settings_) {
+		super(croppedImage_, roi_, settings_);
 		// TODO Auto-generated constructor stub
 	}
 

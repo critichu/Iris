@@ -3,7 +3,6 @@
  */
 package tileReaders;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Calibration;
@@ -12,14 +11,13 @@ import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
+import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import ij.process.AutoThresholder.Method;
-import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.OpacityTileReaderInput;
-import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
+import utils.Toolbox;
 
 /**
  * @author George Kritikos
@@ -45,8 +43,11 @@ public class OpacityTileReader {
 		//
 		//
 		
+		
 		//1. apply a threshold at the tile, using the Otsu algorithm
-		turnImageBW_Otsu_auto(input.tileImage);
+		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
+		
+		
 
 		//
 		//--------------------------------------------------
