@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see http://www.gnu.org/licenses/.
  */
-package cz.vutbr.feec.imageprocessing.imagej.pluginsAndFilters;
+package ij.plugin;
 
 /***
  * Author: Martin Hasmanda, Brno University of Technology, FEEC, Department of telecommunications
@@ -2199,7 +2199,7 @@ public class Wavelet_Decompositon implements ExtendedPlugInFilter,
 	double m_res_height = 1.0;
 
 	/**
-	 * vytvoøí obraz z pole RGB.
+	 * vytvoï¿½ï¿½ obraz z pole RGB.
 	 * 
 	 * @param rgb
 	 *            the rgb

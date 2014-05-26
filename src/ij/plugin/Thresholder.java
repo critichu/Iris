@@ -1,12 +1,26 @@
 package ij.plugin;
-import ij.*;
-import ij.gui.*;
-import ij.process.*;
-import ij.measure.*;
+import ij.CompositeImage;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.LookUpTable;
+import ij.Macro;
+import ij.Prefs;
+import ij.Undo;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.Toolbar;
+import ij.measure.Measurements;
 import ij.plugin.frame.Recorder;
-import ij.plugin.filter.PlugInFilter;
-import java.awt.*;
-import java.awt.event.*;
+import ij.process.AutoThresholder;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.StackProcessor;
+
+import java.awt.Choice;
+import java.awt.Color;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Vector;
 
 /** This plugin implements the Process/Binary/Make Binary 
@@ -18,7 +32,7 @@ public class Thresholder implements PlugIn, Measurements, ItemListener {
 	private double minThreshold;
 	private double maxThreshold;
 	boolean autoThreshold;
-	boolean skipDialog;
+	public boolean skipDialog;
 	static boolean fill1 = true;
 	static boolean fill2 = true;
 	static boolean useBW = true;
@@ -92,7 +106,7 @@ public class Thresholder implements PlugIn, Measurements, ItemListener {
 		Prefs.blackBackground = saveBlackBackground; 
 	}
 
-	void applyThreshold(ImagePlus imp) {
+	public void applyThreshold(ImagePlus imp) {
 		imp.deleteRoi();
 		ImageProcessor ip = imp.getProcessor();
 		ip.resetBinaryThreshold();

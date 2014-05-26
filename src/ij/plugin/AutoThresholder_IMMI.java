@@ -16,7 +16,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see http://www.gnu.org/licenses/.
  */
-package cz.vutbr.feec.imageprocessing.imagej.pluginsAndFilters;
+package ij.plugin;
 
 import ij.IJ;
 
@@ -28,7 +28,7 @@ import java.util.Arrays;
  * bham dot ac dot uk.
  */
 
-public class AutoThresholder {
+public class AutoThresholder_IMMI {
 
 	private static final String[] methods = { "Huang", "Intermodes", "IsoData",
 			"Li", "MaxEntropy", "Mean", "MinError(I)", "Minimum", "Moments",
@@ -229,7 +229,7 @@ public class AutoThresholder {
 		// j and k
 		// Threshold t is (j+k)/2.
 		// Images with histograms having extremely unequal peaks or a broad and
-		// ﬂat valley are unsuitable for this method.
+		// ���at valley are unsuitable for this method.
 		double[] iHisto = new double[256];
 		int iter = 0;
 		int threshold = -1;
@@ -623,7 +623,7 @@ public class AutoThresholder {
 		// local maxima.
 		// Threshold t is such that > yt yt+1.
 		// Images with histograms having extremely unequal peaks or a broad and
-		// ﬂat valley are unsuitable for this method.
+		// ���at valley are unsuitable for this method.
 		int iter = 0;
 		int threshold = -1;
 		double[] iHisto = new double[256];

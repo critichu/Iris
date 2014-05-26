@@ -14,6 +14,7 @@ import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
+import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 
 /**
@@ -397,5 +398,50 @@ public class Toolbox {
 
 		return(threshold);
 	}
+	
+	
+	
+	/**
+	 * Normally, you can only create an Ellipse2D defining the top left coordinates.
+	 * This function allows you to create an Ellipse2D by defining the center coordinates (x, y).
+	 * Internally, this function will transform the center coordinates to the correct top-left coordinates
+	 * and return the requested ellipse.
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @return
+	 */
+	public static Ellipse2D getEllipseFromCenter(double x, double y, double width, double height)
+	{
+	    double newX = x - width / 2.0;
+	    double newY = y - height / 2.0;
+
+	    Ellipse2D ellipse = new Ellipse2D.Double(newX, newY, width, height);
+
+	    return ellipse;
+	}
+	
+	
+	
+	/**
+	 * This method simply iterates through this array and finds the index
+	 * of the largest element
+	 */
+	public static int getIndexOfMaximumElement(int[] array) {
+		int index = -1;
+		float max = -Integer.MAX_VALUE;
+		
+		for (int i = 0; i < array.length; i++) {
+			if(array[i]>max){
+				max = array[i];
+				index = i;
+			}
+		}
+		
+		return(index);
+	}
+	
+	
 
 }

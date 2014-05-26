@@ -3,6 +3,8 @@
  */
 package tileReaderOutputs;
 
+import ij.gui.Roi;
+
 /**
  * 
  * @author George Kritikos
@@ -19,6 +21,11 @@ public class BasicTileReaderOutput extends TileReaderOutput {
 	 * the circularity index of the biggest particle in the tile (corresponds to the colony)
 	 */
 	public float circularity = 0;
+	
+	/**
+	 * the ROI that describes the colony
+	 */
+	public Roi colonyROI = null;
 
 	
 	public BasicTileReaderOutput(){

@@ -42,7 +42,7 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-package cz.vutbr.feec.imageprocessing.imagej.pluginsAndFilters;
+package ij.plugin;
 
 import ij.ImagePlus;
 import ij.gui.NewImage;

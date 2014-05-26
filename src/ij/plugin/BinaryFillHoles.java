@@ -21,7 +21,7 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/.
  */
 
-package cz.vutbr.feec.imageprocessing.imagej.pluginsAndFilters;
+package ij.plugin;
 
 import ij.ImagePlus;
 import ij.plugin.filter.PlugInFilter;
