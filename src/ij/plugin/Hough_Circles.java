@@ -152,8 +152,8 @@ public class Hough_Circles implements PlugInFilter {
 		Point[] centers = this.centerPoint;
 		
 		int maxIndex = getIndexOfMaximumCircleInbounds(radius, centers, ip);
-		
-//		Ellipse2D circle = new Ellipse2D.Double(centers[0].x, centers[0].y, 2*radius[0], 2*radius[0]); //put the points here
+//		int maxIndex = 0;
+
 		Ellipse2D circle = new Ellipse2D.Double(centers[maxIndex].x, centers[maxIndex].y, 2*radius[maxIndex], 2*radius[maxIndex]); //put the points here
 		
 		

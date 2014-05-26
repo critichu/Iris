@@ -68,7 +68,8 @@ public class MyHoughCircleFinder {
 		
 		ImageProcessor ip = tileImage.getProcessor();
 		ip.setSnapshotCopyMode(true);
- 		ip.smooth();
+ 		//ip.smooth();
+		ip.sharpen();
 		ip.setSnapshotCopyMode(false);
 		
 		tileImage.updateImage();
