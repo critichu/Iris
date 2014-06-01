@@ -16,7 +16,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import imageCroppers.NaiveImageCropper;
+import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -114,7 +114,8 @@ public class ColorProfileHSB extends Profile{
 
 
 		//3. crop the plate to keep only the colonies
-		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+//		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
 		
 		//flush the original pictures, we won't be needing them anymore
 		rotatedImage.flush();
