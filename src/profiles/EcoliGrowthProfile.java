@@ -16,6 +16,7 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 
 import java.io.File;
@@ -136,12 +137,12 @@ public class EcoliGrowthProfile extends Profile {
 
 
 		//change the settings so that the distance between the colonies can now be smaller
-//		settings.minimumDistanceBetweenRows = 22;
-//		//..or larger
-//		settings.maximumDistanceBetweenRows = 55;
+		//		settings.minimumDistanceBetweenRows = 22;
+		//		//..or larger
+		//		settings.maximumDistanceBetweenRows = 55;
 
 		calculateGridSpacing(settings, croppedImage);
-		
+
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
@@ -166,13 +167,18 @@ public class EcoliGrowthProfile extends Profile {
 				System.err.print("\tincorrect row spacing\n");
 			}			
 
-			
+
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
+
+
+		//6. colony breathing
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
 		int y = segmentationOutput.getTopLeftRoi().getBounds().y;
@@ -190,7 +196,7 @@ public class EcoliGrowthProfile extends Profile {
 		//
 		//
 
-		//6. analyze each tile
+		//7. analyze each tile
 
 		//create an array of measurement outputs
 		BasicTileReaderOutput [][] readerOutputs = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -206,7 +212,7 @@ public class EcoliGrowthProfile extends Profile {
 			}
 		}
 
-		
+
 		//check if a row or a column has most of it's tiles empty (then there was a problem with gridding)
 		//check rows first
 		if(checkRowsColumnsIncorrectGridding(readerOutputs)){
@@ -217,7 +223,7 @@ public class EcoliGrowthProfile extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -226,9 +232,9 @@ public class EcoliGrowthProfile extends Profile {
 
 
 
-		//7. output the results
+		//8. output the results
 
-		//7.1 output the colony measurements as a text file
+		//8.1 output the colony measurements as a text file
 		output.append("row\tcolumn\tsize\n");
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -250,17 +256,17 @@ public class EcoliGrowthProfile extends Profile {
 
 
 
-		//7.2 save any intermediate picture files, if requested
+		//8.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
 	}
 
-	
+
 	/**
 	 * This function calculates the minimum and maximum grid distances according to the
 	 * cropped image size and
@@ -280,16 +286,16 @@ public class EcoliGrowthProfile extends Profile {
 	 */
 	private void calculateGridSpacing(BasicSettings settings_,
 			ImagePlus croppedImage) {
-		
+
 		int image_width = croppedImage.getWidth();
 		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
-		
+
 		//save the results directly to the settings object
 		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
 		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*3/2);
-		
+
 	}
-	
+
 	/**
 	 * This function will check if there is any row or any column with more than half of it's tiles being empty.
 	 * If so, it will return true. If everything is ok, it will return false.

@@ -16,6 +16,7 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 
 import java.io.File;
@@ -136,10 +137,10 @@ public class EcoliOpacityProfile extends Profile {
 
 
 		//change the settings so that the distance between the colonies can now be smaller
-//		settings.minimumDistanceBetweenRows = 22;
-//		//..or larger
-//		settings.maximumDistanceBetweenRows = 55;
-		
+		//		settings.minimumDistanceBetweenRows = 22;
+		//		//..or larger
+		//		settings.maximumDistanceBetweenRows = 55;
+
 		calculateGridSpacing(settings, croppedImage);
 
 		//5. segment the cropped picture
@@ -174,6 +175,10 @@ public class EcoliOpacityProfile extends Profile {
 			return;
 		}
 
+		//6. colony breathing
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
+
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
 		int y = segmentationOutput.getTopLeftRoi().getBounds().y;
 		output.append("top left of the grid found at (" +x+ " , " +y+ ")\n");
@@ -190,7 +195,7 @@ public class EcoliOpacityProfile extends Profile {
 		//
 		//
 
-		//6. analyze each tile
+		//7. analyze each tile
 
 		//create an array of measurement outputs
 		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -206,8 +211,8 @@ public class EcoliOpacityProfile extends Profile {
 			}
 		}
 
-		
-		
+
+
 		//check if a row or a column has most of it's tiles empty (then there was a problem with gridding)
 		//check rows first
 		if(checkRowsColumnsIncorrectGridding(readerOutputs)){
@@ -218,7 +223,7 @@ public class EcoliOpacityProfile extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -227,9 +232,9 @@ public class EcoliOpacityProfile extends Profile {
 
 
 
-		//7. output the results
+		//8. output the results
 
-		//7.1 output the colony measurements as a text file
+		//8.1 output the colony measurements as a text file
 		output.append("row\tcolumn\tsize\tcircularity\topacity\n");
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -254,11 +259,11 @@ public class EcoliOpacityProfile extends Profile {
 
 
 
-		//7.2 save any intermediate picture files, if requested
+		//8.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 
@@ -284,16 +289,16 @@ public class EcoliOpacityProfile extends Profile {
 	 */
 	private void calculateGridSpacing(BasicSettings settings_,
 			ImagePlus croppedImage) {
-		
+
 		int image_width = croppedImage.getWidth();
 		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
-		
+
 		//save the results directly to the settings object
 		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
 		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*3/2);
-		
+
 	}
-	
+
 	/**
 	 * This function will create a copy of the original image, and rotate that copy.
 	 * The original image should be flushed by the caller if not reused
