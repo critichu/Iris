@@ -10,12 +10,18 @@ import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
+import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 
+import java.awt.Color;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
+
+import tileReaderOutputs.BasicTileReaderOutput;
 
 /**
  * This class holds methods that are not profile-specific
@@ -43,14 +49,140 @@ public class Toolbox {
 		aDuplicate.getProcessor().rotate(angle);
 
 		aDuplicate.updateImage();
-		
+
 		aDuplicate.setTitle(originalImage.getTitle());
 
 		return(aDuplicate);
 	}
-	
-	
-	
+
+
+	/**
+	 * This function will get original picture, segment it into tiles.
+	 * For each one, it will apply the colony ROI on it (except it it was empty -- add an empty ROI).
+	 * Then, it will get the mask from the ROI and find it's bounds.
+	 * At the end, for each original tile, we'll have 0/1 tiles, with 1s where the colony bounds are.
+	 * @param croppedImage
+	 * @param segmenterOutput
+	 * @param colonyRoi
+	 * @return
+	 */
+	public static ByteProcessor[][] getColonyBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
+
+		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
+
+		//for all rows
+		for(int i=0;i<tileReaderOutputs.length; i++){
+			//for all columns
+			for (int j = 0; j<tileReaderOutputs[0].length; j++) {
+
+				//get the tile
+				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
+				croppedImage.copy(false);
+				ImagePlus tile = ImagePlus.getClipboard();
+
+				//				tile.updateImage();
+				//				tile.show();
+				//				tile.hide();
+
+				//apply the ROI, get the mask
+				ImageProcessor tileProcessor = tile.getProcessor();
+				tileProcessor.setRoi(tileReaderOutputs[i][j].colonyROI);
+
+				tileProcessor.setColor(Color.white);
+				tileProcessor.setBackgroundValue(0);
+				tileProcessor.fill(tileProcessor.getMask());
+
+				//				tile.updateImage();
+				//				tile.show();
+				//				tile.hide();
+
+
+				//get the bounds of the mask, that's it, save it
+				tileProcessor.findEdges();
+				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
+
+
+				//				tile.setProcessor(colonyBounds[i][j]);
+				//				tile.updateImage();
+				//				tile.show();
+				//				tile.hide();
+
+
+			}
+		}
+
+		croppedImage.deleteRoi();
+
+		return(colonyBounds);
+	}
+
+
+	/**
+	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
+	 * offsets found in the segmenterOutput.  
+	 * @param segmentedImage
+	 * @param segmenterOutput
+	 */
+	public static void drawColonyBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, BasicTileReaderOutput [][] tileReaderOutputs){
+
+
+		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
+		ByteProcessor[][] colonyBounds = getColonyBounds(croppedImage, segmenterOutput, tileReaderOutputs);
+
+
+		//paint those bounds on the original cropped image
+		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
+		bigPictureProcessor.setColor(Color.black);
+		bigPictureProcessor.setLineWidth(2);
+
+
+		//for all rows
+		for(int i=0; i<tileReaderOutputs.length; i++){
+			//for all columns
+			for(int j=0; j<tileReaderOutputs[0].length; j++) {
+
+				//get tile offsets
+				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
+				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
+				int tileWidth = segmenterOutput.ROImatrix[i][j].getBounds().width;
+				int tileHeight = segmenterOutput.ROImatrix[i][j].getBounds().height;
+
+
+				//for each pixel, if it is colony bounds, paint it on the big picture
+				for(int x=0; x<tileWidth; x++){
+					for(int y=0; y<tileHeight; y++){
+						if(colonyBounds[i][j].getPixel(x, y)==255){ //it is a colony bounds pixel
+							bigPictureProcessor.drawDot(x+tile_x_offset, y+tile_y_offset); //paint it on the big picture
+						}
+					}
+				}
+
+			}
+
+		}
+
+
+
+
+		//now paint also the tile bounds
+		ColonyBreathing.paintSegmentedImage(croppedImage, segmenterOutput);
+
+		croppedImage.updateImage();
+		croppedImage.show();
+		croppedImage.hide();
+
+
+
+
+		/**
+		 * TODO: if cropping the segmented (input) image doesn't give the tile we want (to set the ROI),
+		 * then we can switch back to using the original (cropped color) picture and draw both the grid and the colony bounds on it.
+		 * This will also give us the advantage of outputting a color grid
+		 */
+	}
+
+
+
 	/**
 	 * This method gets a subset of that picture (for faster execution), and calculates the rotation of that part
 	 * using an OCR-derived method. The method applied here rotates the image, attempting to maximize
@@ -114,9 +246,9 @@ public class Toolbox {
 
 		return(bestAngle);			
 	}
-	
-	
-	
+
+
+
 	/**
 	 * This method will naively crop the plate in a hard-coded manner.
 	 * It copies the given area of interest to the internal clipboard.
@@ -132,9 +264,9 @@ public class Toolbox {
 		return(croppedImage);
 
 	}
-	
-	
-	
+
+
+
 	/**
 	 * I cannot believe I have to write this
 	 * @param list
@@ -168,8 +300,8 @@ public class Toolbox {
 		return(sum/(list.size()-1));
 
 	}
-	
-	
+
+
 	/**
 	 * Takes the grayscale cropped image and calculates the sum of the
 	 * light intensity of it's columns (for every x)
@@ -263,8 +395,8 @@ public class Toolbox {
 
 		return(threshold);
 	}
-	
-	
+
+
 
 	/**
 	 * Saves a picture, sparing us the dramatic ImageJ's pass through the GUI elements
@@ -274,7 +406,7 @@ public class Toolbox {
 	public static void savePicture(ImagePlus inputImage, String path) {
 		FileSaver saver = new FileSaver(inputImage);
 		saver.saveAsJpeg(path);
-		
+
 	}
 
 	/**
@@ -290,8 +422,8 @@ public class Toolbox {
 				Measurements.MEAN, img.getCalibration()); 
 		return((float) stats.area); 
 	}
-	
-	
+
+
 	/**
 	 * This function will return the circumference of a ROI
 	 * @param imp
@@ -306,9 +438,9 @@ public class Toolbox {
 				Measurements.MEAN, img.getCalibration()); 
 		return((float) stats.binSize); 
 	}
-	
-	
-	
+
+
+
 	/**
 	 * This function will convert the given picture into black and white
 	 * using ImageProcessor's auto thresholding function, employing the Otsu algorithm. 
@@ -356,8 +488,8 @@ public class Toolbox {
 		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
 		imageProcessor.setAutoThreshold(Method.MinError, true, ImageProcessor.BLACK_AND_WHITE_LUT);
 	}
-	
-	
+
+
 	/**
 	 * @deprecated: see Evernote note on how this algorithm performs on overgrown colonies
 	 * This function will convert the given picture into black and white
@@ -366,19 +498,19 @@ public class Toolbox {
 	 * @param
 	 */
 	public static void turnImageBW_RenyiEntropy_auto(ImagePlus BW_croppedImage) {
-		
+
 		System.out.println(Integer.toString(getThreshold(BW_croppedImage, Method.RenyiEntropy)));
-		
+
 		BW_croppedImage.show();
 		BW_croppedImage.hide();
-		
+
 		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
 		imageProcessor.setAutoThreshold(Method.RenyiEntropy, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-		
-		
+
+
 	}
-	
-	
+
+
 	/**
 	 * This method will return the threshold found by the Otsu method and do nothing else
 	 * @param grayscale_image
@@ -398,9 +530,9 @@ public class Toolbox {
 
 		return(threshold);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Normally, you can only create an Ellipse2D defining the top left coordinates.
 	 * This function allows you to create an Ellipse2D by defining the center coordinates (x, y).
@@ -414,16 +546,16 @@ public class Toolbox {
 	 */
 	public static Ellipse2D getEllipseFromCenter(double x, double y, double width, double height)
 	{
-	    double newX = x - width / 2.0;
-	    double newY = y - height / 2.0;
+		double newX = x - width / 2.0;
+		double newY = y - height / 2.0;
 
-	    Ellipse2D ellipse = new Ellipse2D.Double(newX, newY, width, height);
+		Ellipse2D ellipse = new Ellipse2D.Double(newX, newY, width, height);
 
-	    return ellipse;
+		return ellipse;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * This method simply iterates through this array and finds the index
 	 * of the largest element
@@ -431,17 +563,17 @@ public class Toolbox {
 	public static int getIndexOfMaximumElement(int[] array) {
 		int index = -1;
 		float max = -Integer.MAX_VALUE;
-		
+
 		for (int i = 0; i < array.length; i++) {
 			if(array[i]>max){
 				max = array[i];
 				index = i;
 			}
 		}
-		
+
 		return(index);
 	}
-	
-	
+
+
 
 }

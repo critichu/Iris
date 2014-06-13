@@ -70,7 +70,7 @@ public class IrisFrontend {
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "f07c027";
+	public static String IrisBuild = "40055b6";
 
 
 	

@@ -10,7 +10,7 @@ import ij.gui.Roi;
  * @author George Kritikos
  *
  */
-public class BasicTileReaderOutput extends TileReaderOutput {
+public class BasicTileReaderOutput{
 
 	/**
 	 * the pixel count of the area of the biggest particle in the tile

@@ -208,7 +208,11 @@ public class BasicProfile extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+			
+			Toolbox.drawColonyBounds(croppedImage, segmentationOutput, readerOutputs);
+			
+			
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -249,7 +253,10 @@ public class BasicProfile extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+			
+			Toolbox.drawColonyBounds(croppedImage, segmentationOutput, readerOutputs);
+			
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 		}
 

@@ -4,10 +4,12 @@
 package tileReaders;
 
 import ij.ImagePlus;
+import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
+import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ImageProcessor;
@@ -44,15 +46,18 @@ public class BasicTileReader {
 
 		//create the results table, where the results of the particle analysis will be shown
 		ResultsTable resultsTable = new ResultsTable();
+		RoiManager roiManager = new RoiManager(true);
 
 		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE, 
+		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER, 
 				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
 				resultsTable, 5, Integer.MAX_VALUE);
+		
+		ParticleAnalyzer.setRoiManager(roiManager);
 
 		particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
 
-
+		Roi[] rois = roiManager.getRoisAsArray();
 
 
 		//3.1 check if the returned results table is empty
@@ -85,6 +90,8 @@ public class BasicTileReader {
 		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		output.colonyROI = rois[indexOfBiggestParticle];
+		
 		
 		originalTileImage.flush();
 		
@@ -96,6 +103,12 @@ public class BasicTileReader {
 		//should be very far from the center of the tile
 
 	}
+	
+	
+	
+	
+	
+	
 
 
 
