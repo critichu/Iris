@@ -197,7 +197,7 @@ public class BsubtilisSporulationProfile extends Profile{
 			//save the grid before exiting
 			ImagePlus croppedImageSegmented = grayscaleCroppedImage.duplicate();
 
-			RisingTideSegmenter.paintSegmentedImage(croppedImageSegmented, segmentationOutput); //calculate grid image
+			RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImageSegmented, filename + ".grid.jpg");
 
 			croppedImageSegmented.flush();
@@ -279,8 +279,8 @@ public class BsubtilisSporulationProfile extends Profile{
 			//calculate and save grid image
 			ImagePlus croppedImageSegmented = grayscaleCroppedImage.duplicate();
 
-			ColonyBreathing.paintSegmentedImage(croppedImageSegmented, segmentationOutput); //calculate grid image
-			Toolbox.savePicture(croppedImageSegmented, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			croppedImageSegmented.flush();
 			grayscaleCroppedImage.flush();
@@ -347,8 +347,8 @@ public class BsubtilisSporulationProfile extends Profile{
 			//ImagePlus croppedImageSegmented = croppedImage.duplicate();
 
 			//RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			ColonyBreathing.paintSegmentedImage(grayscaleCroppedImage, segmentationOutput); ///
-			Toolbox.savePicture(grayscaleCroppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			grayscaleCroppedImage.flush();
 		}

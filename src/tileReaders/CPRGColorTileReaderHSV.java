@@ -3,36 +3,21 @@
  */
 package tileReaders;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
-import tileReaderInputs.BasicTileReaderInput;
-import tileReaderInputs.ColorTileReaderInput;
-import tileReaderInputs.TileReaderInput;
-import tileReaderOutputs.CPRGTileReaderOutput;
-import tileReaderOutputs.ColorTileReaderOutput;
-import tileReaderOutputs.BasicTileReaderOutput;
-import tileReaderOutputs.TileReaderOutput;
-import ij.ImagePlus;
-import ij.plugin.ChannelSplitter;
-import ij.plugin.ImageCalculator;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
-import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
-import ij.process.AutoThresholder;
-import ij.process.ByteProcessor;
+import ij.process.AutoThresholder.Method;
 import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
-import ij.process.AutoThresholder.Method;
-import tileReaderInputs.BasicTileReaderInput;
-import tileReaderOutputs.BasicTileReaderOutput;
+
+import java.util.ArrayList;
+
+import tileReaderInputs.ColorTileReaderInput;
+import tileReaderOutputs.CPRGTileReaderOutput;
 
 /**
  * This class provides with methods that output the color of a colony.
@@ -196,6 +181,7 @@ public class CPRGColorTileReaderHSV {
 		//		else
 		output.colorSumInColony = (int) Math.round(Math.ceil(Math.sqrt(size_normalized_color_colony)));
 
+		output.colonyROI = colonyRoi;
 
 		input.cleanup();
 		return output;

@@ -141,6 +141,9 @@ public class Toolbox {
 		for(int i=0; i<tileReaderOutputs.length; i++){
 			//for all columns
 			for(int j=0; j<tileReaderOutputs[0].length; j++) {
+				
+				if(tileReaderOutputs[i][j].colonySize==0)
+					continue; //don't go through the trouble for emtpy tiles
 
 				//get tile offsets
 				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;

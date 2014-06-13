@@ -5,10 +5,12 @@ package tileReaders;
 
 import fiji.threshold.Auto_Local_Threshold;
 import ij.ImagePlus;
+import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
+import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ImageProcessor;
@@ -55,14 +57,17 @@ public class BasicTileReaderHSB {
 
 		//create the results table, where the results of the particle analysis will be shown
 		ResultsTable resultsTable = new ResultsTable();
-
+		RoiManager roiManager = new RoiManager(true);
+		
 		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES, 
+		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER, 
 				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
 				resultsTable, 5, Integer.MAX_VALUE);
 
+		ParticleAnalyzer.setRoiManager(roiManager);
 		particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
 
+		Roi[] rois = roiManager.getRoisAsArray();
 
 
 
@@ -90,9 +95,6 @@ public class BasicTileReaderHSB {
 		}
 		
 		
-//				input.tileImage.show();
-//				input.tileImage.hide();
-		
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 
@@ -102,6 +104,8 @@ public class BasicTileReaderHSB {
 		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		output.colonyROI = rois[indexOfBiggestParticle];
+		
 		return(output);//returns the biggest result
 
 

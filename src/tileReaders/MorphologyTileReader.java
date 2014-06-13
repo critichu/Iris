@@ -181,6 +181,7 @@ public class MorphologyTileReader {
 			output.normalizedMorphologyScore = output.morphologyScore / (elevationCounts.size()-1);
 
 
+		output.colonyROI = colonyRoi;
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();

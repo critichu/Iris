@@ -140,6 +140,7 @@ public class ColorTileReader {
 		output.colorIntensitySum = colonyColorSum;
 		output.biofilmArea = biofilmPixelCount;
 		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
+		output.colonyROI = colonyRoi;
 	
 		input.cleanup();
 		return output;

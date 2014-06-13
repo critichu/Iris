@@ -129,7 +129,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale)
-		//ImagePlus colourCroppedImage = croppedImage.duplicate();
+		ImagePlus colourCroppedImage = croppedImage.duplicate();
 		ImageProcessor ip =  croppedImage.getProcessor();
 
 		ColorProcessor cp = (ColorProcessor)ip;
@@ -190,7 +190,7 @@ public class BsubtilisHazyProfileHSB extends Profile {
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -241,9 +241,10 @@ public class BsubtilisHazyProfileHSB extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
-
+			//RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
+			
 			//return;
 		}
 
@@ -286,8 +287,8 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
 
 	}

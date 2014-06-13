@@ -135,7 +135,7 @@ public class ColorProfile extends Profile{
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -199,8 +199,8 @@ public class ColorProfile extends Profile{
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -258,8 +258,8 @@ public class ColorProfile extends Profile{
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
 
 	}

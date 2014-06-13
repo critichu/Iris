@@ -132,7 +132,7 @@ public class OpacityTileReaderForHazyColonies_old {
 		Roi colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
 
 		output.opacity = getBiggestParticleOpacicity(grayscaleTileCopy, colonyRoi);
-
+		output.colonyROI = colonyRoi;
 
 		if(output.opacity==0){
 			//this cannot be zero, unless we have an empty tile, 

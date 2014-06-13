@@ -207,7 +207,7 @@ public class CPRGProfile384 extends Profile {
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			RisingTideSegmenter.paintSegmentedImage(colorCroppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -280,9 +280,8 @@ public class CPRGProfile384 extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
-
+			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			Toolbox.savePicture(colorCroppedImage, filename + ".grid.jpg");
 			return;
 		}
 
@@ -346,8 +345,8 @@ public class CPRGProfile384 extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			Toolbox.savePicture(colorCroppedImage, filename + ".grid.jpg");
 		}
 
 		croppedImage.flush();
