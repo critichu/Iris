@@ -132,8 +132,9 @@ public class Toolbox {
 
 		//paint those bounds on the original cropped image
 		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
-		bigPictureProcessor.setColor(Color.black);
-		bigPictureProcessor.setLineWidth(2);
+		//bigPictureProcessor.setColor(Color.black);
+		bigPictureProcessor.setColor(Color.cyan);
+		bigPictureProcessor.setLineWidth(1);
 
 
 		//for all rows
@@ -167,9 +168,9 @@ public class Toolbox {
 		//now paint also the tile bounds
 		ColonyBreathing.paintSegmentedImage(croppedImage, segmenterOutput);
 
-		croppedImage.updateImage();
-		croppedImage.show();
-		croppedImage.hide();
+//		croppedImage.updateImage();
+//		croppedImage.show();
+//		croppedImage.hide();
 
 
 

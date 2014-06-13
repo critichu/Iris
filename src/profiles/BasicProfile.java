@@ -108,7 +108,6 @@ public class BasicProfile extends Profile {
 
 		//3. crop the plate to keep only the colonies
 		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
-
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
 
@@ -121,10 +120,11 @@ public class BasicProfile extends Profile {
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale)
+		ImagePlus croppedImageColor = croppedImage.duplicate();
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
-
+		
 		//
 		//--------------------------------------------------
 		//
@@ -159,7 +159,7 @@ public class BasicProfile extends Profile {
 
 
 			//save the grid before exiting
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -210,10 +210,8 @@ public class BasicProfile extends Profile {
 			//calculate and save grid image
 			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			
-			Toolbox.drawColonyBounds(croppedImage, segmentationOutput, readerOutputs);
-			
-			
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 
 			return;
 		}
@@ -255,9 +253,8 @@ public class BasicProfile extends Profile {
 			//calculate grid image
 			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
 			
-			Toolbox.drawColonyBounds(croppedImage, segmentationOutput, readerOutputs);
-			
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 		}
 
 	}
