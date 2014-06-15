@@ -16,7 +16,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import imageCroppers.GenericImageCropper;
+import imageCroppers.GenericImageCropper2;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -43,7 +43,7 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class ColorProfileHSB extends Profile{
+public class ColorProfileEcoli extends Profile{
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
@@ -115,7 +115,8 @@ public class ColorProfileHSB extends Profile{
 
 		//3. crop the plate to keep only the colonies
 //		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
-		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		ImagePlus croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		
 		
 		//flush the original pictures, we won't be needing them anymore
 		rotatedImage.flush();
@@ -155,9 +156,6 @@ public class ColorProfileHSB extends Profile{
 		ImagePlus grayscaleCroppedImage  = croppedImage.duplicate();
 		grayscaleCroppedImage.setTitle(croppedImage.getTitle());
 		croppedImage.flush();
-
-		//				grayscaleCroppedImage.show();
-		//				grayscaleCroppedImage.hide();
 
 		//get a copy of the picture thresholded using a local algorithm
 		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();

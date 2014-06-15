@@ -9,13 +9,14 @@ import ij.process.ImageConverter;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *This class provides methods to crop the original picture so as to keep only the colonies.
  *This class can be used as a generic method with all plates
  *
  */
-public class GenericImageCropper {
+public class GenericImageCropper2 {
 
 	/**
 	 * the margin in which to look for the start of the first/last columns
@@ -38,7 +39,7 @@ public class GenericImageCropper {
 	 * These values correspond to the fraction of the in-plate image that will be used as
 	 * boundaries within which a search for a minimum will be performed.
 	 */
-	public static double searchStart = 0.035;
+	public static double searchStart = 0.055;
 	public static double searchEnd = 0.065;
 
 
@@ -59,7 +60,7 @@ public class GenericImageCropper {
 		//perform this in a duplicate picture, so any operations performed to find the Roi won't
 		//interfere with the original picture
 		ImagePlus duplicate = originalImage.duplicate();
-		Roi rectangle = findCropBorders(duplicate);
+		Roi rectangle = findCropBorders2(duplicate);
 		duplicate.flush();
 
 		originalImage.setRoi(rectangle);
@@ -83,7 +84,7 @@ public class GenericImageCropper {
 
 
 		//1. get the plate's plastic borders
-		Roi plasticPlateBorders = findPlatePlasticBorders(originalImage);
+		Roi plasticPlateBorders = findPlatePlasticBorders2(originalImage);
 
 		//2. get the sums of brightness per row/column
 		ImageConverter imageConverter = new ImageConverter(originalImage);
@@ -146,104 +147,151 @@ public class GenericImageCropper {
 		return(roiToReturn);
 
 	}
-	
-	
+
+
+	private static Roi findCropBorders2(ImagePlus originalImage){
+		//1. make image grayscale
+		ImageConverter imageConverter = new ImageConverter(originalImage);
+		imageConverter.convertToGray8();
+
+		int originalImageHeight = originalImage.getHeight();
+		int originalImageWidth = originalImage.getWidth();
+
+
+
+		//get a horizontal section of the plate
+		originalImage.setRoi(new Rectangle(0, 1000, originalImageWidth, 1000));
+		originalImage.copy(false);
+		ImagePlus horizontalSection = ImagePlus.getClipboard();
+
+
+		//get a vertical section of the plate
+		originalImage.setRoi(new Rectangle(1000, 0, 1000, originalImageHeight));
+		originalImage.copy(false);
+		ImagePlus verticalSection = ImagePlus.getClipboard();
+
+
+		//2. get sum of rows/columns
+		ArrayList<Integer> sumOfColumns = sumOfColumns(horizontalSection);
+		ArrayList<Integer> sumOfRows = sumOfRows(verticalSection);
+
+		//3. get only the sums that correspond to the middle of the plate, get their means
+		int indexOfLeftPlasticBorder = getIndexOfMaximumElement(sumOfColumns.subList(0, originalImageWidth/2));
+		int indexOfRightPlasticBorder = getIndexOfMaximumElement(sumOfColumns.subList(originalImageWidth/2, originalImageWidth)) + originalImageWidth/2;
+
+		int indexOfTopPlasticBorder = getIndexOfMaximumElement(sumOfRows.subList(0, originalImageHeight/2));
+		int indexOfBottomPlasticBorder = getIndexOfMaximumElement(sumOfRows.subList(originalImageHeight/2, originalImageHeight)) + originalImageHeight/2;
+
+		
+		//set the search space 
+		int smallMarginWidth = (int)Math.round(searchStart * originalImageWidth);
+		int largeMarginWidth = (int)Math.round(searchEnd * originalImageWidth);
+		int smallMarginHeight = (int)Math.round(searchStart * originalImageHeight);
+		int largeMarginHeight = (int)Math.round(searchEnd * originalImageHeight);
+		
+		
+		int indexOfLeftColonyBorder = getIndexOfMinimumElement(sumOfColumns.subList(indexOfLeftPlasticBorder+smallMarginWidth, indexOfLeftPlasticBorder+largeMarginWidth)) + indexOfLeftPlasticBorder+smallMarginWidth;
+		int indexOfRightColonyBorder = getIndexOfMinimumElement(sumOfColumns.subList(indexOfRightPlasticBorder-largeMarginWidth, indexOfRightPlasticBorder-smallMarginWidth)) + indexOfRightPlasticBorder-largeMarginWidth;
+		
+		int indexOfTopColonyBorder = getIndexOfMinimumElement(sumOfRows.subList(indexOfTopPlasticBorder+smallMarginHeight, indexOfTopPlasticBorder+largeMarginHeight)) + indexOfTopPlasticBorder+smallMarginHeight;
+		int indexOfBottomColonyBorder = getIndexOfMinimumElement(sumOfRows.subList(indexOfBottomPlasticBorder-largeMarginHeight, indexOfBottomPlasticBorder-smallMarginHeight)) + indexOfBottomPlasticBorder-largeMarginHeight;
+		
+
+		int roiX = indexOfLeftColonyBorder;
+		int roiY = indexOfTopColonyBorder;
+		int roiWidth = indexOfRightColonyBorder - indexOfLeftColonyBorder;
+		int roiHeight = indexOfBottomColonyBorder - indexOfTopColonyBorder;
+
+
+		Roi roiToReturn = new Roi(new Rectangle(roiX, roiY, roiWidth, roiHeight));
+		return(roiToReturn);
+	}
+
+
+
 	/**
 	 * This method will return the Roi of the image, where the plate's plastic borders were found.
 	 * The image is assumed to be already rotated.
 	 * @param originalImage
 	 * @return
 	 */
-	private static Roi findPlatePlasticBorders(ImagePlus originalImage) {
-		
+	private static Roi findPlatePlasticBorders2(ImagePlus originalImage) {
+
 		//1. make image grayscale
 		ImageConverter imageConverter = new ImageConverter(originalImage);
 		imageConverter.convertToGray8();
-		
-		//2. get sum of rows/columns
-		ArrayList<Integer> sumOfColumns = sumOfColumns(originalImage);
-		ArrayList<Integer> sumOfRows = sumOfRows(originalImage);
-		
-		//3. get only the sums that correspond to the middle of the plate, get their means
-		int width = originalImage.getWidth();
+
 		int height = originalImage.getHeight();
-		
-		//define from where to where to get the sums of brightness (in the sawtooth pattern)
-		int columnsStartArea = width/2 - plateBorderSearchAreaColumns;
-		int columnsEndArea = width/2 + plateBorderSearchAreaColumns;
-		//get the sublist of those sums
-		ArrayList<Integer> sublistColumns = new ArrayList<Integer>(sumOfColumns.subList(columnsStartArea, columnsEndArea));
-		//get their mean
-		int meanOfCenterColumns = (int)Math.round(getMean(sublistColumns));
-		
-		//define from where to where to get the sums of brightness (in the sawtooth pattern)
-		int rowsStartArea = height/2 - plateBorderSearchAreaRows;
-		int rowsEndArea = height/2 + plateBorderSearchAreaRows;
-		//get the sublist of those sums
-		ArrayList<Integer> sublistRows = new ArrayList<Integer>(sumOfRows.subList(rowsStartArea, rowsEndArea));
-		//get their mean
-		int meanOfCenterRows = (int)Math.round(getMean(sublistRows));
-		
-		//4. get the index of the 20th element above the mean, this is the plate's plastic bounds
-		ArrayList<Integer> indicesOfColumnsSumsAboveMean = getIndicesAboveMean(sumOfColumns, meanOfCenterColumns);
-		ArrayList<Integer> indicesOfRowsSumsAboveMean = getIndicesAboveMean(sumOfRows, meanOfCenterRows);
-		
-		
-		
-		//get the 20th from left and the 20th from the right
-		int indexOfLeftBorder = indicesOfColumnsSumsAboveMean.get(skip);
-		int indexOfRightBorder = indicesOfColumnsSumsAboveMean.get(indicesOfColumnsSumsAboveMean.size()-skip);
-		
-		//get the 20th from the top and the 20th from the bottom
-		int indexOfTopBorder = indicesOfRowsSumsAboveMean.get(skip);
-		int indexOfBottomBorder = indicesOfRowsSumsAboveMean.get(indicesOfRowsSumsAboveMean.size()-skip);
-		
-		
-		
+		int width = originalImage.getWidth();
+
+
+
+		//get a horizontal section of the plate
+		originalImage.setRoi(new Rectangle(0, 1000, width, 1000));
+		originalImage.copy(false);
+		ImagePlus horizontalSection = ImagePlus.getClipboard();
+
+
+		//get a vertical section of the plate
+		originalImage.setRoi(new Rectangle(1000, 0, 1000, height));
+		originalImage.copy(false);
+		ImagePlus verticalSection = ImagePlus.getClipboard();
+
+
+		//2. get sum of rows/columns
+		ArrayList<Integer> sumOfColumns = sumOfColumns(horizontalSection);
+		ArrayList<Integer> sumOfRows = sumOfRows(verticalSection);
+
+		//3. get only the sums that correspond to the middle of the plate, get their means
+		int indexOfLeftBorder = getIndexOfMaximumElement(sumOfColumns.subList(0, width/2));
+		int indexOfRightBorder = getIndexOfMaximumElement(sumOfColumns.subList(width/2, width));
+
+		int indexOfTopBorder = getIndexOfMaximumElement(sumOfRows.subList(0, height/2));
+		int indexOfBottomBorder = getIndexOfMaximumElement(sumOfColumns.subList(height/2, height));
+
+
+
 		int roiX = indexOfLeftBorder;
 		int roiY = indexOfTopBorder;
-		int roiWidth = indexOfRightBorder - indexOfLeftBorder;
-		int roiHeight = indexOfBottomBorder - indexOfTopBorder;
-		
-		
+		int roiWidth = indexOfRightBorder+width/2 - indexOfLeftBorder;
+		int roiHeight = indexOfBottomBorder+height/2 - indexOfTopBorder;
+
+
 		Roi roiToReturn = new Roi(new Rectangle(roiX, roiY, roiWidth, roiHeight));
 		return(roiToReturn);		
 	}
 
 
-
-	
-
-
 	/**
 	 * This method simply iterates through this array and finds the index
-	 * of the smallest element
+	 * of the largest element
 	 */
-	private static int getIndexOfMinimumElement(ArrayList<Integer> columns) {
+	private static int getIndexOfMinimumElement(List<Integer> list) {
 		int index = -1;
 		float min = Float.MAX_VALUE;
 
-		for (int i = 0; i < columns.size(); i++) {
-			if(columns.get(i)<min){
-				min = columns.get(i);
+		for (int i = 0; i < list.size(); i++) {
+			if(list.get(i)<min){
+				min = list.get(i);
 				index = i;
 			}
 		}
 
 		return(index);
 	}
-	
+
+
 	/**
 	 * This method simply iterates through this array and finds the index
 	 * of the smallest element
 	 */
-	private static int getIndexOfMaximumElement(ArrayList<Integer> columns) {
+	private static int getIndexOfMaximumElement(List<Integer> list) {
 		int index = -1;
 		float max = -Float.MAX_VALUE;
 
-		for (int i = 0; i < columns.size(); i++) {
-			if(columns.get(i)>max){
-				max = columns.get(i);
+		for (int i = 0; i < list.size(); i++) {
+			if(list.get(i)>max){
+				max = list.get(i);
 				index = i;
 			}
 		}

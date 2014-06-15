@@ -18,7 +18,7 @@ import profiles.BsubtilisHazyProfileHSB;
 import profiles.BsubtilisSporulationProfile;
 import profiles.CPRGProfile384;
 import profiles.ColorProfile;
-import profiles.ColorProfileHSB;
+import profiles.ColorProfilePA;
 import profiles.ColorProfile_SimpleSegmentation;
 import profiles.EcoliGrowthProfile;
 import profiles.EcoliGrowthProfile384_HazyColonies_old;
@@ -146,8 +146,8 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		}
 
 		else if(profileName.equals("Biofilm formation (HSB)")){
-			ColorProfileHSB colorProfileHSB = new ColorProfileHSB();
-			colorProfileHSB.analyzePicture(filename);
+			ColorProfilePA colorProfilePA = new ColorProfilePA();
+			colorProfilePA.analyzePicture(filename);
 		}
 
 		else if(profileName.equals("Biofilm formation - Simple Grid")){
