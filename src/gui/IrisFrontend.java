@@ -46,8 +46,9 @@ public class IrisFrontend {
 		"B.subtilis Opacity (HSB)",
 		"B.subtilis Sporulation (HSB)",
 		//"CPRG 384",
-		"Biofilm formation",
-		"Biofilm formation (HSB)",
+		//"Biofilm formation",
+		"Biofilm formation PA",
+		"Biofilm formation Ecoli",
 		"Morphology Profile [Candida 96-plates]"
 		//"Biofilm formation - Simple Grid",
 		//"Opacity",

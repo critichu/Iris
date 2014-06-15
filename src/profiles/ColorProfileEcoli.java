@@ -47,7 +47,7 @@ public class ColorProfileEcoli extends Profile{
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Biofilm formation (HSB)";
+	public static String profileName = "Biofilm formation Ecoli";
 
 
 	/**
@@ -159,8 +159,8 @@ public class ColorProfileEcoli extends Profile{
 
 		//get a copy of the picture thresholded using a local algorithm
 		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
-		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
-		turnImageBW_Local_auto(BW_local_thresholded_picture);
+//		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
+//		turnImageBW_Local_auto(BW_local_thresholded_picture);
 		
 		@SuppressWarnings("unused")
 		//blah = BW_local_thresholded_picture.getTitle();

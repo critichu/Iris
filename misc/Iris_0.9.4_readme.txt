@@ -1,0 +1,62 @@
+Iris version 0.9.4 README
+
+
+Iris can be considered as an image feature extraction software, as it also reports other features of a colony, such as colony opacity.
+Given that colonies not only grow wider in diameter but also become more dense, colony opacity could be a better proxy in measuring growth fitness.
+
+Since Iris is still under active development, we would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
+
+
+1. Running Iris:
+Iris is written in Java, which makes it compatible with any platform.
+Java software is typically distributed in JAR files (.jar ending).
+
+1.1 Iris GUI
+To run Iris as a window (GUI) application, open a command line window, cd into the folder the Iris JAR file is in, and run the following command:
+
+java -Xmx1g -jar Iris_0.9.x.xx.jar
+
+Note: the Iris jar file can also be run on all systems by double clicking. To do this, first make sure you have permanently set the maximum Java heap size to 1g (1 Gigabyte). Google on how to do that in your particular system/setup.
+
+1.2 Iris console (e.g. for scripting)
+To run Iris as a console application (no GUI window), which can be rather useful for scripting, you need to provide Iris with a profile name and a folder that pictures are found in:
+
+java -Xmx1g -jar Iris_0.9.x.xx.jar "profile name" "folder location”
+
+Valid profile names are the following:
+			"Stm growth",
+			"Ecoli growth",
+			"Ecoli opacity",
+			"Ecoli opacity 384",
+			"Ecoli growth 384 - hazy colonies",
+			"B.subtilis Opacity (HSB)",
+			"B.subtilis Sporulation (HSB)",
+			"Biofilm formation",
+			"Biofilm formation (HSB)",
+			"Morphology profile [Candida 96-plates]"
+NOTE: please keep the quotes when inputting the profile name
+
+
+2. Using Iris:
+After running Iris in your system, select one of the available profiles (drop down list on the top left).
+Next, click "open folder", and select a folder which holds the pictures to be processed. Iris will process any pictures with a ".jpg" file ending, displaying any messages on the application window. 
+You can abort the process at any time, by closing the program.
+
+
+3. Iris output
+Iris outputs 2 kind of files and a log file.
+
+3.1 .iris files
+these hold the results of the feature extraction process. 
+They are in fact plain text tab-delimited files, which can easily be opened with any text viewer or Excel.
+
+3.2 .grid files
+these are currently saved mainly for debugging purposes, as they demonstrate the results of gridding algorithm.
+
+3.3 .log files
+each time Iris is run, it creates a timestamped log file. This is a text file that is currently used for debugging reasons; any error messages will also be written on this file.
+
+
+
+
+

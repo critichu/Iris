@@ -47,7 +47,7 @@ public class ColorProfilePA extends Profile{
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Biofilm formation (HSB)";
+	public static String profileName = "Biofilm formation PA";
 
 
 	/**
