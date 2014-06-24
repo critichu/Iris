@@ -42,14 +42,16 @@ public class IrisFrontend {
 		"Ecoli growth",
 		"Ecoli opacity",
 		"Ecoli opacity 384",
-		"Ecoli growth 384 - hazy colonies",
+		"Ecoli opacity 384 - hazy colonies",
 		"B.subtilis Opacity (HSB)",
 		"B.subtilis Sporulation (HSB)",
 		//"CPRG 384",
 		//"Biofilm formation",
 		"Biofilm formation PA",
 		"Biofilm formation Ecoli",
-		"Morphology Profile [Candida 96-plates]"
+		"Morphology Profile [Candida 96-plates]",
+		"Xgal assay 384",
+		"Xgal assay 1536"
 		//"Biofilm formation - Simple Grid",
 		//"Opacity",
 		//"Opacity (fixed grid)"
@@ -66,12 +68,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4.31";
+	public static String IrisVersion = "0.9.4.33";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "3ff52a9";
+	public static String IrisBuild = "cbfdd9e";
 
 
 	

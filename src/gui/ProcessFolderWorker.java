@@ -22,12 +22,13 @@ import profiles.ColorProfileEcoli;
 import profiles.ColorProfilePA;
 import profiles.ColorProfile_SimpleSegmentation;
 import profiles.EcoliGrowthProfile;
-import profiles.EcoliGrowthProfile384_HazyColonies_old;
 import profiles.EcoliOpacityProfile;
 import profiles.EcoliOpacityProfile384;
+import profiles.EcoliOpacityProfile384_HazyColonies;
 import profiles.MorphologyProfileCandida96;
 import profiles.OpacityProfile;
 import profiles.OpacityProfile2;
+import profiles.XgalProfile;
 
 /**
  * @author George Kritikos
@@ -131,10 +132,24 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			ecoliOpacityProfile384.analyzePicture(filename);			
 		}
 
-		else if(profileName.equals("Ecoli growth 384 - hazy colonies")){
-			EcoliGrowthProfile384_HazyColonies_old ecoliGrowth384_hazy_old = new EcoliGrowthProfile384_HazyColonies_old();
-			ecoliGrowth384_hazy_old.analyzePicture(filename);			
-		}			
+		else if(profileName.equals("Ecoli opacity 384 - hazy colonies")){
+			EcoliOpacityProfile384_HazyColonies ecoliOpacity384_hazy = new EcoliOpacityProfile384_HazyColonies();
+			ecoliOpacity384_hazy.analyzePicture(filename);			
+		}
+		
+		else if(profileName.equals("Xgal assay 384")){
+			XgalProfile xgalProfile = new XgalProfile();
+			xgalProfile.settings.numberOfColumnsOfColonies = 24;
+			xgalProfile.settings.numberOfRowsOfColonies = 16;
+			xgalProfile.analyzePicture(filename);			
+		}
+		
+		else if(profileName.equals("Xgal assay 1536")){
+			XgalProfile xgalProfile = new XgalProfile();
+			xgalProfile.settings.numberOfColumnsOfColonies = 48;
+			xgalProfile.settings.numberOfRowsOfColonies = 32;
+			xgalProfile.analyzePicture(filename);			
+		}
 
 		else if(profileName.equals("CPRG 384")){
 			CPRGProfile384 cprgProfile384 = new CPRGProfile384();

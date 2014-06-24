@@ -75,12 +75,12 @@ public class OpacityTileReaderForHazyColonies_old {
 
 
 		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		synchronized(input.settings){
+		//synchronized(input.settings){
 			
 			ParticleAnalyzer.setRoiManager(manager);
 			
 			particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
-		}
+		//}
 		//
 		//--------------------------------------------------
 		//
@@ -260,7 +260,7 @@ public class OpacityTileReaderForHazyColonies_old {
 	 * @param tile
 	 * @return
 	 */
-	private static boolean isTileEmpty_simple(ImagePlus tile){
+	public static boolean isTileEmpty_simple(ImagePlus tile){
 		//sum up the pixel values (brightness) on the x axis
 		double[] sumOfBrightnessXaxis = sumOfRows(tile);
 		double variance = StdStats.varp(sumOfBrightnessXaxis);

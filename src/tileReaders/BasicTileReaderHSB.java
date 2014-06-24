@@ -58,7 +58,7 @@ public class BasicTileReaderHSB {
 		//create the results table, where the results of the particle analysis will be shown
 		ResultsTable resultsTable = new ResultsTable();
 		RoiManager roiManager = new RoiManager(true);
-		
+
 		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
 		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER, 
 				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
@@ -83,9 +83,9 @@ public class BasicTileReaderHSB {
 
 		//3.2 check to see if the tile was empty. If so, return a colony size of zero
 		//if variance is more than 1, then the brightness sum said there's a colony there
-				//so there's has to be both variance less than 1 and other filters saying that there's no colony there
+		//so there's has to be both variance less than 1 and other filters saying that there's no colony there
 		if(isTileEmpty_simple(input.tileImage)) {
-		//if(isTileEmpty(resultsTable, input.tileImage)){
+			//if(isTileEmpty(resultsTable, input.tileImage)){
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
 
@@ -93,8 +93,17 @@ public class BasicTileReaderHSB {
 
 			return(output);
 		}
-		
-		
+
+		if(isTileEmpty_simple2(resultsTable, input.tileImage)){
+			output.emptyTile = true;
+			output.colonySize = 0;//return a colony size of zero
+
+			input.cleanup(); //clear the tile image here, since we don't need it anymore
+
+			return(output);
+		}
+
+
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 
@@ -105,7 +114,7 @@ public class BasicTileReaderHSB {
 		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = rois[indexOfBiggestParticle];
-		
+
 		return(output);//returns the biggest result
 
 
@@ -114,8 +123,40 @@ public class BasicTileReaderHSB {
 		//should be very far from the center of the tile
 
 	}
-	
-	
+
+
+	/**
+	 * This function just checks for circularity. If it's under 0.20, then the tile gets rejected.
+	 * @param resultsTable
+	 * @param tileImage
+	 * @return
+	 */
+	private static boolean isTileEmpty_simple2(ResultsTable resultsTable,
+			ImagePlus tileImage) {
+
+		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));//get the areas of all the particles the particle analyzer has found
+		float circularities[] = resultsTable.getColumn(resultsTable.getColumnIndex("Circ."));//get the circularities of all the particles
+
+
+		//for the following, we only check the largest particle
+		//which is the one who would be reported either way if we decide that this spot is not empty
+		int indexOfMax = getIndexOfMaximumElement(areas);
+
+		//check for the circularity of the largest particle
+		//usually, colonies have roundnesses that start from 0.50 (faint colonies)
+		//and reach 0.92 for normal colonies
+		//for empty spots, this value is usually around 0.07, but there have been cases
+		//where it reached 0.17.
+		//Since this threshold would characterize a spot as empty, we will be more relaxed and set it at 0.20
+		//everything below that, gets characterized as an empty spot
+		if(circularities[indexOfMax]<0.20){
+			return(true); //it's empty
+		}
+
+		return(false);
+	}
+
+
 	/**
 	 * This function checks whether the given tile is empty,
 	 * by summing up it's brightness and calculating the variance of these sums.
@@ -127,15 +168,15 @@ public class BasicTileReaderHSB {
 		//sum up the pixel values (brightness) on the x axis
 		double[] sumOfBrightnessXaxis = sumOfRows(tile);
 		double variance = StdStats.varp(sumOfBrightnessXaxis);
-		
+
 		//System.out.println(variance);
-		
+
 		if(variance<varianceThreshold){
 			return(true);
 		}
 		return(false);
 	}
-	
+
 	/**
 	 * Takes the grayscale cropped image and calculates the sum of the
 	 * light intensity of it's columns (for every x)
@@ -194,7 +235,7 @@ public class BasicTileReaderHSB {
 		return(threshold);
 	}
 
-	
+
 	/**
 	 * This function will convert the given picture into black and white
 	 * using a fancy local thresholding algorithm, as described here:
@@ -205,9 +246,9 @@ public class BasicTileReaderHSB {
 		//use the mean algorithm with default values
 		//just use smaller radius (8 instead of default 15)
 		Auto_Local_Threshold.Mean(BW_croppedImage, 8, 0, 0, true);
-//		BW_croppedImage.updateAndDraw();
-//		BW_croppedImage.show();
-//		BW_croppedImage.hide();
+		//		BW_croppedImage.updateAndDraw();
+		//		BW_croppedImage.show();
+		//		BW_croppedImage.hide();
 	}
 
 

@@ -23,7 +23,7 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class OpacityTileReader {
+public class OpacityTileReaderForHazyColonies {
 
 	/**
 	 * This tile reader gets the size of the colony in pixels, as well as the sum of it's brightness.
@@ -45,7 +45,7 @@ public class OpacityTileReader {
 		
 		
 		//1. apply a threshold at the tile, using the Otsu algorithm
-		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
+		Toolbox.turnImageBW_Huang_auto(input.tileImage);
 		
 		
 
@@ -320,14 +320,14 @@ public class OpacityTileReader {
 		//check for the number of detected particles. 
 		//Normally, if there is a colony there, the number of results should not be more than 20.
 		//We set a limit of 40, since empty spots usually have more than 70 particles.
-		if(numberOfParticles>40){
-			return(true);//it's empty
+		if(numberOfParticles>40){//40){
+			penalty++;//return(true);//it's empty
 		}
 
-		//borderline to empty tile
-		if(numberOfParticles>15){
-			penalty++;
-		}
+//		//borderline to empty tile
+//		if(numberOfParticles>15){
+//			penalty++;
+//		}
 
 		//for the following, we only check the largest particle
 		//which is the one who would be reported either way if we decide that this spot is not empty
@@ -336,7 +336,7 @@ public class OpacityTileReader {
 
 		//check for unusually high aspect ratio
 		//Normal colonies would have an aspect ratio around 1, but contaminations have much higher aspect ratios (around 4)
-		if(aspect_ratios[indexOfMax]>2){
+		if(aspect_ratios[indexOfMax]>2.2){
 			return(true); 
 			//the tile is empty, the particle was just a contamination
 			//TODO: notify the user that there has been a contamination in the plate in this spot
@@ -355,8 +355,8 @@ public class OpacityTileReader {
 		//where it reached 0.17.
 		//Since this threshold would characterize a spot as empty, we will be more relaxed and set it at 0.20
 		//everything below that, gets characterized as an empty spot
-		if(circularities[indexOfMax]<0.20){
-			return(true); //it's empty
+		if(circularities[indexOfMax]<0.2){
+			penalty++;//return(true); //it's empty
 		}
 
 

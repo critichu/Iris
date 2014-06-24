@@ -3,7 +3,6 @@
  */
 package profiles;
 
-import fiji.threshold.Auto_Local_Threshold;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
@@ -17,7 +16,7 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
-import imageSegmenters.RisingTideSegmenter;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.SimpleImageSegmenter;
 
 import java.io.File;
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 
 import settings.BasicSettings;
 import tileReaderInputs.OpacityTileReaderInput;
-import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.OpacityTileReaderForHazyColonies;
 import utils.Toolbox;
@@ -36,21 +34,20 @@ import utils.Toolbox;
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
  * 
  * @author George Kritikos
- * @deprecated: this profile is replaced by EcoliGrowthProfile384_HazyColonies_old. Ironic, no?
+ *
  */
-public class EcoliGrowthProfile384_HazyColonies extends Profile {
+public class XgalProfile extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "E.coli Opacity Profile for 384 plates: special version for hazy colonies";
+	public static String profileName = "Xgal assay profile";
 
 
 	/**
 	 * this is a description of the profile that will be shown to the user on hovering the profile name 
 	 */
-	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes and opacities of E. coli on the UCSF screens." +
-			"This vesion specializes in really translucent, just pinend, or irregularly shaped colonies";
+	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes and opacities of E. coli on the UCSF screens";
 
 
 	/**
@@ -70,8 +67,8 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
 		//0. initialize settings and open files for input and output
 		//since this is a 384 plate, make sure the settings are redefined to match our setup
-		settings.numberOfColumnsOfColonies = 24;
-		settings.numberOfRowsOfColonies = 16;
+		//settings.numberOfColumnsOfColonies = 24;
+		//settings.numberOfRowsOfColonies = 16;
 
 		//
 		//--------------------------------------------------
@@ -147,7 +144,6 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 		imageConverter.convertToGray8();
 
 
-
 		//
 		//--------------------------------------------------
 		//
@@ -164,16 +160,16 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
 
 
-		//get a copy of the picture thresholded using a local algorithm
-		//ImagePlus BW_local_thresholded_picture = croppedImage.duplicate();
-		//turnImageBW_Local_auto(BW_local_thresholded_picture);
-
 
 
 
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+
+		//let colonies breathe
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -197,12 +193,8 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput); //calculate grid image
-			//Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
-			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
-
-			croppedImage.flush();
-			//croppedImage.flush();
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -232,7 +224,6 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
 				readerOutputs[i][j] = OpacityTileReaderForHazyColonies.processTile(
 						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
@@ -270,8 +261,8 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
-						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\n");
-
+						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
+						+ Integer.toString(readerOutputs[i][j].opacity) + "\n");
 			}
 		}
 
@@ -335,7 +326,7 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 	 * @return
 	 */
 	private boolean checkRowsColumnsIncorrectGridding(
-			BasicTileReaderOutput[][] readerOutputs) {
+			OpacityTileReaderOutput[][] readerOutputs) {
 
 		int numberOfRows = readerOutputs.length;		
 		if(numberOfRows==0)
@@ -640,22 +631,6 @@ public class EcoliGrowthProfile384_HazyColonies extends Profile {
 		}
 
 		return(true); //operation succeeded
-	}
-
-
-	/**
-	 * This function will convert the given picture into black and white
-	 * using a fancy local thresholding algorithm, as described here:
-	 * @see http://www.dentistry.bham.ac.uk/landinig/software/autothreshold/autothreshold.html
-	 * @param 
-	 */
-	private static void turnImageBW_Local_auto(ImagePlus BW_croppedImage){
-		//use the mean algorithm with default values
-		//just use smaller radius (8 instead of default 15)
-		Auto_Local_Threshold.Mean(BW_croppedImage, 200, 0, 0, true);
-		//		BW_croppedImage.updateAndDraw();
-		//		BW_croppedImage.show();
-		//		BW_croppedImage.hide();
 	}
 
 

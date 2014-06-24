@@ -139,6 +139,7 @@ public class EcoliOpacityProfile384 extends Profile {
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale)
+		ImagePlus colourCroppedImage = croppedImage.duplicate();
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -238,8 +239,8 @@ public class EcoliOpacityProfile384 extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			///HACK for Alex: removing the next return statement will make Iris print out the result even though the gridding failed  
 			//return;
@@ -277,8 +278,8 @@ public class EcoliOpacityProfile384 extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
 
 	}
