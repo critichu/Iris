@@ -171,8 +171,8 @@ public class BsubtilisHazyProfileHSB extends Profile {
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
 
-			System.err.println("\nE.coli opacity profile: unable to process picture " + justFilename);
-
+			System.err.println("\n"+profileName+": unable to process picture " + justFilename);
+			
 			System.err.print("Image segmentation algorithm failed:\n");
 
 			if(segmentationOutput.notEnoughColumnsFound){

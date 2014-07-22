@@ -126,6 +126,7 @@ public class EcoliOpacityProfile extends Profile {
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale)
+		ImagePlus colourCroppedImage = croppedImage.duplicate();
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -146,6 +147,10 @@ public class EcoliOpacityProfile extends Profile {
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+
+		//let colonies breathe
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -169,7 +174,7 @@ public class EcoliOpacityProfile extends Profile {
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -223,8 +228,8 @@ public class EcoliOpacityProfile extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			return;
 		}
@@ -263,8 +268,8 @@ public class EcoliOpacityProfile extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
 
 	}

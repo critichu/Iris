@@ -41,7 +41,7 @@ public class BasicProfile extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Basic Profile";
+	public static String profileName = "Stm growth profile";
 
 
 	/**

@@ -211,8 +211,8 @@ public class ColorTileReaderHSB {
 		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
 		output.colonyROI = colonyRoi;
 		if(colonySize!=0)
-			output.relativeColorIntensity = (double) biofilmColorSum / (double) colonySize;
-			//output.relativeColorIntensity = (int) Math.round(Math.log10(biofilmColorSum+1)  / colonySize);
+			output.relativeColorIntensity = (double) colonyColorSum / (double) colonySize;
+			//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
 
 		input.cleanup();
 		return output;

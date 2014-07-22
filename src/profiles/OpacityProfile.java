@@ -10,6 +10,7 @@ import ij.process.ImageConverter;
 import imageCroppers.NaiveImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 
 import java.io.File;
@@ -98,6 +99,7 @@ public class OpacityProfile extends Profile {
 		//
 
 		//3. pre-process the picture (i.e. make it grayscale)
+		ImagePlus colourCroppedImage = croppedImage.duplicate();
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -110,6 +112,10 @@ public class OpacityProfile extends Profile {
 		//4. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+
+		//let colonies breathe
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -172,7 +178,7 @@ public class OpacityProfile extends Profile {
 		}
 
 
-		
+
 		//check if a row or a column has most of it's tiles empty (then there was a problem with gridding)
 		//check rows first
 		if(checkRowsColumnsIncorrectGridding(readerOutputs)){
@@ -183,13 +189,13 @@ public class OpacityProfile extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			return;
 		}
 
-		
+
 
 
 		//6. output the results
@@ -222,14 +228,14 @@ public class OpacityProfile extends Profile {
 		//6.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
-			//calculate grid image
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			//calculate and save grid image
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
 
 	}
-	
-	
+
+
 	/**
 	 * This function will check if there is any row or any column with more than half of it's tiles being empty.
 	 * If so, it will return true. If everything is ok, it will return false.
