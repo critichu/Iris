@@ -47,50 +47,6 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 * This is the combo box used to select the profile
 	 */
 	public static JComboBox comboBox = null;
-	
-	//public static String selectedProfile;
-
-
-	/**
-	 * these are added specially for the multithreading case
-	 */
-	//public static boolean multiThreaded = false;
-	//public static ExecutorService executorService;
-//	public static List<Callable<Object>> todoThread;
-//	public static int numberOfThreads = 4;
-
-
-//	/**
-//	 * This string array holds the names of all the profiles
-//	 */
-//	public static String[] profileCollection = {
-//		"Stm growth",
-//		"Ecoli growth",
-//		"Ecoli opacity",
-//		"Ecoli opacity 384",
-//		"Ecoli growth 384 - hazy colonies",
-//		"B.subtilis Opacity (HSB)",
-//		"B.subtilis Sporulation (HSB)",
-//		//"CPRG 384",
-//		"Biofilm formation",
-//		"Biofilm formation (HSB)",
-//		//"Biofilm formation - Simple Grid",
-//		//"Opacity",
-//		//"Opacity (fixed grid)"
-//	};
-
-
-	
-
-	/**
-	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
-	 */
-	//public static String IrisVersion = "0.9.4.18";
-
-	/**
-	 * This string holds the commit id of Iris versioning in Git
-	 */
-	//public static String IrisBuild = "55e1fd9";
 
 
 	/**
