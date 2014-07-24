@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService;
 public class IrisFrontend {
 	
 	
-	public static String selectedProfile;
+
 
 
 	/**
@@ -57,6 +57,8 @@ public class IrisFrontend {
 		//"Opacity",
 		//"Opacity (fixed grid)"
 	};
+	
+	public static String selectedProfile = IrisFrontend.profileCollection[1];
 
 
 	/**
@@ -74,7 +76,7 @@ public class IrisFrontend {
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "6b191fe";
+	public static String IrisBuild = "8b975f9";
 
 
 	
