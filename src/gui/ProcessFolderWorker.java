@@ -69,7 +69,13 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		int max = filesInDirectory.length;
 
 		for (File file : filesInDirectory) {
-			processSingleFile(file);
+			
+			try{
+				processSingleFile(file);
+			}
+			catch(Exception e){
+				System.out.println("Error processing file!\n");
+			}
 
 			i++;
 			int progress = Math.min(i*100/max, 100);
