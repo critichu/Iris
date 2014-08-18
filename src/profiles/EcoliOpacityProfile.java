@@ -149,6 +149,7 @@ public class EcoliOpacityProfile extends Profile {
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 		//let colonies breathe
+		ColonyBreathing.breathingSpace = 8;
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
 
