@@ -37,61 +37,68 @@ public class ColonyBreathing {
 	public static BasicImageSegmenterOutput segmentPicture(BasicImageSegmenterOutput originalSegmentation, BasicImageSegmenterInput input){
 
 
-		//create a copy of the output
-		BasicImageSegmenterOutput output = new BasicImageSegmenterOutput();
-		output.ROImatrix = originalSegmentation.copyRoiMatrix();
+		try{
 
-		//for all rows except the last one
-		for(int i=0;i<input.settings.numberOfRowsOfColonies-1; i++){
-			//for all columns except the last one
-			for (int j = 0; j < input.settings.numberOfColumnsOfColonies-1; j++) {
+			//create a copy of the output
+			BasicImageSegmenterOutput output = new BasicImageSegmenterOutput();
+			output.ROImatrix = originalSegmentation.copyRoiMatrix();
 
-
-
-				Roi newRoi = colonyBreathe(output.ROImatrix[i][j], input.imageToSegment);
+			//for all rows except the last one
+			for(int i=0;i<input.settings.numberOfRowsOfColonies-1; i++){
+				//for all columns except the last one
+				for (int j = 0; j < input.settings.numberOfColumnsOfColonies-1; j++) {
 
 
 
-				//update bottom one's top (also change it's height)
-				//bottom one is on the next row, so i+1
-				//the new top of the tile just under the current tile is where the old one was 
-				//plus the difference from the new height to the previous height 
-				//e.g. making this tile higher should increase the bottom one's y
-				//conversely, making this tile shorter should bring the bottom one higher
-				int heightDifference = newRoi.getBounds().height - output.ROImatrix[i][j].getBounds().height;				
-
-				int bottomsNewTop = output.ROImatrix[i+1][j].getBounds().y + heightDifference;
-				int bottomsNewHeight = output.ROImatrix[i+1][j].getBounds().height - heightDifference; //just because we want to keep the bottom's bottom where it was
-
-				int x = output.ROImatrix[i+1][j].getBounds().x;
-				int y = bottomsNewTop;
-				int width = output.ROImatrix[i+1][j].getBounds().width;
-				int height = bottomsNewHeight;
-
-				output.ROImatrix[i+1][j] = new Roi(new Rectangle(x, y, width, height));
-
-				//in a similar fashion, update right one's left (also change it's width)
-				//right one is on the next column, so j+1
-				int widthDifference = newRoi.getBounds().width - output.ROImatrix[i][j].getBounds().width;				
-
-				int rightsNewLeft = output.ROImatrix[i][j+1].getBounds().x + widthDifference;
-				int rightsNewWidth = output.ROImatrix[i][j+1].getBounds().width - widthDifference; //just because we want to keep the bottom's bottom where it was
-
-				x = rightsNewLeft;
-				y = output.ROImatrix[i][j+1].getBounds().y;
-				width = rightsNewWidth;
-				height = output.ROImatrix[i][j+1].getBounds().height;
-
-				output.ROImatrix[i][j+1] = new Roi(new Rectangle(x, y, width, height));
+					Roi newRoi = colonyBreathe(output.ROImatrix[i][j], input.imageToSegment);
 
 
-				//now update also our current tile
-				output.ROImatrix[i][j] = newRoi;
 
+					//update bottom one's top (also change it's height)
+					//bottom one is on the next row, so i+1
+					//the new top of the tile just under the current tile is where the old one was 
+					//plus the difference from the new height to the previous height 
+					//e.g. making this tile higher should increase the bottom one's y
+					//conversely, making this tile shorter should bring the bottom one higher
+					int heightDifference = newRoi.getBounds().height - output.ROImatrix[i][j].getBounds().height;				
+
+					int bottomsNewTop = output.ROImatrix[i+1][j].getBounds().y + heightDifference;
+					int bottomsNewHeight = output.ROImatrix[i+1][j].getBounds().height - heightDifference; //just because we want to keep the bottom's bottom where it was
+
+					int x = output.ROImatrix[i+1][j].getBounds().x;
+					int y = bottomsNewTop;
+					int width = output.ROImatrix[i+1][j].getBounds().width;
+					int height = bottomsNewHeight;
+
+					output.ROImatrix[i+1][j] = new Roi(new Rectangle(x, y, width, height));
+
+					//in a similar fashion, update right one's left (also change it's width)
+					//right one is on the next column, so j+1
+					int widthDifference = newRoi.getBounds().width - output.ROImatrix[i][j].getBounds().width;				
+
+					int rightsNewLeft = output.ROImatrix[i][j+1].getBounds().x + widthDifference;
+					int rightsNewWidth = output.ROImatrix[i][j+1].getBounds().width - widthDifference; //just because we want to keep the bottom's bottom where it was
+
+					x = rightsNewLeft;
+					y = output.ROImatrix[i][j+1].getBounds().y;
+					width = rightsNewWidth;
+					height = output.ROImatrix[i][j+1].getBounds().height;
+
+					output.ROImatrix[i][j+1] = new Roi(new Rectangle(x, y, width, height));
+
+
+					//now update also our current tile
+					output.ROImatrix[i][j] = newRoi;
+
+				}
 			}
-		}
 
-		return output;
+			return output;
+		}
+		catch(Exception e){
+			//in case something goes wrong, fall back to the non-breathing segmentation
+			return(originalSegmentation);
+		}
 	}
 
 
@@ -105,7 +112,7 @@ public class ColonyBreathing {
 	 * @param segmenterOutput
 	 */
 	public static void paintSegmentedImage(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput) {
-		
+
 		ImageProcessor croppedImageProcessor = croppedImage.getProcessor();		
 		croppedImageProcessor.setColor(java.awt.Color.WHITE);
 
@@ -117,14 +124,14 @@ public class ColonyBreathing {
 		for(int i=0;i<numberOfRows; i++){
 			//for all columns
 			for (int j = 0; j < numberOfColumns; j++) {
-				
-				
+
+
 				int y1 = segmenterOutput.ROImatrix[i][j].getBounds().y;
 				int y2 = y1 + segmenterOutput.ROImatrix[i][j].getBounds().height;
 				int x1 = segmenterOutput.ROImatrix[i][j].getBounds().x;
 				int x2 = x1 + segmenterOutput.ROImatrix[i][j].getBounds().width;
-				
-				
+
+
 				//draw the tile's borders:
 				//1. draw the top boundary (1px below)
 				croppedImageProcessor.drawLine(x1, y1+1, x2, y1+1);
@@ -135,7 +142,7 @@ public class ColonyBreathing {
 				croppedImageProcessor.drawLine(x1+1, y1, x1+1, y2);
 				//4. draw the right boundary (1px to the left)
 				croppedImageProcessor.drawLine(x2-1, y1, x2-1, y2);
-				
+
 			}
 
 		}
@@ -166,10 +173,10 @@ public class ColonyBreathing {
 		//first calculate the bottom boundary, then the right boundary
 		int newBottom = colonyBreatheBotom(left, oldRight, oldBottom, bigPicture) + oldBottom;
 		int newRight = colonyBreatheRight(top, newBottom, oldRight, bigPicture) + oldRight; //use the new bottom
-		
+
 		int newHeight = newBottom - top;
 		int newWidth = newRight - left;
-		
+
 
 
 		//calculate the new colony Roi
