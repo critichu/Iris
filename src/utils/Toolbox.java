@@ -312,7 +312,7 @@ public class Toolbox {
 	 * @param croppedImage
 	 * @return
 	 */
-	private static ArrayList<Integer> sumOfRows(ImagePlus croppedImage){
+	public static ArrayList<Integer> sumOfRows(ImagePlus croppedImage){
 		int dimensions[] = croppedImage.getDimensions();
 
 		//make the sum of rows

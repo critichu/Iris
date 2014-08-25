@@ -33,7 +33,7 @@ public class PicturesFilenameFilter implements FilenameFilter {
 		if(filename.contains("dat_grid_ovr")){
 			return(false);
 		}
-		if(filename.contains("jpg") || filename.contains("JPG") || filename.contains("png")){ //png is a hack to also process screenshots
+		if(filename.contains(".jpg") || filename.contains(".JPG") || filename.contains(".png") || filename.contains(".tif")){ //png is a hack to also process screenshots
 			return(true);
 		}
 		return(false);

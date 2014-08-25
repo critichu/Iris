@@ -76,7 +76,7 @@ public class Hough_Circles implements PlugInFilter {
 	}
 
 	public void run(ImageProcessor ip) {
-		
+
 		ip.setAutoThreshold(Method.Otsu, true);
 
 		imageValues = (byte[])ip.getPixels();
@@ -150,63 +150,92 @@ public class Hough_Circles implements PlugInFilter {
 
 		int[] radius = this.radius;
 		Point[] centers = this.centerPoint;
-		
-		int maxIndex = getIndexOfMaximumCircleInbounds(radius, centers, ip);
-//		int maxIndex = 0;
+
+		int maxIndex = getIndexOfMaxCenteredCircle(radius, centers, ip);//getIndexOfMaximumCircleInbounds(radius, centers, ip);
+		//		int maxIndex = 0;
 
 		Ellipse2D circle = new Ellipse2D.Double(centers[maxIndex].x, centers[maxIndex].y, 2*radius[maxIndex], 2*radius[maxIndex]); //put the points here
-		
-		
+
+
 		return(circle);
 
 
 	}
-	
+
+
+	private static int getIndexOfMaxCenteredCircle(int[] radius, Point[] centers, ImageProcessor ip){
+		
+
+		int imageWidth = ip.getRoi().width;
+		int imageHeight = ip.getRoi().height;
+
+
+		int indexOfMax = getIndexOfMaximumCircleInbounds(radius, centers, ip);
+		for(int i=1; i<radius.length; i++){
+			
+			indexOfMax = Toolbox.getIndexOfMaximumElement(radius);
+			//if the circle center is >10% (in tile size) off the tile center, dismiss this tile  
+			if(Math.abs(centers[indexOfMax].x - (double)(imageWidth/2.0)) > 0.1*(double)imageWidth){
+				radius[indexOfMax]=0;
+				continue;
+			}
+			if(Math.abs(centers[indexOfMax].y - (double)(imageHeight/2.0)) > 0.1*(double)imageHeight){
+				radius[indexOfMax]=0;
+				continue;
+			}
+			break;
+		}
+		
+		return(indexOfMax);
+
+
+	}
+
 	/**
 	 * This function will find the circle best fitting the colony
 	 * @return
 	 */
 	private static int getIndexOfMaximumCircleInbounds(int[] radius, Point[] centers, ImageProcessor ip){
-		
+
 		int imageWidth = ip.getRoi().width;
 		int imageHeight = ip.getRoi().height;
-		
+
 		for(int i=1; i<radius.length; i++){
 			int maxIndex = Toolbox.getIndexOfMaximumElement(radius);
-			
+
 			//top
 			if(centers[maxIndex].y - radius[maxIndex] < 0 ){
 				radius[maxIndex] = 0;
 				continue;
 			}
-			
+
 			//bottom
 			if(centers[maxIndex].y + radius[maxIndex] > imageHeight ){
 				radius[maxIndex] = 0;
 				continue;
 			}
-			
+
 			//left
 			if(centers[maxIndex].x - radius[maxIndex] < 0 ){
 				radius[maxIndex] = 0;
 				continue;
 			}
-			
+
 			//right
 			if(centers[maxIndex].x + radius[maxIndex] > imageWidth ){
 				radius[maxIndex] = 0;
 				continue;
 			}
-			
+
 			//if it passed all that, then the circle is in bounds
 			return(maxIndex);
-			
+
 		}
-		
+
 		//fall back to the first circle that you found
 		return(0);
-		
-		
+
+
 	}
 
 
