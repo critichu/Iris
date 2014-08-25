@@ -40,6 +40,9 @@ public class IrisSingleColonyRunTileReader {
 	public static String profileName = "single tile profile";
 
 
+	private static double varianceThreshold = 2e4;
+
+
 	/**
 	 * @param args
 	 */
@@ -57,7 +60,6 @@ public class IrisSingleColonyRunTileReader {
 
 		String folderLocation = args[0];
 
-
 		//get a list of the files in the directory, keeping only image files
 		File directory = new File(folderLocation);
 		File[] filesInDirectory = directory.listFiles(new PicturesFilenameFilter());
@@ -66,7 +68,12 @@ public class IrisSingleColonyRunTileReader {
 		for (File file : filesInDirectory) {
 			String[] args1 = new String[2];
 			args1[0] = file.getAbsolutePath();
-			IrisSingleColonyRunTileReader.processSingleTile(args1);
+//			try {
+				IrisSingleColonyRunTileReader.processSingleTile(args1);
+//			} catch (Exception e) {
+//				System.out.println("Couldn't process file..\n");
+//			}
+			
 		}
 	}
 
@@ -90,8 +97,7 @@ public class IrisSingleColonyRunTileReader {
 		output.append(filename+"\n");
 		output.append("no grid, single colony image file\n");
 		output.append("no grid, single colony image file\n");
-		
-		//String filename = "/Users/george/Desktop/Iris/biofilm readout/Manuel odd colonies issue/colony pictures/dark/Screen Shot 2014-05-14 at 7.39.43 PM.png";
+
 
 		//1. open the image file, and check if it was opened correctly
 		ImagePlus originalImage = IJ.openImage(filename);
@@ -102,7 +108,7 @@ public class IrisSingleColonyRunTileReader {
 			return;
 		}
 
-		//7.1 output the colony measurements as a text file
+		//output the colony measurements as a text file
 		output.append("row\t" +
 				"column\t" +
 				"empty\t" +
@@ -116,31 +122,47 @@ public class IrisSingleColonyRunTileReader {
 				"size_threshold\t" +
 				"size_hough\n");
 
-		int i=0;
-		int j=0;
-		output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t"); 
+//		int i=0;
+//		int j=0;
+//		output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t");
+		//4. pre-process the picture (i.e. make it grayscale)
+		ImagePlus tile = originalImage.duplicate();
+		ImageConverter imageConverter = new ImageConverter(tile);
+		imageConverter.convertToGray8();
+		
+		BasicTileReaderInput input = new BasicTileReaderInput(tile, null);
 
-		getTileFeatures(originalImage.duplicate(), output);
+		Roi defaultRoi = getTileFeatures(originalImage.duplicate(), output);
+		
+		BasicTileReaderOutput basicTileReaderOutput = BasicTileReader.processTile(input);
+		
 
-		//create input
-		BasicTileReaderInput input = new BasicTileReaderInput(originalImage.duplicate(), null);
+		
+		BasicTileReaderOutput houghTileReaderOutput = null;
 
-		//call tile reader
-		BasicTileReaderOutput basicTileReaderOutput = MyHoughCircleFinder.processTile(input);
-		output.append(Integer.toString(basicTileReaderOutput.colonySize) + "\n");
-
-
-
-
-		//check if writing to disk was successful
-		String outputFilename = filename + ".iris";
-		if(!writeOutputFile(outputFilename, output)){
-			System.err.println("Could not write output file " + outputFilename);
+		//if it's not empty but the default ROI method failed
+		if(!isTileEmpty_simple(originalImage) && basicTileReaderOutput.colonySize==0){
+			//call Hough tile reader
+			
+			tile = originalImage.duplicate();
+			imageConverter = new ImageConverter(tile);
+			imageConverter.convertToGray8();
+			
+			input = new BasicTileReaderInput(tile, null);
+			
+			houghTileReaderOutput = MyHoughCircleFinder.processTile(input);
+//			output.append(Integer.toString(houghTileReaderOutput.colonySize) + "\n");
 		}
-		else{
-			//System.out.println("Done processing file " + filename + "\n\n");
-			System.out.println("...done processing!");
-		}
+
+//		//check if writing to disk was successful
+//		String outputFilename = filename + ".iris";
+//		if(!writeOutputFile(outputFilename, output)){
+//			System.err.println("Could not write output file " + outputFilename);
+//		}
+//		else{
+//			//System.out.println("Done processing file " + filename + "\n\n");
+//			System.out.println("...done processing!");
+//		}
 
 
 
@@ -150,9 +172,13 @@ public class IrisSingleColonyRunTileReader {
 		//paint contour picture (from output Roi) on input picture
 		//originalImage.setRoi(output.colonyROI, true);
 		originalImage.getProcessor().setColor(java.awt.Color.cyan);
-		basicTileReaderOutput.colonyROI.drawPixels(originalImage.getProcessor());
-		//			originalImage.show();
-		//			originalImage.hide();
+		if(houghTileReaderOutput!=null)
+			houghTileReaderOutput.colonyROI.drawPixels(originalImage.getProcessor());
+
+		originalImage.getProcessor().setColor(java.awt.Color.white);
+		if(basicTileReaderOutput.colonySize!=0)
+			basicTileReaderOutput.colonyROI.drawPixels(originalImage.getProcessor());
+
 
 		//save it as filename.ROI.png
 		Toolbox.savePicture(originalImage, filename.concat(".ROI.png"));
@@ -197,7 +223,7 @@ public class IrisSingleColonyRunTileReader {
 	 * between the 2 tile readout modules
 	 * @see BasicTileReader.isTileEmpty
 	 */
-	private static boolean getTileFeatures(ImagePlus tile, StringBuffer output) {
+	private static Roi getTileFeatures(ImagePlus tile, StringBuffer output) {
 
 		/**
 		 * Penalty is a number given to this tile if some of it's attributes (e.g. circularity of biggest particle)
@@ -211,7 +237,7 @@ public class IrisSingleColonyRunTileReader {
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImageConverter imageConverter = new ImageConverter(tile);
 		imageConverter.convertToGray8();
-		
+
 		//threshold the picture
 		Toolbox.turnImageBW_Otsu_auto(tile);
 
@@ -250,7 +276,7 @@ public class IrisSingleColonyRunTileReader {
 			output.append(Double.toString(0) + "\t");//X_bounding_rectangle
 			output.append(Double.toString(0) + "\t");//Y_bounding_rectangle
 			output.append(Double.toString(0) + "\t");//size
-			return(empty);
+			return(null);
 		}
 
 
@@ -298,7 +324,7 @@ public class IrisSingleColonyRunTileReader {
 			output.append(Double.toString(X_bounding_rectangles[indexOfMax]) + "\t");//X_bounding_rectangle
 			output.append(Double.toString(Y_bounding_rectangles[indexOfMax]) + "\t");//Y_bounding_rectangle
 			output.append(Double.toString(areas[indexOfMax]) + "\t");//size
-			return(empty);
+			return(null);
 		}
 
 		//borderline to empty tile
@@ -320,7 +346,7 @@ public class IrisSingleColonyRunTileReader {
 			output.append(Double.toString(X_bounding_rectangles[indexOfMax]) + "\t");//X_bounding_rectangle
 			output.append(Double.toString(Y_bounding_rectangles[indexOfMax]) + "\t");//Y_bounding_rectangle
 			output.append(Double.toString(areas[indexOfMax]) + "\t");//size
-			return(empty);
+			return(null);
 			//the tile is empty, the particle was just a contamination
 			//TODO: notify the user that there has been a contamination in the plate in this spot
 		}
@@ -349,7 +375,7 @@ public class IrisSingleColonyRunTileReader {
 			output.append(Double.toString(X_bounding_rectangles[indexOfMax]) + "\t");//X_bounding_rectangle
 			output.append(Double.toString(Y_bounding_rectangles[indexOfMax]) + "\t");//Y_bounding_rectangle
 			output.append(Double.toString(areas[indexOfMax]) + "\t");//size
-			return(empty);
+			return(null);
 		}
 
 
@@ -371,7 +397,7 @@ public class IrisSingleColonyRunTileReader {
 			output.append(Double.toString(X_bounding_rectangles[indexOfMax]) + "\t");//X_bounding_rectangle
 			output.append(Double.toString(Y_bounding_rectangles[indexOfMax]) + "\t");//Y_bounding_rectangle
 			output.append(Double.toString(areas[indexOfMax]) + "\t");//size
-			return(empty);
+			return(null);
 		}
 
 
@@ -406,7 +432,7 @@ public class IrisSingleColonyRunTileReader {
 			output.append(Double.toString(X_bounding_rectangles[indexOfMax]) + "\t");//X_bounding_rectangle
 			output.append(Double.toString(Y_bounding_rectangles[indexOfMax]) + "\t");//Y_bounding_rectangle
 			output.append(Double.toString(areas[indexOfMax]) + "\t");//size
-			return(empty);
+			return(null);
 		}
 
 
@@ -421,7 +447,7 @@ public class IrisSingleColonyRunTileReader {
 		output.append(Double.toString(areas[indexOfMax]) + "\t");//size
 
 
-		return(empty);
+		return(rois[indexOfMax]);
 	}
 
 	/**
@@ -473,6 +499,26 @@ public class IrisSingleColonyRunTileReader {
 		}
 
 		return(sumOfRows);
+	}
+
+
+	/**
+	 * This function checks whether the given tile is empty,
+	 * by summing up it's brightness and calculating the variance of these sums.
+	 * Empty tiles have a very low variance, whereas tiles with colonies have high variances.
+	 * @param tile
+	 * @return
+	 */
+	private static boolean isTileEmpty_simple(ImagePlus tile){
+		//sum up the pixel values (brightness) on the x axis
+		double[] sumOfBrightnessXaxis = sumOfRows(tile);
+		double variance = StdStats.varp(sumOfBrightnessXaxis);
+
+
+		if(variance<varianceThreshold){
+			return(true);
+		}
+		return(false);
 	}
 
 }
