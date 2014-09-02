@@ -65,6 +65,9 @@ public class Hough_Circles implements PlugInFilter {
 	private int vectorMaxSize = 500;
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
+	
+	public static double centerX;
+	public static double centerY;
 
 
 	public int setup(String arg, ImagePlus imp) {
@@ -118,7 +121,12 @@ public class Hough_Circles implements PlugInFilter {
 	}
 
 
-	public Ellipse2D my_run(ImageProcessor ip){
+	public Ellipse2D my_run(ImageProcessor ip){//ImagePlus tileImage){
+
+		//ImageProcessor ip = tileImage.duplicate().getProcessor();
+		//Rectangle oldRoi = ip.getRoi();
+		//ip.resetRoi();
+
 		imageValues = (byte[])ip.getPixels();
 		Rectangle r = ip.getRoi();
 
@@ -135,7 +143,7 @@ public class Hough_Circles implements PlugInFilter {
 		radiusMax = width/2;
 		radiusInc = 2;
 		depth = ((radiusMax-radiusMin)/radiusInc)+1;
-		maxCircles = 15;
+		maxCircles = 15;//15;
 		//threshold = (int) gd.getNextNumber();
 
 
@@ -151,8 +159,10 @@ public class Hough_Circles implements PlugInFilter {
 		int[] radius = this.radius;
 		Point[] centers = this.centerPoint;
 
-		int maxIndex = getIndexOfMaxCenteredCircle(radius, centers, ip);//getIndexOfMaximumCircleInbounds(radius, centers, ip);
-		//		int maxIndex = 0;
+		//ip.setRoi(oldRoi);
+		//int maxIndex = getIndexOfMaxCenteredCircle(radius, centers, ip);
+		int maxIndex = getIndexOfMaximumCircleInbounds(radius, centers, ip);
+//				int maxIndex = 0;
 
 		Ellipse2D circle = new Ellipse2D.Double(centers[maxIndex].x, centers[maxIndex].y, 2*radius[maxIndex], 2*radius[maxIndex]); //put the points here
 
@@ -163,29 +173,48 @@ public class Hough_Circles implements PlugInFilter {
 	}
 
 
+	/**
+	 * will discard the circles that are futher than 10% (in tile dimensions) from 
+	 * the old (traditional) ROI center 
+	 * @param radius
+	 * @param centers
+	 * @param ip
+	 * @return
+	 */
 	private static int getIndexOfMaxCenteredCircle(int[] radius, Point[] centers, ImageProcessor ip){
+
 		
+//		ImageProcessor ip = tileImage.getProcessor();
 
 		int imageWidth = ip.getRoi().width;
 		int imageHeight = ip.getRoi().height;
 
 
+//		centerX = (double)(imageWidth/2.0);
+//		centerY =  (double)(imageHeight/2.0);
+//
+//		if(ip.getRoi()!=null){ //if there was a ROI from a thresholding, we should use this to center our circle
+//			centerX = (double)(ip.getRoi().getBounds().getCenterX());
+//			centerY =  (double)(ip.getRoi().getBounds().getCenterY());
+//		}
+
+
 		int indexOfMax = getIndexOfMaximumCircleInbounds(radius, centers, ip);
 		for(int i=1; i<radius.length; i++){
-			
+
 			indexOfMax = Toolbox.getIndexOfMaximumElement(radius);
 			//if the circle center is >10% (in tile size) off the tile center, dismiss this tile  
-			if(Math.abs(centers[indexOfMax].x - (double)(imageWidth/2.0)) > 0.1*(double)imageWidth){
+			if(Math.abs(centers[indexOfMax].x - centerX) > 0.1*(double)imageWidth){
 				radius[indexOfMax]=0;
 				continue;
 			}
-			if(Math.abs(centers[indexOfMax].y - (double)(imageHeight/2.0)) > 0.1*(double)imageHeight){
+			if(Math.abs(centers[indexOfMax].y - centerY) > 0.1*(double)imageHeight){
 				radius[indexOfMax]=0;
 				continue;
 			}
 			break;
 		}
-		
+
 		return(indexOfMax);
 
 

@@ -19,7 +19,7 @@ import java.io.IOException;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaders.BasicTileReader;
-import tileReaders.MyHoughCircleFinder;
+import tileReaders.BasicTileReaderHSB_darkColonies;
 import utils.StdStats;
 import utils.Toolbox;
 
@@ -134,14 +134,14 @@ public class IrisSingleColonyRunTileReader {
 
 		Roi defaultRoi = getTileFeatures(originalImage.duplicate(), output);
 		
-		BasicTileReaderOutput basicTileReaderOutput = BasicTileReader.processTile(input);
+		BasicTileReaderOutput basicTileReaderOutput = BasicTileReaderHSB_darkColonies.processTile(input);
 		
 
 		
 		BasicTileReaderOutput houghTileReaderOutput = null;
 
 		//if it's not empty but the default ROI method failed
-		if(!isTileEmpty_simple(originalImage) && basicTileReaderOutput.colonySize==0){
+		//if(!isTileEmpty_simple(originalImage) && basicTileReaderOutput.colonySize==0){
 			//call Hough tile reader
 			
 			tile = originalImage.duplicate();
@@ -150,9 +150,9 @@ public class IrisSingleColonyRunTileReader {
 			
 			input = new BasicTileReaderInput(tile, null);
 			
-			houghTileReaderOutput = MyHoughCircleFinder.processTile(input);
+//			houghTileReaderOutput = MyHoughCircleFinder.processTile(input);
 //			output.append(Integer.toString(houghTileReaderOutput.colonySize) + "\n");
-		}
+		//}
 
 //		//check if writing to disk was successful
 //		String outputFilename = filename + ".iris";

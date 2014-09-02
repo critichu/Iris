@@ -29,14 +29,12 @@ import java.util.ArrayList;
 
 import settings.ColorSettings;
 import tileReaderInputs.BasicTileReaderInput;
-import tileReaderInputs.ColorTileReaderInput2;
-import tileReaderInputs.OpacityTileReaderInput;
+import tileReaderInputs.ColorTileReaderInput3;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
-import tileReaders.BasicTileReaderHSB;
+import tileReaders.BasicTileReaderHSB_darkColonies;
 import tileReaders.ColorTileReaderHSB;
-import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
 /**
@@ -158,11 +156,11 @@ public class ColorProfileEcoli extends Profile{
 		croppedImage.flush();
 
 		//get a copy of the picture thresholded using a local algorithm
-		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
+		ImagePlus grayscalePicture = grayscaleCroppedImage.duplicate();
 //		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
 //		turnImageBW_Local_auto(BW_local_thresholded_picture);
 		
-		@SuppressWarnings("unused")
+//		@SuppressWarnings("unused")
 		//blah = BW_local_thresholded_picture.getTitle();
 
 
@@ -175,7 +173,7 @@ public class ColorProfileEcoli extends Profile{
 		//
 
 		//5. segment the cropped picture
-		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
+		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscalePicture, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 
@@ -220,6 +218,7 @@ public class ColorProfileEcoli extends Profile{
 
 
 		//6. colony breathing
+//gkri 25.08.2014		
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
 
@@ -254,18 +253,23 @@ public class ColorProfileEcoli extends Profile{
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 
 				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
-				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
-						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+				basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
+						new BasicTileReaderInput(grayscalePicture, segmentationOutput.ROImatrix[i][j], settings));
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
 					//colour
-					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processThresholdedTile(
-							new ColorTileReaderInput2(colourCroppedImage, BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
+							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 					
 					//opacity -- to check if colony darkness correlates with colour information
-					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
-							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+//					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
+//							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
+					opacityTileReaderOutputs[i][j].colonySize = basicTileReaderOutputs[i][j].colonySize;
+					opacityTileReaderOutputs[i][j].circularity = basicTileReaderOutputs[i][j].circularity;
+					opacityTileReaderOutputs[i][j].colonyROI = basicTileReaderOutputs[i][j].colonyROI;
+					opacityTileReaderOutputs[i][j].opacity=0;
 					
 				}
 				else{

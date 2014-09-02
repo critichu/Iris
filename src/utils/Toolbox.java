@@ -11,6 +11,7 @@ import ij.measure.Measurements;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -30,6 +31,9 @@ import tileReaderOutputs.BasicTileReaderOutput;
  *
  */
 public class Toolbox {
+
+	private static final boolean debug = false;
+
 
 	/**
 	 * This function will create a copy of the original image, and rotate that copy.
@@ -79,10 +83,13 @@ public class Toolbox {
 				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
 				croppedImage.copy(false);
 				ImagePlus tile = ImagePlus.getClipboard();
+				
+//				ImageConverter imageConverter = new ImageConverter(tile);
+//				imageConverter.convertToGray8();
 
 				//				tile.updateImage();
-				//				tile.show();
-				//				tile.hide();
+//								tile.show();
+//								tile.hide();
 
 				//apply the ROI, get the mask
 				ImageProcessor tileProcessor = tile.getProcessor();
@@ -91,10 +98,12 @@ public class Toolbox {
 				tileProcessor.setColor(Color.white);
 				tileProcessor.setBackgroundValue(0);
 				tileProcessor.fill(tileProcessor.getMask());
+				//tileProcessor.fill(tileReaderOutputs[i][j].colonyROI.getMask());
+				
 
 				//				tile.updateImage();
-				//				tile.show();
-				//				tile.hide();
+//								tile.show();
+//								tile.hide();
 
 
 				//get the bounds of the mask, that's it, save it
@@ -103,9 +112,9 @@ public class Toolbox {
 
 
 				//				tile.setProcessor(colonyBounds[i][j]);
-				//				tile.updateImage();
-				//				tile.show();
-				//				tile.hide();
+//								tile.updateImage();
+//								tile.show();
+//								tile.hide();
 
 
 			}
@@ -505,8 +514,7 @@ public class Toolbox {
 
 		System.out.println(Integer.toString(getThreshold(BW_croppedImage, Method.RenyiEntropy)));
 
-		BW_croppedImage.show();
-		BW_croppedImage.hide();
+		Toolbox.show(BW_croppedImage, "before thresholding RenyiEntropy_auto");
 
 		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
 		imageProcessor.setAutoThreshold(Method.RenyiEntropy, true, ImageProcessor.BLACK_AND_WHITE_LUT);
@@ -576,6 +584,57 @@ public class Toolbox {
 		}
 
 		return(index);
+	}
+
+
+	/**
+	 * @param tileImage
+	 * @param string
+	 */
+	public static void show(ImagePlus image, String title) {
+
+		if(Toolbox.debug)
+		{
+			image.setTitle(title);
+			image.show();
+			image.hide();
+		}
+		
+	}
+
+
+	/**
+	 * This is very very very badly done
+	 * @param colonyRoi
+	 * @return
+	 * @deprecated
+	 */
+	public static int getSizeOfRoi(Roi colonyRoi) {
+		
+		ImagePlus image = colonyRoi.getImage().duplicate();
+		image.setRoi(colonyRoi);
+		ColorProcessor ip = (ColorProcessor) image.getChannelProcessor();
+		ip.setRoi(colonyRoi);
+		ip.fillOutside(colonyRoi);
+		
+		//ip.convertToByte(false);
+		
+		//ByteProcessor bp = (ByteProcessor) image.getpro
+
+		byte[] maskPixels = (byte[]) ip.getChannel(1);
+
+		
+		
+		int roiSize = 0;
+		
+		for(int i=1; i<maskPixels.length; i++){
+			if(maskPixels[i]>0)
+				roiSize++;
+		}
+		
+		return(roiSize);
+		
+		
 	}
 
 

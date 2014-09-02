@@ -5,11 +5,12 @@ package tileReaders;
 
 import fiji.threshold.Auto_Local_Threshold;
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
-import ij.plugin.Hough_Circles;
+import ij.plugin.filter.Binary;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
@@ -27,7 +28,7 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class BasicTileReaderHSB {
+public class BasicTileReaderHSB_darkColonies {
 
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
@@ -44,18 +45,38 @@ public class BasicTileReaderHSB {
 	 * @return
 	 */
 	public static BasicTileReaderOutput processTile(BasicTileReaderInput input){
-		
-		//-1. make a copy of the input tile, in case we need to pass it to HoughCircleFinder
-		ImagePlus tileCopy = input.tileImage.duplicate();
 
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
+		//1. check if the tile is empty or not
+		boolean emptyTile_simple = isTileEmpty_simple(input.tileImage);
+
+
+		if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
+
+			output.emptyTile = true;
+			output.colonySize = 0;//return a colony size of zero
+
+			input.cleanup(); //clear the tile image here, since we don't need it anymore
+
+			return(output);
+		}
+
+		//-1. make a copy of the input tile, in case we need to pass it to HoughCircleFinder
+		ImagePlus tileCopy = input.tileImage.duplicate();
+
 
 		//1. apply a threshold at the tile, using a local thresholding algorithm
-		turnImageBW_Huang_auto(input.tileImage);
-		//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
 
+		turnImageBW_Local_auto_dark_colonies(input.tileImage);
+		//Toolbox.show(input.tileImage, "out of the local thresholding function");
+
+		//threshold it again...
+		//turnImageBW_Huang_auto(input.tileImage);
+		//		input.tileImage.getProcessor().invert();
+		//		
+		//		Toolbox.show(input.tileImage, "after second inversion");
 
 
 		//2. perform particle analysis on the thresholded tile
@@ -65,7 +86,9 @@ public class BasicTileReaderHSB {
 		RoiManager roiManager = new RoiManager(true);
 
 		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER, 
+		//old//ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER,
+		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE /*+ ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES*/ +ParticleAnalyzer.ADD_TO_MANAGER,
+		//new, showing results //ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_OUTLINES +ParticleAnalyzer.SHOW_RESULTS /*+ ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES*/ +ParticleAnalyzer.ADD_TO_MANAGER,
 				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
 				resultsTable, 5, Integer.MAX_VALUE);
 
@@ -75,6 +98,7 @@ public class BasicTileReaderHSB {
 		Roi[] rois = roiManager.getRoisAsArray();
 
 
+//		IJ.run("Close");
 
 		//3.1 check if the returned results table is empty
 		if(resultsTable.getCounter()==0){
@@ -90,19 +114,8 @@ public class BasicTileReaderHSB {
 		//if variance is more than 1, then the brightness sum said there's a colony there
 		//so there's has to be both variance less than 1 and other filters saying that there's no colony there
 
-		boolean emptyTile = isTileEmpty(resultsTable, input.tileImage);
-		boolean emptyTile_simple = isTileEmpty_simple(input.tileImage);
+		//boolean emptyTile = isTileEmpty(resultsTable, input.tileImage);
 
-
-		if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
-			
-			output.emptyTile = true;
-			output.colonySize = 0;//return a colony size of zero
-
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-
-			return(output);
-		}
 
 		//		if(isTileEmpty_simple2(resultsTable, input.tileImage)){
 		//			output.emptyTile = true;
@@ -114,32 +127,20 @@ public class BasicTileReaderHSB {
 		//		}
 
 
-		if(!emptyTile){ //there's a colony in the tile which was detected in the traditional way
+		//else{ //there's a colony in the tile which was detected in the least stringent way
 
-			//3.2 if there was a colony there, return the area of the biggest particle
-			//this should also clear away contaminations, because normally the contamination
-			//area will be smaller than the colony area, so the contamination will never be reported
-			int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-			output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
-			output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-			output.colonyROI = rois[indexOfBiggestParticle];
-			
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
+		//3.2 if there was a colony there, return the area of the biggest particle
+		//this should also clear away contaminations, because normally the contamination
+		//area will be smaller than the colony area, so the contamination will never be reported
+		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
+		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		output.colonyROI = rois[indexOfBiggestParticle];
 
-			return(output);//returns the biggest result
-		}
-		else{ //there's a colony here, but we need to employ Hough to get it right
-			input.tileImage = tileCopy;
-			//input.tileImage.setRoi(rois[getIndexOfBiggestParticle(resultsTable)], false);
-			
-			Hough_Circles.centerX = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
-			Hough_Circles.centerY = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
-			return(MyHoughCircleFinder.processTile(input));
-		}
+		input.cleanup(); //clear the tile image here, since we don't need it anymore
 
-		//TODO: still there is no way to filter out contaminations in case the tile is empty
-		//this should be straight forward to do, since the center of mass (see ResultsTable) of the contamination
-		//should be very far from the center of the tile
+		return(output);//returns the biggest result
+		//}
 
 	}
 
@@ -261,13 +262,78 @@ public class BasicTileReaderHSB {
 	 * @see http://www.dentistry.bham.ac.uk/landinig/software/autothreshold/autothreshold.html
 	 * @param 
 	 */
-	private static void turnImageBW_Local_auto(ImagePlus BW_croppedImage){
-		//use the mean algorithm with default values
-		//just use smaller radius (8 instead of default 15)
-		Auto_Local_Threshold.Mean(BW_croppedImage, 8, 0, 0, true);
-		//		BW_croppedImage.updateAndDraw();
-		//		BW_croppedImage.show();
-		//		BW_croppedImage.hide();
+	private static void turnImageBW_Local_auto_dark_colonies(ImagePlus tileImage){
+
+		Prefs.blackBackground = true;
+
+		Toolbox.show(tileImage, "original");
+
+		Auto_Local_Threshold.Mean(tileImage, 20, 0, 0, true);
+
+		Toolbox.show(tileImage, "threshold");
+
+
+		Binary binaryTools = new Binary();
+
+
+		binaryTools.setup("open", tileImage);
+		binaryTools.run(tileImage.getProcessor());
+		//tileImage.updateImage();
+
+		//	Toolbox.show(tileImage, "close");
+
+
+		//		removeEdgePixels(tileImage);
+		//		
+		//		Toolbox.show(tileImage, "edge removed");
+
+
+		binaryTools.setup("fill", tileImage);
+		binaryTools.run(tileImage.getProcessor());
+		binaryTools.run(tileImage.getProcessor());
+
+		tileImage.updateImage();
+
+		Toolbox.show(tileImage, "fill");
+
+
+
+		//tileImage.getProcessor().invert();
+		//tileImage.updateImage();
+
+	}
+
+
+
+	/**
+	 * This function will set all edge pixels (top, bottom rows, left, right columns)
+	 * as background
+	 * @param tileImage
+	 */
+	private static void removeEdgePixels(ImagePlus tileImage){
+		int foreground, background;
+
+		ImageProcessor ip = tileImage.getProcessor();
+		int width = ip.getWidth();
+		int height = ip.getHeight();
+
+
+		int fg = Prefs.blackBackground ? 255 : 0;
+		foreground = ip.isInvertedLut() ? 255-fg : fg;
+		background = 255 - foreground;
+
+		///HACK
+		background = 255;
+
+		for (int y=0; y<height; y++) {
+			ip.putPixel(0,y,background); 
+			ip.putPixel(width-1,y,background);
+		}
+
+		for (int x=0; x<width; x++){
+			ip.putPixel(x,0,background);
+			ip.putPixel(x,height-1,background);
+		}		
 	}
 
 

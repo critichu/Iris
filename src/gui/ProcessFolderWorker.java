@@ -75,6 +75,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			}
 			catch(Exception e){
 				System.out.println("Error processing file!\n");
+				e.printStackTrace(System.err);
 			}
 
 			i++;

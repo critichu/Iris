@@ -16,6 +16,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import tileReaderInputs.ColorTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput2;
+import tileReaderInputs.ColorTileReaderInput3;
 import tileReaderOutputs.ColorTileReaderOutput;
 
 /**
@@ -212,6 +213,104 @@ public class ColorTileReaderHSB {
 		output.colonyROI = colonyRoi;
 		if(colonySize!=0)
 			output.relativeColorIntensity = (double) colonyColorSum / (double) colonySize;
+			//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
+
+		input.cleanup();
+		return output;
+	}
+	
+	
+	
+	/**
+	 * This function will take as input a colored tile, plus a tile which has already been thresholded.
+	 * It will perform particle analysis and measure the color in the thresholded area.
+	 * @param input
+	 * @return
+	 */
+	public static ColorTileReaderOutput processDefinedColonyTile(ColorTileReaderInput3 input){
+
+		//0. create the output object
+		ColorTileReaderOutput output = new ColorTileReaderOutput();
+
+		//set the pre-calculated ROI (of the largest particle = colony) on the original picture and fill everything around it with black
+		input.tileImage.setRoi(input.colonyRoi);
+		
+
+		try {
+			input.tileImage.getProcessor().fillOutside(input.colonyRoi);
+		} catch (Exception e) {
+			output.biofilmArea=0;
+			output.colorIntensitySum=0;
+			output.colorIntensitySumInBiofilmArea=0;
+			output.relativeColorIntensity=0;
+			output.errorOccurred=true;
+
+			input.cleanup();
+			return(output);
+		}
+
+
+		//dilate 3 times to remove the colony periphery
+//		input.tileImage.getProcessor().dilate();
+//		input.tileImage.getProcessor().dilate();
+//		input.tileImage.getProcessor().dilate();
+		//
+		//--------------------------------------------------
+		//
+		//
+
+		//4. separate the color channels, calculate relative color intensity of red
+		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(input.tileImage, 2, 1, (float)1, (float)2); ///
+		//byte[] relativeColorIntensity_includingBrightness = calculateRelativeColorIntensity(input.tileImage, 2, 1);
+
+		//but because colonies get darker with accumulation of congo red..		
+
+
+		//
+		//--------------------------------------------------
+		//
+		//
+		
+		//show picture
+//		ByteProcessor biofilmScoreP = new ByteProcessor(width,height,biofilmScorePerPixel);
+//		ImagePlus biofilmScore = new ImagePlus("biofilmScore", biofilmScoreP);
+//		biofilmScore.show();
+//		biofilmScore.hide();
+
+
+		//5. get the sum of remaining color intensity
+		//6. apply a threshold (found in settings), count area in pixels above the threshold
+		// also count the color intensity sum 
+		int colonyColorSum = 0;
+		int biofilmPixelCount = 0;
+		int biofilmColorSum = 0;
+
+		for(int i=0;i<pixelBiofilmScores.length;i++){
+
+			int pixelBiofilmScoreByteValue = pixelBiofilmScores[i]&0xFF;
+
+			if(pixelBiofilmScoreByteValue>0){
+				colonyColorSum += pixelBiofilmScoreByteValue;
+			}
+			else{
+				continue;
+			}
+
+			if(pixelBiofilmScoreByteValue>input.settings.colorThreshold){
+				biofilmPixelCount++;
+				biofilmColorSum += pixelBiofilmScoreByteValue;
+			}
+		}
+
+		output.colorIntensitySum = colonyColorSum;
+		output.biofilmArea = biofilmPixelCount;
+		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
+		output.colonyROI = input.colonyRoi;
+		//Toolbox.show(input.tileImage, "after processing");
+		
+		
+		if(input.colonySize!=0)
+			output.relativeColorIntensity = (double) colonyColorSum / (double) input.colonySize;
 			//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
 
 		input.cleanup();
