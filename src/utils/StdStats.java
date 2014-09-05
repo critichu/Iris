@@ -198,6 +198,21 @@ public final class StdStats {
         }
         return sum / (a.length - 1);
     }
+    
+    
+    /**
+     * Returns the sample variance in the array a[], NaN if no such value.
+     */
+    public static double varp(int[] a) {
+        if (a.length == 0) return Double.NaN;
+        double avg = mean(a);
+        double sum = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            sum += (a[i] - avg) * (a[i] - avg);
+        }
+        return sum / a.length;
+    }
+    
 
    /**
      * Returns the population variance in the array a[], NaN if no such value.
@@ -298,5 +313,6 @@ public final class StdStats {
         }
         return sum;
     }
+    
    
 }

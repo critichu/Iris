@@ -19,8 +19,9 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper2;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
-import imageSegmenters.ColonyBreathing;
+import imageSegmenters.ColonyBreathing_variance;
 import imageSegmenters.RisingTideSegmenter;
+import imageSegmenters.RisingTideSegmenter_variance;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -174,7 +175,7 @@ public class ColorProfileEcoli extends Profile{
 
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscalePicture, settings);
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
 
 
 		//check if something went wrong
@@ -219,7 +220,7 @@ public class ColorProfileEcoli extends Profile{
 
 		//6. colony breathing
 //gkri 25.08.2014		
-		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		segmentationOutput = ColonyBreathing_variance.segmentPicture(segmentationOutput, segmentationInput);
 
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
