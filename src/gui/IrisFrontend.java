@@ -71,12 +71,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4.37";
+	public static String IrisVersion = "0.9.4.44";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "53dcff0";
+	public static String IrisBuild = "aa3f4d6";
 
 
 	
