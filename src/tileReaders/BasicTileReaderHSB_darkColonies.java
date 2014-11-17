@@ -266,11 +266,11 @@ public class BasicTileReaderHSB_darkColonies {
 
 		Prefs.blackBackground = true;
 
-		Toolbox.show(tileImage, "original");
+		//Toolbox.show(tileImage, "original");
 
 		Auto_Local_Threshold.Mean(tileImage, 20, 0, 0, true);
 
-		Toolbox.show(tileImage, "threshold");
+		//Toolbox.show(tileImage, "threshold");
 
 
 		Binary binaryTools = new Binary();
@@ -294,7 +294,7 @@ public class BasicTileReaderHSB_darkColonies {
 
 		tileImage.updateImage();
 
-		Toolbox.show(tileImage, "fill");
+		//Toolbox.show(tileImage, "fill");
 
 
 

@@ -77,6 +77,12 @@ public class IrisFrontend {
 	 * This string holds the hash id of Iris versioning in Git
 	 */
 	public static String IrisBuild = "aa3f4d6";
+	
+	
+	/**
+	 * This value calls whether Iris is running in debug mode or not
+	 */
+	public static boolean debug = false;
 
 
 	

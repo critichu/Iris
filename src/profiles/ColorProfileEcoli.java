@@ -19,7 +19,7 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper2;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
-import imageSegmenters.ColonyBreathing_variance;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 import imageSegmenters.RisingTideSegmenter_variance;
 
@@ -72,11 +72,12 @@ public class ColorProfileEcoli extends Profile{
 
 
 		File file = new File(filename);
+		String path = file.getParent();
 		String justFilename = file.getName();
 
 		System.out.println("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
 		//IrisFrontend.writeToLog("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
-		
+
 		//initialize results file output
 		StringBuffer output = new StringBuffer();
 		output.append("Iris output\n");
@@ -87,7 +88,7 @@ public class ColorProfileEcoli extends Profile{
 
 		//1. open the image file, and check if it was opened correctly
 		ImagePlus originalImage = IJ.openImage(filename);
-		
+
 		//check that file was opened successfully
 		if(originalImage==null){
 			//TODO: warn the user that the file was not opened successfully
@@ -113,10 +114,10 @@ public class ColorProfileEcoli extends Profile{
 
 
 		//3. crop the plate to keep only the colonies
-//		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+		//		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
 		ImagePlus croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
-		
-		
+
+
 		//flush the original pictures, we won't be needing them anymore
 		rotatedImage.flush();
 		originalImage.flush();
@@ -158,10 +159,10 @@ public class ColorProfileEcoli extends Profile{
 
 		//get a copy of the picture thresholded using a local algorithm
 		ImagePlus grayscalePicture = grayscaleCroppedImage.duplicate();
-//		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
-//		turnImageBW_Local_auto(BW_local_thresholded_picture);
-		
-//		@SuppressWarnings("unused")
+		//		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
+		//		turnImageBW_Local_auto(BW_local_thresholded_picture);
+
+		//		@SuppressWarnings("unused")
 		//blah = BW_local_thresholded_picture.getTitle();
 
 
@@ -219,8 +220,10 @@ public class ColorProfileEcoli extends Profile{
 
 
 		//6. colony breathing
-//gkri 25.08.2014		
-		segmentationOutput = ColonyBreathing_variance.segmentPicture(segmentationOutput, segmentationInput);
+		//gkri 25.08.2014		
+		//segmentationOutput = ColonyBreathing_variance.segmentPicture(segmentationOutput, segmentationInput);
+		//gkri 17.11.2014: variance wasn't such a good idea after all..
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
@@ -262,22 +265,22 @@ public class ColorProfileEcoli extends Profile{
 					//colour
 					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
 							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
-					
+
 					//opacity -- to check if colony darkness correlates with colour information
-//					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
-//							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					//					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
+					//							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 					opacityTileReaderOutputs[i][j].colonySize = basicTileReaderOutputs[i][j].colonySize;
 					opacityTileReaderOutputs[i][j].circularity = basicTileReaderOutputs[i][j].circularity;
 					opacityTileReaderOutputs[i][j].colonyROI = basicTileReaderOutputs[i][j].colonyROI;
 					opacityTileReaderOutputs[i][j].opacity=0;
-					
+
 				}
 				else{
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
 					colourTileReaderOutputs[i][j].biofilmArea=0;
 					colourTileReaderOutputs[i][j].colorIntensitySum=0;
-					
+
 					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 					opacityTileReaderOutputs[i][j].colonySize=0;
 					opacityTileReaderOutputs[i][j].circularity=0;
@@ -368,23 +371,42 @@ public class ColorProfileEcoli extends Profile{
 		//7.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
-			//calculate grid image
-			//ImagePlus croppedImageSegmented = croppedImage.duplicate();
-
-			//RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			//ColonyBreathing.paintSegmentedImage(grayscaleCroppedImage, segmentationOutput); ///
 			
-			//Toolbox.savePicture(grayscaleCroppedImage, filename + ".grid.jpg");
-			
+			//TODO: need to make this function return a copy of the picture with the grid drawn on it
+			//the original picture will be untouched
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
+//			colourCroppedImage.flush();
 			grayscaleCroppedImage.flush();
 		}
 		else
 		{
+//			colourCroppedImage.flush();
 			grayscaleCroppedImage.flush();
 		}
+
+		//7.3 save any colony picture files, if in debug mode
+		double circularityThreshold = 0.4;
+		int sizeThreshold = 500;
+		if(IrisFrontend.debug){
+			//for all rows
+			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+				//for all columns
+				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+					if(basicTileReaderOutputs[i][j].circularity<circularityThreshold && 
+							basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
+						
+						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
+						String tileFilename = path + File.separator + String.format("tile_%.3f_%2d_%2d_", basicTileReaderOutputs[i][j].circularity, i+1, j+1) + justFilename;
+						
+						Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
+					}
+				}
+			}
+		}
+		
+		colourCroppedImage.flush();
 
 	}
 

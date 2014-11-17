@@ -3,6 +3,7 @@
  */
 package utils;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.io.FileSaver;
@@ -31,8 +32,6 @@ import tileReaderOutputs.BasicTileReaderOutput;
  *
  */
 public class Toolbox {
-
-	private static final boolean debug = false;
 
 
 	/**
@@ -593,7 +592,7 @@ public class Toolbox {
 	 */
 	public static void show(ImagePlus image, String title) {
 
-		if(Toolbox.debug)
+		if(IrisFrontend.debug)
 		{
 			image.setTitle(title);
 			image.show();
@@ -634,6 +633,33 @@ public class Toolbox {
 		
 		return(roiSize);
 		
+		
+	}
+
+
+	/**
+	 * Designed to be a pretty generic function, it will save the tile at the i,j location to
+	 * the desired filename
+	 * @param i	the colony row
+	 * @param j	the colony column
+	 * @param colourCroppedImage	the cropped image, still in color
+	 * @param segmentationOutput	the colony borders
+	 * @param basicTileReaderOutputs	the colony's basic measurements
+	 */
+	public static void saveColonyPicture(int i, int j,
+			ImagePlus colourCroppedImage,
+			BasicImageSegmenterOutput segmentationOutput,
+			BasicTileReaderOutput[][] basicTileReaderOutputs,
+			String tileImageFilename) {
+		
+		//get just the tile part of the image
+		ImagePlus tileImage = cropImage(colourCroppedImage, segmentationOutput.ROImatrix[i][j]);
+		
+		
+		//construct the output filename for the tile.
+		//this will hold the 
+		
+		savePicture(tileImage, tileImageFilename);
 		
 	}
 
