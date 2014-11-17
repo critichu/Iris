@@ -20,8 +20,8 @@ import java.util.concurrent.ExecutorService;
  *
  */
 public class IrisFrontend {
-	
-	
+
+
 
 
 
@@ -57,7 +57,7 @@ public class IrisFrontend {
 		//"Opacity",
 		//"Opacity (fixed grid)"
 	};
-	
+
 	public static String selectedProfile = IrisFrontend.profileCollection[1];
 
 
@@ -71,30 +71,37 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4.44";
+	public static String IrisVersion = "0.9.4.46";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "aa3f4d6";
-	
-	
+	public static String IrisBuild = "a0f090f";
+
+
 	/**
 	 * This value calls whether Iris is running in debug mode or not
 	 */
 	public static boolean debug = false;
 
 
-	
+
 
 	public static void main(String[] args) {
-		if(args.length==0)
+
+		//first check if we need to turn on debug mode
+		if(args.length>0 && args[args.length-1].equalsIgnoreCase("DEBUG"))
+			IrisFrontend.debug = true;
+
+
+		//then, go to either Iris GUI or Iris console mode
+		if(args.length<2)
 			IrisGUI.main(args);
 		else
 			IrisConsole.main(args);
 	}
-	
-	
+
+
 	/**
 	 * This function will create a unique log filename and open it for writing
 	 */
@@ -154,6 +161,6 @@ public class IrisFrontend {
 		DateFormat df = new SimpleDateFormat("yyyy.MM.dd_hh.mm.ss");
 		return df.format(new Date());
 	}
-	
-	
+
+
 }

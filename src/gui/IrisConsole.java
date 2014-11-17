@@ -29,12 +29,6 @@ public class IrisConsole {
 
 		IrisFrontend.selectedProfile = args[0];
 		String folderLocation = args[1];
-		
-		//check to see if the user specified debug mode
-		try {
-			if(args[2].contains("DEBUG"))
-				IrisFrontend.debug = true;
-		} catch (Exception e) {}
 
 
 		redirectSystemStreams();
