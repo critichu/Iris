@@ -89,10 +89,10 @@ public class CPRGProfile384 extends Profile {
 
 		//initialize results file output
 		StringBuffer output = new StringBuffer();
-		output.append("Iris output\n");
-		output.append("Profile: " + profileName + "\n");
+		output.append("#Iris output\n");
+		output.append("#Profile: " + profileName + "\n");
 		output.append("Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
-		output.append(filename+"\n");
+		output.append("#"+filename+"\n");
 
 
 		//1. open the image file, and check if it was opened correctly
@@ -215,11 +215,11 @@ public class CPRGProfile384 extends Profile {
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
 		int y = segmentationOutput.getTopLeftRoi().getBounds().y;
-		output.append("top left of the grid found at (" +x+ " , " +y+ ")\n");
+		output.append("#top left of the grid found at (" +x+ " , " +y+ ")\n");
 
 		x = segmentationOutput.getBottomRightRoi().getBounds().x;
 		y = segmentationOutput.getBottomRightRoi().getBounds().y;
-		output.append("bottom right of the grid found at (" +x+ " , " +y+ ")\n");
+		output.append("#bottom right of the grid found at (" +x+ " , " +y+ ")\n");
 
 
 
