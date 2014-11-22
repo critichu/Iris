@@ -223,8 +223,8 @@ public class EcoliGrowthProfile extends Profile {
 			System.err.println("\ttoo many empty rows/columns");
 
 			//calculate and save grid image
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 
 			return;
 		}

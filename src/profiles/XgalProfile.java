@@ -193,8 +193,8 @@ public class XgalProfile extends Profile {
 
 
 			//save the grid before exiting
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 
 			return;
 		}

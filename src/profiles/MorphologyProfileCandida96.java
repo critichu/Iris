@@ -177,8 +177,8 @@ public class MorphologyProfileCandida96 extends Profile {
 
 
 			//save the grid before exiting
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 			croppedImage.flush();
 			return;
 		}
@@ -273,8 +273,8 @@ public class MorphologyProfileCandida96 extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 		}
 
 	}

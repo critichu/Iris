@@ -373,8 +373,11 @@ public class ColorProfileEcoli extends Profile{
 		if(settings.saveGridImage){
 			
 			//TODO: need to make this function return a copy of the picture with the grid drawn on it
-			//the original picture will be untouched
+			
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			//now paint also the tile bounds 
+			//the original picture will be untouched
+			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 //			colourCroppedImage.flush();
@@ -387,8 +390,8 @@ public class ColorProfileEcoli extends Profile{
 		}
 
 		//7.3 save any colony picture files, if in debug mode
-		double circularityThreshold = 0.4;
-		int sizeThreshold = 500;
+		double circularityThreshold = 0.5;
+		int sizeThreshold = 600;
 		if(IrisFrontend.debug){
 			//for all rows
 			for(int i=0;i<settings.numberOfRowsOfColonies;i++){

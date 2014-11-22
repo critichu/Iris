@@ -111,9 +111,12 @@ public class ColonyBreathing {
 	 * @param croppedImage
 	 * @param segmenterOutput
 	 */
-	public static void paintSegmentedImage(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput) {
+	public static ImagePlus paintSegmentedImage(ImagePlus input_croppedImage, BasicImageSegmenterOutput segmenterOutput) {
 
-		ImageProcessor croppedImageProcessor = croppedImage.getProcessor();		
+		ImagePlus paintedImage = input_croppedImage.duplicate();
+		
+		
+		ImageProcessor croppedImageProcessor = paintedImage.getProcessor();		
 		croppedImageProcessor.setColor(java.awt.Color.WHITE);
 
 		int numberOfRows = segmenterOutput.ROImatrix.length;
@@ -146,10 +149,9 @@ public class ColonyBreathing {
 			}
 
 		}
-
-
-
-
+		
+		
+		return(paintedImage);
 	}
 
 

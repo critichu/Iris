@@ -159,9 +159,12 @@ public class BasicProfile extends Profile {
 
 
 			//save the grid before exiting
-			ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput); //calculate grid image
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput); //calculate grid image
+			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 
+			croppedImageColor.flush();
+			paintedImage.flush();
+			
 			return;
 		}
 

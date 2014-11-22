@@ -17,7 +17,6 @@ import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
-import imageSegmenters.ColonyBreathing;
 
 import java.awt.Color;
 import java.awt.geom.Ellipse2D;
@@ -82,13 +81,13 @@ public class Toolbox {
 				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
 				croppedImage.copy(false);
 				ImagePlus tile = ImagePlus.getClipboard();
-				
-//				ImageConverter imageConverter = new ImageConverter(tile);
-//				imageConverter.convertToGray8();
+
+				//				ImageConverter imageConverter = new ImageConverter(tile);
+				//				imageConverter.convertToGray8();
 
 				//				tile.updateImage();
-//								tile.show();
-//								tile.hide();
+				//								tile.show();
+				//								tile.hide();
 
 				//apply the ROI, get the mask
 				ImageProcessor tileProcessor = tile.getProcessor();
@@ -98,11 +97,11 @@ public class Toolbox {
 				tileProcessor.setBackgroundValue(0);
 				tileProcessor.fill(tileProcessor.getMask());
 				//tileProcessor.fill(tileReaderOutputs[i][j].colonyROI.getMask());
-				
+
 
 				//				tile.updateImage();
-//								tile.show();
-//								tile.hide();
+				//								tile.show();
+				//								tile.hide();
 
 
 				//get the bounds of the mask, that's it, save it
@@ -111,9 +110,9 @@ public class Toolbox {
 
 
 				//				tile.setProcessor(colonyBounds[i][j]);
-//								tile.updateImage();
-//								tile.show();
-//								tile.hide();
+				//								tile.updateImage();
+				//								tile.show();
+				//								tile.hide();
 
 
 			}
@@ -149,7 +148,7 @@ public class Toolbox {
 		for(int i=0; i<tileReaderOutputs.length; i++){
 			//for all columns
 			for(int j=0; j<tileReaderOutputs[0].length; j++) {
-				
+
 				if(tileReaderOutputs[i][j].colonySize==0)
 					continue; //don't go through the trouble for emtpy tiles
 
@@ -176,12 +175,11 @@ public class Toolbox {
 
 
 
-		//now paint also the tile bounds
-		ColonyBreathing.paintSegmentedImage(croppedImage, segmenterOutput);
+		
 
-//		croppedImage.updateImage();
-//		croppedImage.show();
-//		croppedImage.hide();
+		//		croppedImage.updateImage();
+		//		croppedImage.show();
+		//		croppedImage.hide();
 
 
 
@@ -598,7 +596,7 @@ public class Toolbox {
 			image.show();
 			image.hide();
 		}
-		
+
 	}
 
 
@@ -609,31 +607,31 @@ public class Toolbox {
 	 * @deprecated
 	 */
 	public static int getSizeOfRoi(Roi colonyRoi) {
-		
+
 		ImagePlus image = colonyRoi.getImage().duplicate();
 		image.setRoi(colonyRoi);
 		ColorProcessor ip = (ColorProcessor) image.getChannelProcessor();
 		ip.setRoi(colonyRoi);
 		ip.fillOutside(colonyRoi);
-		
+
 		//ip.convertToByte(false);
-		
+
 		//ByteProcessor bp = (ByteProcessor) image.getpro
 
 		byte[] maskPixels = (byte[]) ip.getChannel(1);
 
-		
-		
+
+
 		int roiSize = 0;
-		
+
 		for(int i=1; i<maskPixels.length; i++){
 			if(maskPixels[i]>0)
 				roiSize++;
 		}
-		
+
 		return(roiSize);
-		
-		
+
+
 	}
 
 
@@ -651,16 +649,16 @@ public class Toolbox {
 			BasicImageSegmenterOutput segmentationOutput,
 			BasicTileReaderOutput[][] basicTileReaderOutputs,
 			String tileImageFilename) {
-		
+
 		//get just the tile part of the image
 		ImagePlus tileImage = cropImage(colourCroppedImage, segmentationOutput.ROImatrix[i][j]);
-		
-		
+
+
 		//construct the output filename for the tile.
 		//this will hold the 
-		
+
 		savePicture(tileImage, tileImageFilename);
-		
+
 	}
 
 

@@ -420,13 +420,17 @@ public class RisingTideSegmenter {
 	
 	/**
 	 * This function takes a picture and draws lines in the coordinates of the rows and columns given as arguments
+	 * the input picture will not change, we will retr
 	 * @param croppedImage
 	 * @param segmenterOutput
 	 */
-	public static void paintSegmentedImage(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput) {
+	public static ImagePlus paintSegmentedImage(ImagePlus input_croppedImage, BasicImageSegmenterOutput segmenterOutput) {
+		
+		ImagePlus paintedImage = input_croppedImage.duplicate();
+		
 		//now, all that remains is to paint the picture using imageJ
-		ImageProcessor croppedImageProcessor = croppedImage.getProcessor();
-		int dimensions[] = croppedImage.getDimensions();
+		ImageProcessor croppedImageProcessor = paintedImage.getProcessor();
+		int dimensions[] = paintedImage.getDimensions();
 		croppedImageProcessor.setColor(java.awt.Color.white);
 		
 		
@@ -459,8 +463,13 @@ public class RisingTideSegmenter {
 			croppedImageProcessor.drawLine(x+1, 0, x+1, dimensions[1]);
 		}
 		
-		croppedImage.updateImage();
-		//croppedImage.show();
+		paintedImage.updateImage();
+		
+		//HACK: this line needs to be commented out
+		input_croppedImage = paintedImage;
+		
+		return(paintedImage);
+		
 
 	}
 	
