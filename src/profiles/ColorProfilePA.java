@@ -383,7 +383,7 @@ public class ColorProfilePA extends Profile{
 		}
 
 		//7.3 save any colony picture files, if in debug mode
-		double circularityThreshold = 0.4;
+		double circularityThreshold = 0.7;
 		int sizeThreshold = 500;
 		if(IrisFrontend.debug){
 			//for all rows
@@ -394,7 +394,8 @@ public class ColorProfilePA extends Profile{
 							basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
 
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
-						String tileFilename = path + File.separator + String.format("tile_%.3f_%2d_%2d_", basicTileReaderOutputs[i][j].circularity, i+1, j+1) + justFilename;
+						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
+								basicTileReaderOutputs[i][j].circularity, basicTileReaderOutputs[i][j].colonySize, i+1, j+1) + justFilename;
 
 						Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
 					}
