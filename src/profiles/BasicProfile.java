@@ -26,8 +26,11 @@ import java.util.ArrayList;
 
 import settings.BasicSettings;
 import tileReaderInputs.BasicTileReaderInput;
+import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
+import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.BasicTileReader;
+import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
 /**
@@ -74,7 +77,7 @@ public class BasicProfile extends Profile {
 		StringBuffer output = new StringBuffer();
 		output.append("#Iris output\n");
 		output.append("#Profile: " + profileName + "\n");
-		output.append("Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
+		output.append("#Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
 		output.append("#"+filename+"\n");
 
 
@@ -124,7 +127,7 @@ public class BasicProfile extends Profile {
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
-		
+
 		//
 		//--------------------------------------------------
 		//
@@ -133,7 +136,7 @@ public class BasicProfile extends Profile {
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
-		
+
 		//let colonies breathe
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
@@ -164,7 +167,7 @@ public class BasicProfile extends Profile {
 
 			croppedImageColor.flush();
 			paintedImage.flush();
-			
+
 			return;
 		}
 
@@ -188,6 +191,8 @@ public class BasicProfile extends Profile {
 
 		//create an array of measurement outputs
 		BasicTileReaderOutput [][] readerOutputs = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		OpacityTileReaderOutput [][] opacityReaderOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -196,6 +201,15 @@ public class BasicProfile extends Profile {
 				readerOutputs[i][j] = BasicTileReader.processTile(
 						new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
+				if(readerOutputs[i][j].colonySize>0){
+
+					opacityReaderOutputs[i][j] = OpacityTileReader.processTile(
+							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				}
+				else
+				{
+					opacityReaderOutputs[i][j] = new OpacityTileReaderOutput();
+				}
 				//each generated tile image is cleaned up inside the tile reader
 			}
 		}
@@ -212,7 +226,7 @@ public class BasicProfile extends Profile {
 
 			//calculate and save grid image
 			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-			
+
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 
@@ -226,7 +240,8 @@ public class BasicProfile extends Profile {
 		output.append("row\t" +
 				"column\t" +
 				"size\t" +
-				"circularity\n");
+				"circularity\t" +
+				"opacity\n");
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -234,7 +249,8 @@ public class BasicProfile extends Profile {
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
-						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\n");
+						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
+						+ Integer.toString(opacityReaderOutputs[i][j].opacity) + "\n");
 			}
 		}
 
@@ -255,7 +271,7 @@ public class BasicProfile extends Profile {
 		if(settings.saveGridImage){
 			//calculate grid image
 			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-			
+
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 		}
@@ -332,9 +348,9 @@ public class BasicProfile extends Profile {
 
 		return(true); //operation succeeded
 	}
-	
-	
-	
+
+
+
 	/**
 	 * This method gets a subset of that picture (for faster execution), and calculates the rotation of that part
 	 * using an OCR-derived method. The method applied here rotates the image, attempting to maximize
@@ -521,8 +537,8 @@ public class BasicProfile extends Profile {
 
 		return(sumOfColumns);
 	}
-	
-	
+
+
 
 	/**
 	 * This function will convert the given picture into black and white
@@ -548,7 +564,7 @@ public class BasicProfile extends Profile {
 		return(threshold);
 	}
 
-	
+
 	/**
 	 * This function will create a copy of the original image, and rotate that copy.
 	 * The original image should be flushed by the caller if not reused

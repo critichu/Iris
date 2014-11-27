@@ -31,11 +31,13 @@ import java.util.ArrayList;
 import settings.ColorSettings;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput3;
+import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.BasicTileReaderHSB_darkColonies;
 import tileReaders.ColorTileReaderHSB;
+import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
 /**
@@ -82,7 +84,7 @@ public class ColorProfileEcoli extends Profile{
 		StringBuffer output = new StringBuffer();
 		output.append("#Iris output\n");
 		output.append("#Profile: " + profileName + "\n");
-		output.append("Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
+		output.append("#Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
 		output.append("#"+filename+"\n");
 
 
@@ -267,13 +269,13 @@ public class ColorProfileEcoli extends Profile{
 							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 
 					//opacity -- to check if colony darkness correlates with colour information
-					//					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
-					//							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
-					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
-					opacityTileReaderOutputs[i][j].colonySize = basicTileReaderOutputs[i][j].colonySize;
-					opacityTileReaderOutputs[i][j].circularity = basicTileReaderOutputs[i][j].circularity;
-					opacityTileReaderOutputs[i][j].colonyROI = basicTileReaderOutputs[i][j].colonyROI;
-					opacityTileReaderOutputs[i][j].opacity=0;
+					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
+							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					//					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
+					//					opacityTileReaderOutputs[i][j].colonySize = basicTileReaderOutputs[i][j].colonySize;
+					//					opacityTileReaderOutputs[i][j].circularity = basicTileReaderOutputs[i][j].circularity;
+					//					opacityTileReaderOutputs[i][j].colonyROI = basicTileReaderOutputs[i][j].colonyROI;
+					//					opacityTileReaderOutputs[i][j].opacity=0;
 
 				}
 				else{
@@ -371,21 +373,21 @@ public class ColorProfileEcoli extends Profile{
 		//7.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
-			
+
 			//TODO: need to make this function return a copy of the picture with the grid drawn on it
-			
+
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
 			//now paint also the tile bounds 
 			//the original picture will be untouched
 			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
-//			colourCroppedImage.flush();
+			//			colourCroppedImage.flush();
 			grayscaleCroppedImage.flush();
 		}
 		else
 		{
-//			colourCroppedImage.flush();
+			//			colourCroppedImage.flush();
 			grayscaleCroppedImage.flush();
 		}
 
@@ -399,17 +401,17 @@ public class ColorProfileEcoli extends Profile{
 				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 					if(basicTileReaderOutputs[i][j].circularity<circularityThreshold && 
 							basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
-						
+
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
 								basicTileReaderOutputs[i][j].circularity, basicTileReaderOutputs[i][j].colonySize, i+1, j+1) + justFilename;
-						
+
 						Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
 					}
 				}
 			}
 		}
-		
+
 		colourCroppedImage.flush();
 
 	}

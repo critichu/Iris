@@ -93,7 +93,7 @@ public class IrisSingleColonyRunTileReader {
 		StringBuffer output = new StringBuffer();
 		output.append("#Iris output\n");
 		output.append("#Profile: " + profileName + "\n");
-		output.append("Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
+		output.append("#Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
 		output.append("#"+filename+"\n");
 		output.append("no grid, single colony image file\n");
 		output.append("no grid, single colony image file\n");

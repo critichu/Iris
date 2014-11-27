@@ -66,7 +66,7 @@ public class ColorProfile extends Profile{
 		StringBuffer output = new StringBuffer();
 		output.append("#Iris output\n");
 		output.append("#Profile: " + profileName + "\n");
-		output.append("Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
+		output.append("#Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
 		output.append("#"+filename+"\n");
 
 
