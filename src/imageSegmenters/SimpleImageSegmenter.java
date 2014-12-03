@@ -86,6 +86,130 @@ public class SimpleImageSegmenter {
 		return(output);
 	}
 	
+	/**
+	 * This function will segment the picture according to it's size and the number of rows and columns
+	 * that it should have at the end.
+	 * The input should be a BasicImageSegmenterInput, initialized with a grayscaled, cropped
+	 * picture of the plate, as well as a corresponding settings object.
+	 * @param input
+	 * @return
+	 */
+	public static BasicImageSegmenterOutput segmentPicture_width(BasicImageSegmenterInput input){
+		
+		//get input values
+		ImagePlus croppedImage = input.imageToSegment;
+		BasicSettings settings = input.settings;
+		
+		//set up an output object
+		BasicImageSegmenterOutput output = new BasicImageSegmenterOutput();
+		
+		//Toolbox.savePicture(croppedImage, "dummy1234.jpg");
+		
+		//1. copy original picture
+		//since this pipeline needs a black and white version of the picture
+		//we copy the original picture here, so that we don't tamper with the original cropped picture
+		ImagePlus BW_croppedImage = croppedImage.duplicate();
+		int imageWidth = BW_croppedImage.getWidth();
+		
+		
+		//2. calculate the nominal distance between rows and columns
+		int nominalDistance = (int) Math.round( Math.floor( (imageWidth-2*offset)/settings.numberOfColumnsOfColonies ) );
+
+		
+		
+		
+		//5. check how many minima did rising tide return
+		//no need here
+		
+		//6. sort the rows and columns found
+		//no need here
+		
+		//7. check whether the rows and columns are too closely spaced, continue in case of incorrectly spaced columns
+		//no need here
+		
+		
+		//8. return the ROIs found
+		output.ROImatrix = new Roi[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		
+		//for all rows
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){			
+					
+			//for all columns
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				
+				output.ROImatrix[i][j] = new Roi( 
+						/*x*/ offset + j*nominalDistance,
+						/*y*/ offset + i*nominalDistance,
+						/*width*/ nominalDistance,
+						/*height*/ nominalDistance);
+			}
+		}
+				
+		return(output);
+	}
+	
+	
+	/**
+	 * This function will segment the picture according to it's size and the number of rows and columns
+	 * that it should have at the end.
+	 * The input should be a BasicImageSegmenterInput, initialized with a grayscaled, cropped
+	 * picture of the plate, as well as a corresponding settings object.
+	 * @param input
+	 * @return
+	 */
+	public static BasicImageSegmenterOutput segmentPicture_colonyDistance(BasicImageSegmenterInput input, int nominalColonyDistance){
+		
+		//get input values
+		ImagePlus croppedImage = input.imageToSegment;
+		BasicSettings settings = input.settings;
+		
+		//set up an output object
+		BasicImageSegmenterOutput output = new BasicImageSegmenterOutput();
+		
+		//Toolbox.savePicture(croppedImage, "dummy1234.jpg");
+		
+		//1. copy original picture
+		//since this pipeline needs a black and white version of the picture
+		//we copy the original picture here, so that we don't tamper with the original cropped picture
+		ImagePlus BW_croppedImage = croppedImage.duplicate();
+		int imageWidth = BW_croppedImage.getWidth();
+		
+		
+		//2. calculate the nominal distance between rows and columns
+		int nominalDistance = nominalColonyDistance;
+
+		
+		
+		
+		//5. check how many minima did rising tide return
+		//no need here
+		
+		//6. sort the rows and columns found
+		//no need here
+		
+		//7. check whether the rows and columns are too closely spaced, continue in case of incorrectly spaced columns
+		//no need here
+		
+		
+		//8. return the ROIs found
+		output.ROImatrix = new Roi[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		
+		//for all rows
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){			
+					
+			//for all columns
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				
+				output.ROImatrix[i][j] = new Roi( 
+						/*x*/ offset + j*nominalDistance,
+						/*y*/ offset + i*nominalDistance,
+						/*width*/ nominalDistance,
+						/*height*/ nominalDistance);
+			}
+		}
+				
+		return(output);
+	}
 	
 	
 	

@@ -17,7 +17,7 @@ import imageCroppers.NaiveImageCropper2;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
-import imageSegmenters.RisingTideSegmenter;
+import imageSegmenters.SimpleImageSegmenter;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -147,7 +147,17 @@ public class BasicProfileInverted extends Profile {
 
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput;
+		if(settings.numberOfColumnsOfColonies==24){
+			SimpleImageSegmenter.offset=65;
+			segmentationOutput = SimpleImageSegmenter.segmentPicture_colonyDistance(segmentationInput, 170);
+		}
+		else{
+			SimpleImageSegmenter.offset=35;
+			//ColonyBreathing.breathingSpace = 20;
+			segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+		}
+			
 
 		//let colonies breathe
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
