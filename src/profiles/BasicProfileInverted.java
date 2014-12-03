@@ -13,7 +13,7 @@ import ij.process.AutoThresholder.Method;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import imageCroppers.GenericImageCropper;
+import imageCroppers.NaiveImageCropper2;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -29,7 +29,7 @@ import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
-import tileReaders.BasicTileReader;
+import tileReaders.BasicTileReaderInverted;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
@@ -39,18 +39,18 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class BasicProfile extends Profile {
+public class BasicProfileInverted extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Stm growth profile";
+	public static String profileName = "Inverted growth profile";
 
 
 	/**
 	 * this is a description of the profile that will be shown to the user on hovering the profile name 
 	 */
-	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates";
+	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates when background lighting is used";
 
 
 	/**
@@ -110,7 +110,7 @@ public class BasicProfile extends Profile {
 
 
 		//3. crop the plate to keep only the colonies
-		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
 
@@ -124,8 +124,14 @@ public class BasicProfile extends Profile {
 
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImagePlus croppedImageColor = croppedImage.duplicate();
+		
+		
+		
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
+		
+		//invert the picture
+		croppedImage = Toolbox.invertImage(croppedImage);
 
 
 		//
@@ -162,7 +168,10 @@ public class BasicProfile extends Profile {
 
 
 			//save the grid before exiting
-			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput); //calculate grid image
+			//invert back to the original
+			//croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 
 			croppedImageColor.flush();
@@ -198,7 +207,7 @@ public class BasicProfile extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = BasicTileReader.processTile(
+				readerOutputs[i][j] = BasicTileReaderInverted.processTile(
 						new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				if(readerOutputs[i][j].colonySize>0){
@@ -227,7 +236,11 @@ public class BasicProfile extends Profile {
 			//calculate and save grid image
 			
 			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
+			
+			croppedImageColor = Toolbox.invertImage(croppedImageColor);
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
+			croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			
 			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 
 			return;
@@ -270,9 +283,15 @@ public class BasicProfile extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-
+			
+			
+			//croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
+			
+			croppedImageColor = Toolbox.invertImage(croppedImageColor);
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
+			croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			
 			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 		}
 

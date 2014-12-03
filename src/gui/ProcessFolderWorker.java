@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 import javax.swing.SwingWorker;
 
 import profiles.BasicProfile;
+import profiles.BasicProfileInverted;
 import profiles.BsubtilisHazyProfileHSB;
 import profiles.BsubtilisSporulationProfile;
 import profiles.CPRGProfile384;
@@ -204,6 +205,12 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			MorphologyProfileCandida96 morphologyProfile = new MorphologyProfileCandida96();
 			morphologyProfile.analyzePicture(filename);
 		}
+		else if(profileName.equals("Growth profile inverted")){
+			BasicProfileInverted profile = new BasicProfileInverted();
+			profile.analyzePicture(filename);
+		}
+		
+		
 
 
 		else{

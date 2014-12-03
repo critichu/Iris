@@ -116,7 +116,7 @@ public class ColorProfileEcoli extends Profile{
 
 
 		//3. crop the plate to keep only the colonies
-		//		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+//				ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
 		ImagePlus croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 
 

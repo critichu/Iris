@@ -32,6 +32,26 @@ import tileReaderOutputs.BasicTileReaderOutput;
  */
 public class Toolbox {
 
+	/**
+	 * This function will create a copy of the original image, and invert the colours on that copy.
+	 * The original image should be flushed by the caller if not reused
+	 * @param originalImage
+	 * @param angle
+	 * @return
+	 */
+	public static ImagePlus invertImage(ImagePlus originalImage){
+		
+		originalImage.deleteRoi();
+		ImagePlus aDuplicate = originalImage.duplicate();//because we don't want to tamper with the original image
+
+		aDuplicate.getProcessor().invert();
+
+		aDuplicate.updateImage();
+
+		aDuplicate.setTitle(originalImage.getTitle());
+
+		return(aDuplicate);
+	}
 
 	/**
 	 * This function will create a copy of the original image, and rotate that copy.
@@ -43,11 +63,10 @@ public class Toolbox {
 	public static ImagePlus rotateImage(ImagePlus originalImage, double angle) {
 
 		originalImage.deleteRoi();
-		ImagePlus aDuplicate = originalImage.duplicate();//because the caller is going to flush the original image
+		ImagePlus aDuplicate = originalImage.duplicate();//because we don't want to tamper with the original image
 
 		aDuplicate.getProcessor().setBackgroundValue(0);
 
-		//IJ.run(aDuplicate, "Arbitrarily...", "angle=" + angle + " grid=0 interpolate enlarge");
 		aDuplicate.getProcessor().rotate(angle);
 
 		aDuplicate.updateImage();

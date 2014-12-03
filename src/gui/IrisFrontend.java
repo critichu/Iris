@@ -52,13 +52,14 @@ public class IrisFrontend {
 		"Morphology Profile [Candida 96-plates]",
 		"Xgal assay 96",
 		"Xgal assay 384",
-		"Xgal assay 1536"
+		"Xgal assay 1536",
+		"Growth profile inverted"
 		//"Biofilm formation - Simple Grid",
 		//"Opacity",
 		//"Opacity (fixed grid)"
 	};
 
-	public static String selectedProfile = IrisFrontend.profileCollection[1];
+	public static String selectedProfile = IrisFrontend.profileCollection[0];
 
 
 	/**
@@ -71,12 +72,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4.51";
+	public static String IrisVersion = "0.9.4.52";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "0be9b0d";
+	public static String IrisBuild = "864f53f";
 
 
 	/**
