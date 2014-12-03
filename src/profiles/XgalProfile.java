@@ -50,10 +50,7 @@ public class XgalProfile extends Profile {
 	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes and opacities of E. coli on the UCSF screens";
 
 
-	/**
-	 * This holds access to the settings object
-	 */
-	public BasicSettings settings = new BasicSettings();
+	
 
 
 	/**
@@ -151,7 +148,7 @@ public class XgalProfile extends Profile {
 
 		//calculate the minimum and maximum grid spacings according to the cropped image size 
 		//and the number of rows and columns, save the results in the settings object
-		calculateGridSpacing(settings, croppedImage);
+		calculateGridSpacing(IrisFrontend.settings, croppedImage);
 
 		//		//change the settings so that the distance between the colonies can now be smaller
 		//		settings.minimumDistanceBetweenRows = 40;
@@ -164,7 +161,7 @@ public class XgalProfile extends Profile {
 
 
 		//5. segment the cropped picture
-		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
+		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, IrisFrontend.settings);
 		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
 
 		//let colonies breathe
@@ -218,14 +215,14 @@ public class XgalProfile extends Profile {
 		//6. analyze each tile
 
 		//create an array of measurement outputs
-		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[IrisFrontend.settings.numberOfRowsOfColonies][IrisFrontend.settings.numberOfColumnsOfColonies];
 
 		//for all rows
-		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+		for(int i=0;i<IrisFrontend.settings.numberOfRowsOfColonies;i++){
 			//for all columns
-			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+			for (int j = 0; j < IrisFrontend.settings.numberOfColumnsOfColonies; j++) {
 				readerOutputs[i][j] = OpacityTileReaderForHazyColonies.processTile(
-						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], IrisFrontend.settings));
 
 				//each generated tile image is cleaned up inside the tile reader
 			}
@@ -256,9 +253,9 @@ public class XgalProfile extends Profile {
 		//7.1 output the colony measurements as a text file
 		output.append("row\tcolumn\tsize\tcircularity\topacity\n");
 		//for all rows
-		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+		for(int i=0;i<IrisFrontend.settings.numberOfRowsOfColonies;i++){
 			//for all columns
-			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+			for (int j = 0; j < IrisFrontend.settings.numberOfColumnsOfColonies; j++) {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
@@ -279,8 +276,8 @@ public class XgalProfile extends Profile {
 
 
 		//7.2 save any intermediate picture files, if requested
-		settings.saveGridImage = true;
-		if(settings.saveGridImage){
+		IrisFrontend.settings.saveGridImage = true;
+		if(IrisFrontend.settings.saveGridImage){
 			//calculate grid image
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");

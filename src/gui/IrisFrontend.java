@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
+import settings.BasicSettings;
+
 /**
  * This class acts as the decision point between console and GUI versions
  * @author George Kritikos
@@ -22,7 +24,10 @@ import java.util.concurrent.ExecutorService;
 public class IrisFrontend {
 
 
-
+	/**
+	 * This holds access to the settings object
+	 */
+	public static BasicSettings settings = new BasicSettings();
 
 
 	/**
@@ -88,18 +93,40 @@ public class IrisFrontend {
 
 
 
+	/**
+	 * 
+	 * @param args	IrisJarFilename Profile Path [384/96] [DEBUG] 
+	 */
 	public static void main(String[] args) {
 
+
+		int argumentOffset = 0;
 		//first check if we need to turn on debug mode
-		if(args.length>0 && args[args.length-1].equalsIgnoreCase("DEBUG"))
+		if(args.length>0 && args[args.length-1].equalsIgnoreCase("DEBUG")){
 			IrisFrontend.debug = true;
+			argumentOffset = 1;
+		}
 
-
-		//then, go to either Iris GUI or Iris console mode
-		if(args.length<2)
+		//if there's no more command line arguments, then it's GUI mode
+		if(args.length<2){
 			IrisGUI.main(args);
-		else
-			IrisConsole.main(args);
+			return;
+		}
+
+
+		if(args.length>2+argumentOffset){
+			if(args[args.length-1-argumentOffset].equals("384")){
+				IrisFrontend.settings.numberOfColumnsOfColonies = 24;
+				IrisFrontend.settings.numberOfRowsOfColonies = 16;
+			}
+			else if(args[args.length-1-argumentOffset].equals("96")){
+				IrisFrontend.settings.numberOfColumnsOfColonies = 12;
+				IrisFrontend.settings.numberOfRowsOfColonies = 8;
+			}
+		}
+
+		//call the console version
+		IrisConsole.main(args);
 	}
 
 

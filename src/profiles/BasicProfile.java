@@ -52,12 +52,10 @@ public class BasicProfile extends Profile {
 	 */
 	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates";
 
-
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings();
-
+	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
 	/**
 	 * This function will analyze the picture using the basic profile

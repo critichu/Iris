@@ -59,7 +59,7 @@ public class BasicSettings /*extends Settings*/ implements Serializable{
 	 * This option, if set to true, will save the image file of the grid in the same folder, 
 	 * next to the original input image file. 
 	 */
-	public boolean saveGridImage = false;
+	public boolean saveGridImage = true;
 	
 	
 	
@@ -71,6 +71,15 @@ public class BasicSettings /*extends Settings*/ implements Serializable{
 //		setBounds(100, 100, 450, 300);
 //		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
+	}
+	
+	public BasicSettings(BasicSettings that){
+		this.maximumDistanceBetweenRows = that.maximumDistanceBetweenRows;
+		this.minimumDistanceBetweenRows = that.minimumDistanceBetweenRows;
+		this.numberOfColumnsOfColonies = that.numberOfColumnsOfColonies;
+		this.numberOfRowsOfColonies = that.numberOfRowsOfColonies;
+		this.saveGridImage = that.saveGridImage;
+		this.threshold = that.threshold;
 	}
 
 }

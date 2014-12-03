@@ -52,11 +52,10 @@ public class BasicProfileInverted extends Profile {
 	 */
 	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates when background lighting is used";
 
-
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings();
+	public BasicSettings settings = IrisFrontend.settings;
 
 
 	/**
@@ -94,9 +93,14 @@ public class BasicProfileInverted extends Profile {
 		//--------------------------------------------------
 		//
 		// 
+		
+		//invert the picture
+		originalImage = Toolbox.invertImage(originalImage);
+
 
 
 		//2. rotate the whole image
+		//HACK: calculateImageRotation doesn't seem to work for white pictures in 384..
 		double imageAngle = calculateImageRotation(originalImage);
 
 		//create a copy of the original image and rotate it, then clear the original picture
@@ -113,6 +117,8 @@ public class BasicProfileInverted extends Profile {
 		ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
+		
+		calculateGridSpacing(settings, croppedImage);
 
 
 
@@ -131,7 +137,7 @@ public class BasicProfileInverted extends Profile {
 		imageConverter.convertToGray8();
 		
 		//invert the picture
-		croppedImage = Toolbox.invertImage(croppedImage);
+		//croppedImage = Toolbox.invertImage(croppedImage);
 
 
 		//
@@ -235,9 +241,11 @@ public class BasicProfileInverted extends Profile {
 
 			//calculate and save grid image
 			
-			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
-			
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
+			croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			
+			
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
 			
@@ -285,10 +293,10 @@ public class BasicProfileInverted extends Profile {
 			//calculate grid image
 			
 			
-			//croppedImageColor = Toolbox.invertImage(croppedImageColor);
-			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
-			
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
+			croppedImageColor = Toolbox.invertImage(croppedImageColor);
+			
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
 			
@@ -611,6 +619,36 @@ public class BasicProfileInverted extends Profile {
 		//		rotatedOriginalImage.updateImage();
 		//		
 		//		return(rotatedOriginalImage);
+	}
+	
+	
+	/**
+	 * This function calculates the minimum and maximum grid distances according to the
+	 * cropped image size and
+	 * the number of rows and columns that need to be found.
+	 * Since the cropped image needs to be segmented roughly in equal distances, the
+	 * nominal distance in which the coluns will be spaced apart will be
+	 * nominal distance = image width / number of columns
+	 * this should be equal to the (image height / number of rows), which is not calculated separately.
+	 * Using this nominal distance, we can calculate the minimum and maximum distances, which are then used
+	 * by the image segmentation algorithm. Distances that do in practice lead the segmentation algorithm
+	 * to a legitimate segmentation of the picture are:
+	 * minimum = 2/3 * nominal distance
+	 * maximum = 4/3 * nominal distance
+	 * 
+	 * @param settings_
+	 * @param croppedImage
+	 */
+	private void calculateGridSpacing(BasicSettings settings_,
+			ImagePlus croppedImage) {
+
+		int image_width = croppedImage.getWidth();
+		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
+
+		//save the results directly to the settings object
+		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
+		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*4/3);
+
 	}
 
 

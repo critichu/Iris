@@ -145,24 +145,8 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			ecoliOpacity384_hazy.analyzePicture(filename);			
 		}
 		
-		else if(profileName.equals("Xgal assay 96")){
+		else if(profileName.equals("Xgal assay")){
 			XgalProfile xgalProfile = new XgalProfile();
-			xgalProfile.settings.numberOfColumnsOfColonies = 12;
-			xgalProfile.settings.numberOfRowsOfColonies = 8;
-			xgalProfile.analyzePicture(filename);			
-		}
-		
-		else if(profileName.equals("Xgal assay 384")){
-			XgalProfile xgalProfile = new XgalProfile();
-			xgalProfile.settings.numberOfColumnsOfColonies = 24;
-			xgalProfile.settings.numberOfRowsOfColonies = 16;
-			xgalProfile.analyzePicture(filename);			
-		}
-		
-		else if(profileName.equals("Xgal assay 1536")){
-			XgalProfile xgalProfile = new XgalProfile();
-			xgalProfile.settings.numberOfColumnsOfColonies = 48;
-			xgalProfile.settings.numberOfRowsOfColonies = 32;
 			xgalProfile.analyzePicture(filename);			
 		}
 

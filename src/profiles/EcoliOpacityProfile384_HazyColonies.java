@@ -49,13 +49,11 @@ public class EcoliOpacityProfile384_HazyColonies extends Profile {
 	 */
 	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes and opacities of E. coli on the UCSF screens";
 
-
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings();
-
-
+	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
+	
 	/**
 	 * This function will analyze the picture using the basic profile
 	 * The end result will be a file with the same name as the input filename,

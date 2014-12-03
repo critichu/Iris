@@ -46,7 +46,7 @@ public class OpacityProfile extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings();
+	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
 
 	/**

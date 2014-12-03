@@ -35,4 +35,8 @@ public class ColorSettings extends BasicSettings implements Serializable{
 //		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
 	}
+	
+	public ColorSettings(BasicSettings settings_){
+		super(settings_);
+	}
 }

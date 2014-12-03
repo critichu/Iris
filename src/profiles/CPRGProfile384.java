@@ -60,7 +60,7 @@ public class CPRGProfile384 extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public ColorSettings settings = new ColorSettings();
+	public ColorSettings settings = new ColorSettings(IrisFrontend.settings);
 
 
 	/**

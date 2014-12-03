@@ -45,7 +45,7 @@ public class ColorProfile_SimpleSegmentation extends Profile{
 	/**
 	 * This holds access to the settings object
 	 */
-	public ColorSettings settings = new ColorSettings();
+	public ColorSettings settings = new ColorSettings(IrisFrontend.settings);
 
 
 
