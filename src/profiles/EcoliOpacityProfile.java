@@ -269,6 +269,7 @@ public class EcoliOpacityProfile extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
+			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}

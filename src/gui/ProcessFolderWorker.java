@@ -99,11 +99,21 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 	public static void processSingleFile(File file){
 
+		
 
 		//publish("Now processing file " + "\n");
 		//System.out.println("Now processing file " + "\n");
 
 		String filename = file.getAbsolutePath();
+		
+		if(IrisFrontend.nice){
+			File irisFile = new File(filename+".iris");
+			if(irisFile.exists()){
+				String justFilename = irisFile.getName();
+				System.out.println("\n\nIris file already exists:\n  "+justFilename);
+				return;
+			}
+		}
 
 		/**
 		 * Decide which profile to use, according to the profile name
