@@ -5,6 +5,7 @@ package gui;
 
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -70,7 +71,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		int max = filesInDirectory.length;
 
 		for (File file : filesInDirectory) {
-			
+
 			try{
 				processSingleFile(file);
 			}
@@ -99,20 +100,32 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 	public static void processSingleFile(File file){
 
-		
 
 		//publish("Now processing file " + "\n");
 		//System.out.println("Now processing file " + "\n");
 
 		String filename = file.getAbsolutePath();
-		
-		if(IrisFrontend.nice){
-			File irisFile = new File(filename+".iris");
-			if(irisFile.exists()){
+
+		File irisFile = new File(filename+".iris");
+		File irisFileDummy = new File(filename+".iris.dummy");
+
+
+		if(IrisFrontend.nice){	
+			//if the iris file exists, or if another iris instance started working on it
+			if(irisFile.exists() || irisFileDummy.exists()){ 
 				String justFilename = irisFile.getName();
 				System.out.println("\n\nIris file already exists:\n  "+justFilename);
 				return;
 			}
+			//if it didn't write down a dummy file, so that other instances won't start working on the same
+			else{
+				try {
+					irisFileDummy.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
 		}
 
 		/**
@@ -154,7 +167,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			EcoliOpacityProfile384_HazyColonies ecoliOpacity384_hazy = new EcoliOpacityProfile384_HazyColonies();
 			ecoliOpacity384_hazy.analyzePicture(filename);			
 		}
-		
+
 		else if(profileName.equals("Xgal assay")){
 			XgalProfile xgalProfile = new XgalProfile();
 			xgalProfile.analyzePicture(filename);			
@@ -174,7 +187,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			ColorProfilePA colorProfilePA = new ColorProfilePA();
 			colorProfilePA.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Biofilm formation Ecoli")){
 			ColorProfileEcoli colorProfileEcoli = new ColorProfileEcoli();
 			colorProfileEcoli.analyzePicture(filename);
@@ -203,13 +216,21 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			BasicProfileInverted profile = new BasicProfileInverted();
 			profile.analyzePicture(filename);
 		}
-		
-		
+
+
 
 
 		else{
 			System.err.println("Unknown profile name: \"" + profileName +"\"");
+			return;
 		}
+
+
+		//we need to clean up, by removing any dummy files
+		if(IrisFrontend.nice){
+			irisFileDummy.delete();
+		}
+
 
 	}
 

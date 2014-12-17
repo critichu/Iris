@@ -382,16 +382,24 @@ public class ColorProfilePA extends Profile{
 			grayscaleCroppedImage.flush();
 		}
 
+
 		//7.3 save any colony picture files, if in debug mode
-		double circularityThreshold = 0.7;
-		int sizeThreshold = 500;
+		//make it a 2-pass thing
 		if(IrisFrontend.debug){
+
+			
+			//double circularityThreshold1 = Double.MAX_VALUE;
+			int sizeThreshold1 = 5300;
+			
+			double circularityThreshold2_min = 0.40;
+			double circularityThreshold2_max = 0.75;
+			int sizeThreshold2 = 4300;
+
 			//for all rows
 			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 				//for all columns
 				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-					if(basicTileReaderOutputs[i][j].circularity<circularityThreshold && 
-							basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
+					if(basicTileReaderOutputs[i][j].colonySize>sizeThreshold1){
 
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
@@ -399,6 +407,17 @@ public class ColorProfilePA extends Profile{
 
 						Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
 					}
+					else
+						if(basicTileReaderOutputs[i][j].colonySize>sizeThreshold2 &&
+							basicTileReaderOutputs[i][j].circularity<circularityThreshold2_max &&
+							basicTileReaderOutputs[i][j].circularity>circularityThreshold2_min){
+							
+							//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
+							String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
+									basicTileReaderOutputs[i][j].circularity, basicTileReaderOutputs[i][j].colonySize, i+1, j+1) + justFilename;
+
+							Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
+						}
 				}
 			}
 		}
