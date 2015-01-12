@@ -11,12 +11,12 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import imageCroppers.GenericImageCropper;
 import imageCroppers.GenericImageCropper2;
+import imageCroppers.NaiveImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -116,15 +116,7 @@ public class ColorProfilePA extends Profile{
 
 		//3. crop the plate to keep only the colonies
 		//		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
-		ImagePlus croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
-
-
-		//flush the original pictures, we won't be needing them anymore
-		rotatedImage.flush();
-		originalImage.flush();
-
-
-
+		ImagePlus colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 
 		//
 		//--------------------------------------------------
@@ -132,44 +124,13 @@ public class ColorProfilePA extends Profile{
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale), but keep a copy so that we have the colour information
-		//This is how you do it the HSB way
-		ImagePlus colourCroppedImage = croppedImage.duplicate();
-		ImageProcessor ip =  croppedImage.getProcessor();
-
-		ColorProcessor cp = (ColorProcessor)ip;
-
-		//get the number of pixels in the tile
-		//				ip.snapshot(); // override ColorProcessor bug in 1.32c
-		int width = croppedImage.getWidth();
-		int height = croppedImage.getHeight();
-		int numPixels = width*height;
-
-		//we need those to save into
-		byte[] hSource = new byte[numPixels];
-		byte[] sSource = new byte[numPixels];
-		byte[] bSource = new byte[numPixels];
-
-		//saves the channels of the cp into the h, s, bSource
-		cp.getHSB(hSource,sSource,bSource);
-
-		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
-		croppedImage = new ImagePlus(croppedImage.getTitle(), bpBri);
-		ImagePlus grayscaleCroppedImage  = croppedImage.duplicate();
-		grayscaleCroppedImage.setTitle(croppedImage.getTitle());
-		croppedImage.flush();
-
+		//This is how you do it the HSB way		
+		ImagePlus grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
+				
 		//get a copy of the picture thresholded using a local algorithm
-		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
-		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
-		turnImageBW_Local_auto(BW_local_thresholded_picture);
+		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
 
-		@SuppressWarnings("unused")
-		//blah = BW_local_thresholded_picture.getTitle();
-
-
-		//				BW_local_thresholded_picture.show();
-		//				BW_local_thresholded_picture.hide();
-
+		
 		//
 		//--------------------------------------------------
 		//
@@ -182,6 +143,28 @@ public class ColorProfilePA extends Profile{
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
+			//before giving up, try again with a different cropper (this is usually why the segmentation fails)
+			
+			colourCroppedImage = GenericImageCropper.cropPlate(rotatedImage);
+			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
+			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
+			segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
+			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+			
+		}
+		
+		if(segmentationOutput.errorOccurred){
+			//before giving up, try again with a different cropper (this is usually why the segmentation fails)
+			
+			colourCroppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
+			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
+			segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
+			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+			
+		}
+		
+		if(segmentationOutput.errorOccurred){			
 
 			System.err.println("\n"+ profileName +" profile: unable to process picture " + justFilename);
 
@@ -207,12 +190,15 @@ public class ColorProfilePA extends Profile{
 			RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImageSegmented, filename + ".grid.jpg");
 
+			rotatedImage.flush();//12.01.2014: moved from above 
 			croppedImageSegmented.flush();
 			grayscaleCroppedImage.flush();
 
 			return;
 		}
+		
 
+		rotatedImage.flush();//12.01.2014: moved from above 
 
 		//
 		//--------------------------------------------------

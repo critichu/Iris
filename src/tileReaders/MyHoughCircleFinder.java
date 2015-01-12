@@ -112,8 +112,8 @@ public class MyHoughCircleFinder {
 		//		adaptiveThresholder.my_run(ip, 20, 0);
 
 		Auto_Local_Threshold.Mean(tileImage, 20, 0, 0, false);
-		tileImage.show();		
-		tileImage.hide();
+//		tileImage.show();		
+//		tileImage.hide();
 
 
 
@@ -121,16 +121,16 @@ public class MyHoughCircleFinder {
 		binaryTools.setup("close", tileImage);
 		binaryTools.run(tileImage.getProcessor());
 
-		tileImage.show();		
-		tileImage.hide();
+//		tileImage.show();		
+//		tileImage.hide();
 
 
 		//	Prefs.blackBackground = true;
 		binaryTools.setup("fill", tileImage);
 		binaryTools.run(tileImage.getProcessor());
 
-		tileImage.show();		
-		tileImage.hide();
+//		tileImage.show();		
+//		tileImage.hide();
 
 
 		Prefs.blackBackground = true;
@@ -144,8 +144,8 @@ public class MyHoughCircleFinder {
 		ip.setSnapshotCopyMode(false);
 		
 		tileImage.updateImage();
-		tileImage.show();
-		tileImage.hide();
+//		tileImage.show();
+//		tileImage.hide();
 
 
 		//

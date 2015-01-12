@@ -3,6 +3,7 @@
  */
 package utils;
 
+import fiji.threshold.Auto_Local_Threshold;
 import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -31,6 +32,57 @@ import tileReaderOutputs.BasicTileReaderOutput;
  *
  */
 public class Toolbox {
+	
+	/**
+	 * This function will convert the given picture into black and white
+	 * using a fancy local thresholding algorithm, as described here:
+	 * @see http://www.dentistry.bham.ac.uk/landinig/software/autothreshold/autothreshold.html
+	 * @param 
+	 */
+	public static ImagePlus turnImageBW_Local_auto(ImagePlus originalImage, int radius){
+		ImagePlus imageToThreshold = originalImage.duplicate();
+		Auto_Local_Threshold.Mean(imageToThreshold, radius, 0, 0, true);
+		imageToThreshold.setTitle(originalImage.getTitle());
+		
+		return(imageToThreshold);
+	}
+	
+	/**
+	 * This function will return a grayscale version of the given image, using the
+	 * brightness channel of the HSB conversion of the image.
+	 * The original input image is unchanged.
+	 * @param originalImage
+	 * @return
+	 */
+	public static ImagePlus getHSBgrayscaleImageBrightness(ImagePlus originalImage){
+				
+		ImagePlus originalImageCopy = originalImage.duplicate();
+		ImageProcessor ip =  originalImageCopy.getProcessor();
+
+		ColorProcessor cp = (ColorProcessor)ip;
+
+		//get the number of pixels in the picture
+		//ip.snapshot(); // override ColorProcessor bug in 1.32c
+		int width = originalImageCopy.getWidth();
+		int height = originalImageCopy.getHeight();
+		int numPixels = width*height;
+
+		//we need those arrays to save the different channels into
+		byte[] hSource = new byte[numPixels];
+		byte[] sSource = new byte[numPixels];
+		byte[] bSource = new byte[numPixels];
+
+		//saves the HSB channels of the cp into the h, s, bSource
+		cp.getHSB(hSource,sSource,bSource);
+
+		//create a new image with the original title and the brightness HSB channel of the input image
+		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
+		ImagePlus grayscaleImage = new ImagePlus(originalImage.getTitle(), bpBri);
+		originalImageCopy.flush();
+		
+		return(grayscaleImage);
+	}
+	
 
 	/**
 	 * This function will create a copy of the original image, and invert the colours on that copy.

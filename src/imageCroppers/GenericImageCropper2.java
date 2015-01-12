@@ -68,6 +68,7 @@ public class GenericImageCropper2 {
 
 		//copy to a new picture
 		ImagePlus croppedImage = ImagePlus.getClipboard();
+		croppedImage.setTitle(originalImage.getTitle());
 		return(croppedImage);
 	}
 
