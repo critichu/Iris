@@ -54,6 +54,7 @@ public class IrisFrontend {
 		//"Biofilm formation",
 		"Biofilm formation PA",
 		"Biofilm formation Ecoli",
+		"Biofilm formation Ecoli Natural Isolates",
 		"Morphology Profile [Candida 96-plates]",
 		"Xgal assay 96",
 		"Xgal assay 384",

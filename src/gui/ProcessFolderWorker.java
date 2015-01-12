@@ -21,6 +21,7 @@ import profiles.BsubtilisSporulationProfile;
 import profiles.CPRGProfile384;
 import profiles.ColorProfile;
 import profiles.ColorProfileEcoli;
+import profiles.ColorProfileEcoliNaturalIsolates;
 import profiles.ColorProfilePA;
 import profiles.ColorProfile_SimpleSegmentation;
 import profiles.EcoliGrowthProfile;
@@ -191,6 +192,11 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		else if(profileName.equals("Biofilm formation Ecoli")){
 			ColorProfileEcoli colorProfileEcoli = new ColorProfileEcoli();
 			colorProfileEcoli.analyzePicture(filename);
+		}
+		
+		else if(profileName.equals("Biofilm formation Ecoli Natural Isolates")){
+			ColorProfileEcoliNaturalIsolates colorProfileEcoliNaturalIsolates = new ColorProfileEcoliNaturalIsolates();
+			colorProfileEcoliNaturalIsolates.analyzePicture(filename);
 		}
 
 		else if(profileName.equals("Biofilm formation - Simple Grid")){

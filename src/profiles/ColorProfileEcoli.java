@@ -11,12 +11,12 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import imageCroppers.GenericImageCropper;
 import imageCroppers.GenericImageCropper2;
+import imageCroppers.NaiveImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -117,7 +117,7 @@ public class ColorProfileEcoli extends Profile{
 
 		//3. crop the plate to keep only the colonies
 		//				ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
-		ImagePlus croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		ImagePlus colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 
 
 		//flush the original pictures, we won't be needing them anymore
@@ -133,43 +133,8 @@ public class ColorProfileEcoli extends Profile{
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale), but keep a copy so that we have the colour information
-		//This is how you do it the HSB way
-		ImagePlus colourCroppedImage = croppedImage.duplicate();
-		ImageProcessor ip =  croppedImage.getProcessor();
-
-		ColorProcessor cp = (ColorProcessor)ip;
-
-		//get the number of pixels in the tile
-		//				ip.snapshot(); // override ColorProcessor bug in 1.32c
-		int width = croppedImage.getWidth();
-		int height = croppedImage.getHeight();
-		int numPixels = width*height;
-
-		//we need those to save into
-		byte[] hSource = new byte[numPixels];
-		byte[] sSource = new byte[numPixels];
-		byte[] bSource = new byte[numPixels];
-
-		//saves the channels of the cp into the h, s, bSource
-		cp.getHSB(hSource,sSource,bSource);
-
-		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
-		croppedImage = new ImagePlus(croppedImage.getTitle(), bpBri);
-		ImagePlus grayscaleCroppedImage  = croppedImage.duplicate();
-		grayscaleCroppedImage.setTitle(croppedImage.getTitle());
-		croppedImage.flush();
-
-		//get a copy of the picture thresholded using a local algorithm
-		ImagePlus grayscalePicture = grayscaleCroppedImage.duplicate();
-		//		BW_local_thresholded_picture.setTitle(grayscaleCroppedImage.getTitle());
-		//		turnImageBW_Local_auto(BW_local_thresholded_picture);
-
-		//		@SuppressWarnings("unused")
-		//blah = BW_local_thresholded_picture.getTitle();
-
-
-		//				BW_local_thresholded_picture.show();
-		//				BW_local_thresholded_picture.hide();
+		//This is how you do it the HSB way		
+		ImagePlus grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 
 		//
 		//--------------------------------------------------
@@ -177,9 +142,30 @@ public class ColorProfileEcoli extends Profile{
 		//
 
 		//5. segment the cropped picture
-		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscalePicture, settings);
+		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
 
+
+		//check if something went wrong with the segmenting process, then try out different croppers
+		if(segmentationOutput.errorOccurred){
+			//before giving up, try again with a different cropper (this is usually why the segmentation fails)
+
+			colourCroppedImage = GenericImageCropper.cropPlate(rotatedImage);
+			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);			
+			segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
+			segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
+
+		}
+
+		if(segmentationOutput.errorOccurred){
+			//before giving up, try again with a different cropper (this is usually why the segmentation fails)
+
+			colourCroppedImage = NaiveImageCropper.cropPlate(rotatedImage);
+			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
+			segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
+			segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
+
+		}
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -260,7 +246,7 @@ public class ColorProfileEcoli extends Profile{
 
 				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
 				basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
-						new BasicTileReaderInput(grayscalePicture, segmentationOutput.ROImatrix[i][j], settings));
+						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
@@ -382,12 +368,10 @@ public class ColorProfileEcoli extends Profile{
 			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
-			//			colourCroppedImage.flush();
 			grayscaleCroppedImage.flush();
 		}
 		else
 		{
-			//			colourCroppedImage.flush();
 			grayscaleCroppedImage.flush();
 		}
 
@@ -402,8 +386,8 @@ public class ColorProfileEcoli extends Profile{
 				//for all columns
 				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 					if(basicTileReaderOutputs[i][j].circularity<circularityThreshold_max &&
-						basicTileReaderOutputs[i][j].circularity>circularityThreshold_min &&
-						basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
+							basicTileReaderOutputs[i][j].circularity>circularityThreshold_min &&
+							basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
 
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 

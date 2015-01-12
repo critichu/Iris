@@ -43,11 +43,11 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class ColorProfilePA extends Profile{
+public class ColorProfileEcoliNaturalIsolates extends Profile{
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Biofilm formation PA";
+	public static String profileName = "Biofilm formation Ecoli Natural Isolates";
 
 
 	/**
@@ -229,9 +229,6 @@ public class ColorProfilePA extends Profile{
 		//
 
 		//6. analyze each tile
-		
-		//PA uses Hough circles NOT
-		//settings.useHoughCircles = true;
 
 		//create an array of measurement outputs
 		BasicTileReaderOutput [][] basicTileReaderOutputs = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];

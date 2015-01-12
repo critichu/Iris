@@ -44,7 +44,7 @@ public class BasicTileReaderHSB {
 	 * @return
 	 */
 	public static BasicTileReaderOutput processTile(BasicTileReaderInput input){
-		
+
 		//-1. make a copy of the input tile, in case we need to pass it to HoughCircleFinder
 		ImagePlus tileCopy = input.tileImage.duplicate();
 
@@ -95,7 +95,7 @@ public class BasicTileReaderHSB {
 
 
 		if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
-			
+
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
 
@@ -123,18 +123,32 @@ public class BasicTileReaderHSB {
 			output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 			output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 			output.colonyROI = rois[indexOfBiggestParticle];
-			
+
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
 
 			return(output);//returns the biggest result
 		}
 		else{ //there's a colony here, but we need to employ Hough to get it right
-			input.tileImage = tileCopy;
-			//input.tileImage.setRoi(rois[getIndexOfBiggestParticle(resultsTable)], false);
-			
-			Hough_Circles.centerX = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
-			Hough_Circles.centerY = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
-			return(MyHoughCircleFinder.processTile(input));
+
+			//but only if the user wishes to do so
+			if(input.settings.useHoughCircles){
+
+				input.tileImage = tileCopy;
+				//input.tileImage.setRoi(rois[getIndexOfBiggestParticle(resultsTable)], false);
+
+				Hough_Circles.centerX = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
+				Hough_Circles.centerY = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
+				return(MyHoughCircleFinder.processTile(input));
+			}
+			else{
+				//give up and return that the tile is empty
+				output.emptyTile = true;
+				output.colonySize = 0;//return a colony size of zero
+
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+
+				return(output);				
+			}
 		}
 
 		//TODO: still there is no way to filter out contaminations in case the tile is empty

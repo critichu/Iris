@@ -53,6 +53,14 @@ public class BasicSettings /*extends Settings*/ implements Serializable{
 	public int threshold = -1;
 	
 	
+	/**
+	 * This setting enables the use of Hough circles if no better colony selection can be made
+	 * by using the standard thresholding methods. Has been shown to perform rather poorly, but
+	 * maybe a bit better than giving up and ignoring the colony altogether.
+	 */
+	public boolean useHoughCircles = false;
+	
+	
 	
 	
 	/**

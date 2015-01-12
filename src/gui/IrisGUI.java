@@ -54,7 +54,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	 */
 	public static void main(String[] args) {
 
-		if(args.length==0){//GUI version
+
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					try {
@@ -72,32 +72,6 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 					}
 				}
 			});
-		}
-//		else{ //command line version
-//			
-//			if(args.length<2){
-//				printUsage();
-//				return;
-//			}
-//
-//			IrisFrontend.selectedProfile = args[0];
-//			String folderLocation = args[1];
-//
-//			//IrisGUI this_ = new IrisGUI();
-//			//comboBox = new JComboBox(profileCollection);
-//			//comboBox.setSelectedIndex(0);
-//			//comboBox.setSelectedItem(profileName);
-//
-//			ProcessFolderWorker processFolderWorker = new ProcessFolderWorker();
-//			processFolderWorker.directory = new File(folderLocation);
-//
-//			try {
-//				processFolderWorker.doInBackground();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//
-//		}
 	}
 
 	public static void printUsage(){
