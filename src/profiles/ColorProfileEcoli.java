@@ -116,7 +116,7 @@ public class ColorProfileEcoli extends Profile{
 
 
 		//3. crop the plate to keep only the colonies
-//				ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
+		//				ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
 		ImagePlus croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 
 
@@ -392,15 +392,18 @@ public class ColorProfileEcoli extends Profile{
 		}
 
 		//7.3 save any colony picture files, if in debug mode
-		double circularityThreshold = 0.5;
-		int sizeThreshold = 10;
 		if(IrisFrontend.debug){
+			double circularityThreshold_min = 0.5;
+			double circularityThreshold_max = 0.6;
+			int sizeThreshold = 10;
+
 			//for all rows
 			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 				//for all columns
 				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-					if(basicTileReaderOutputs[i][j].circularity<circularityThreshold && 
-							basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
+					if(basicTileReaderOutputs[i][j].circularity<circularityThreshold_max &&
+						basicTileReaderOutputs[i][j].circularity>circularityThreshold_min &&
+						basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
 
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 

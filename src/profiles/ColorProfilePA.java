@@ -390,16 +390,22 @@ public class ColorProfilePA extends Profile{
 			
 			//double circularityThreshold1 = Double.MAX_VALUE;
 			int sizeThreshold1 = 5300;
+			double circularityThreshold1_max = 0.75;
 			
 			double circularityThreshold2_min = 0.40;
 			double circularityThreshold2_max = 0.75;
+			double normalizedOpacityThreshold2_min = 16.5;
+			double normalizedOpacityThreshold2_max = 33;
 			int sizeThreshold2 = 4300;
+			
+			
 
 			//for all rows
 			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 				//for all columns
 				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-					if(basicTileReaderOutputs[i][j].colonySize>sizeThreshold1){
+					if(basicTileReaderOutputs[i][j].colonySize>sizeThreshold1 &&
+						basicTileReaderOutputs[i][j].circularity<circularityThreshold1_max){
 
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
@@ -407,10 +413,14 @@ public class ColorProfilePA extends Profile{
 
 						Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
 					}
-					else
+					else{
+						double normalizedOpacity = (double)opacityTileReaderOutputs[i][j].opacity / (double)basicTileReaderOutputs[i][j].colonySize;
+						
 						if(basicTileReaderOutputs[i][j].colonySize>sizeThreshold2 &&
 							basicTileReaderOutputs[i][j].circularity<circularityThreshold2_max &&
-							basicTileReaderOutputs[i][j].circularity>circularityThreshold2_min){
+							basicTileReaderOutputs[i][j].circularity>circularityThreshold2_min &&
+							normalizedOpacity>normalizedOpacityThreshold2_min &&
+							normalizedOpacity<normalizedOpacityThreshold2_max){
 							
 							//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 							String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
@@ -418,6 +428,7 @@ public class ColorProfilePA extends Profile{
 
 							Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
 						}
+					}
 				}
 			}
 		}
