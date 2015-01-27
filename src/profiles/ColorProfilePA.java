@@ -116,7 +116,7 @@ public class ColorProfilePA extends Profile{
 
 		//3. crop the plate to keep only the colonies
 		//		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
-		ImagePlus colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		ImagePlus colourCroppedImage = GenericImageCropper.cropPlate(rotatedImage);
 
 		//
 		//--------------------------------------------------
@@ -145,7 +145,7 @@ public class ColorProfilePA extends Profile{
 		if(segmentationOutput.errorOccurred){
 			//before giving up, try again with a different cropper (this is usually why the segmentation fails)
 			
-			colourCroppedImage = GenericImageCropper.cropPlate(rotatedImage);
+			colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
 			segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
