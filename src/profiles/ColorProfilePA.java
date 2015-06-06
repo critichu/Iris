@@ -244,16 +244,15 @@ public class ColorProfilePA extends Profile{
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 
-				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
-				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
-						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+				//first get the colony size using the laplacian method
+				basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
+						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				
-				//try once more using the laplacian method
+				//try once more using our method
 				if(basicTileReaderOutputs[i][j].colonySize==0){
-					basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
-							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
-
+					basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+							new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
 				}
 				
 				//only run the color analysis if there is a colony in the tile
