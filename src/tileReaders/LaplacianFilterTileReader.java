@@ -81,34 +81,45 @@ public class LaplacianFilterTileReader {
 		//subtract the 2 laplacians
 		ImageCalculator calculator = new ImageCalculator();
 		ImagePlus laplacianDifference = calculator.run("diff create", tileImageLaplacian, tileImageLaplacianNegative);
-
-
 		laplacianDifference.setProcessor(laplacianDifference.getProcessor().convertToByte(true));
-
 
 		//remove the unused images
 		tileImageLaplacian.flush();
 		tileImageLaplacianNegative.flush();
 
-		//		laplacianDifference.updateImage();
-		//		laplacianDifference.show();
-		//		laplacianDifference.hide();
 
-		//blur the difference a bit
+//		laplacianDifference.updateImage();
+//		laplacianDifference.show();
+//		laplacianDifference.hide();
+
+
+
+		//Sobel edge detection, try to find the "halo" around the colonies, nicely given by the laplacian diff
+		laplacianDifference.getProcessor().findEdges();
+
+//		laplacianDifference.updateImage();
+//		laplacianDifference.show();
+//		laplacianDifference.hide();
+
+		//blur the edge detection a bit
 		GaussianBlur blur = new GaussianBlur();
 		ByteProcessor laplacianDifferenceProcessor = (ByteProcessor) laplacianDifference.getProcessor();
 		blur.blurGaussian(laplacianDifferenceProcessor, sigma, sigma, 0.02);
 
-		//		laplacianDifference.updateImage();
-		//		laplacianDifference.show();
-		//		laplacianDifference.hide();
+//		laplacianDifference.updateImage();
+//		laplacianDifference.show();
+//		laplacianDifference.hide();
+
+
 
 		//next step: threshold the tile image, use Huang (we might change this once we move to large scale tests)   
 		Toolbox.turnImageBW_Huang_auto(laplacianDifference);
 
-		//		laplacianDifference.updateImage();
-		//		laplacianDifference.show();
-		//		laplacianDifference.hide();
+
+
+//		laplacianDifference.updateImage();
+//		laplacianDifference.show();
+//		laplacianDifference.hide();
 
 		//analyze the particles in the image, this includes filling in holes (which we expect using the above pipeline)
 		ResultsTable resultsTable = new ResultsTable();
