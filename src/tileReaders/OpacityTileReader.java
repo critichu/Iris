@@ -141,7 +141,7 @@ public class OpacityTileReader {
 	 * @param input
 	 * @return
 	 */
-	public static OpacityTileReaderOutput processThresholdedTile(OpacityTileReaderInput input){
+	public static OpacityTileReaderOutput processDefinedColonyTile(OpacityTileReaderInput input){
 		
 		//in case no-one's done this for us, get the ROI the traditional way
 		if(input.colonyRoi==null){

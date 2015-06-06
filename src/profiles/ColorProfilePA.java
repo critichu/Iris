@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 import settings.ColorSettings;
 import tileReaderInputs.BasicTileReaderInput;
-import tileReaderInputs.ColorTileReaderInput2;
+import tileReaderInputs.ColorTileReaderInput3;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
@@ -127,11 +127,11 @@ public class ColorProfilePA extends Profile{
 		//4. pre-process the picture (i.e. make it grayscale), but keep a copy so that we have the colour information
 		//This is how you do it the HSB way		
 		ImagePlus grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
-				
+
 		//get a copy of the picture thresholded using a local algorithm
 		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
 
-		
+
 		//
 		//--------------------------------------------------
 		//
@@ -145,26 +145,26 @@ public class ColorProfilePA extends Profile{
 		//check if something went wrong with the segmenting process, then try out different croppers
 		if(segmentationOutput.errorOccurred){
 			//before giving up, try again with a different cropper (this is usually why the segmentation fails)
-			
+
 			colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
 			segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
 			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
-			
+
 		}
-		
+
 		if(segmentationOutput.errorOccurred){
 			//before giving up, try again with a different cropper (this is usually why the segmentation fails)
-			
+
 			colourCroppedImage = NaiveImageCropper.cropPlate(rotatedImage);
 			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
 			segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
 			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
-			
+
 		}
-		
+
 		if(segmentationOutput.errorOccurred){			
 
 			System.err.println("\n"+ profileName +" profile: unable to process picture " + justFilename);
@@ -197,7 +197,7 @@ public class ColorProfilePA extends Profile{
 
 			return;
 		}
-		
+
 
 		rotatedImage.flush();//12.01.2014: moved from above 
 
@@ -230,7 +230,7 @@ public class ColorProfilePA extends Profile{
 		//
 
 		//6. analyze each tile
-		
+
 		//PA uses Hough circles NOT
 		//settings.useHoughCircles = true;
 
@@ -244,26 +244,29 @@ public class ColorProfilePA extends Profile{
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 
-				//first get the colony size using our method
-				
-				basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
-						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
-				
-				//try once more using the laplacian method
+				//first get the colony size using one method
+
+				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+
+
+
+				//try once more using the other
 				if(basicTileReaderOutputs[i][j].colonySize==0){
-					basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
-							new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
-					
+					basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
+							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
 				}
-				
+
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
 					//colour
-					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processThresholdedTile(
-							new ColorTileReaderInput2(colourCroppedImage, BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
+							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], 
+									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 
 					//opacity -- to check if colony darkness correlates with colour information
-					opacityTileReaderOutputs[i][j] = OpacityTileReader.processThresholdedTile(
+					opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
 							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
 									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 
@@ -389,25 +392,25 @@ public class ColorProfilePA extends Profile{
 		//make it a 2-pass thing
 		if(IrisFrontend.debug){
 
-			
+
 			//double circularityThreshold1 = Double.MAX_VALUE;
 			int sizeThreshold1 = 5300;
 			double circularityThreshold1_max = 0.75;
-			
+
 			double circularityThreshold2_min = 0.40;
 			double circularityThreshold2_max = 0.75;
 			double normalizedOpacityThreshold2_min = 16.5;
 			double normalizedOpacityThreshold2_max = 33;
 			int sizeThreshold2 = 4300;
-			
-			
+
+
 
 			//for all rows
 			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 				//for all columns
 				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 					if(basicTileReaderOutputs[i][j].colonySize>sizeThreshold1 &&
-						basicTileReaderOutputs[i][j].circularity<circularityThreshold1_max){
+							basicTileReaderOutputs[i][j].circularity<circularityThreshold1_max){
 
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
@@ -417,13 +420,13 @@ public class ColorProfilePA extends Profile{
 					}
 					else{
 						double normalizedOpacity = (double)opacityTileReaderOutputs[i][j].opacity / (double)basicTileReaderOutputs[i][j].colonySize;
-						
+
 						if(basicTileReaderOutputs[i][j].colonySize>sizeThreshold2 &&
-							basicTileReaderOutputs[i][j].circularity<circularityThreshold2_max &&
-							basicTileReaderOutputs[i][j].circularity>circularityThreshold2_min &&
-							normalizedOpacity>normalizedOpacityThreshold2_min &&
-							normalizedOpacity<normalizedOpacityThreshold2_max){
-							
+								basicTileReaderOutputs[i][j].circularity<circularityThreshold2_max &&
+								basicTileReaderOutputs[i][j].circularity>circularityThreshold2_min &&
+								normalizedOpacity>normalizedOpacityThreshold2_min &&
+								normalizedOpacity<normalizedOpacityThreshold2_max){
+
 							//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 							String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
 									basicTileReaderOutputs[i][j].circularity, basicTileReaderOutputs[i][j].colonySize, i+1, j+1) + justFilename;

@@ -15,6 +15,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import imagescience.feature.Laplacian;
 import imagescience.image.Image;
+import imagescience.segment.ZeroCrosser;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import utils.Toolbox;
@@ -31,7 +32,7 @@ public class LaplacianFilterTileReader {
 		//median filter radius
 		double radius = 2.0;
 		//laplacian filter scale 
-		double scale = 1.5;
+		double scale = 4.0;
 		//gaussian radius (sigma)
 		double sigma = 1.0;
 
@@ -57,16 +58,23 @@ public class LaplacianFilterTileReader {
 
 		Image tileImageAsImage = Image.wrap(input.tileImage);
 		Laplacian laplacianFilter = new Laplacian();
-
-		ImagePlus tileImageLaplacian = laplacianFilter.run(tileImageAsImage, scale).imageplus();
-
-
-		//		tileImageLaplacian.show();
-		//		tileImageLaplacian.hide();
+		ZeroCrosser zc = new ZeroCrosser();
+		
+		Image tileImageToZeroCross = laplacianFilter.run(tileImageAsImage, scale);
+		
+		ImagePlus tileImageLaplacian = tileImageToZeroCross.imageplus();
+//		tileImageLaplacian.show();
+//		tileImageLaplacian.hide();
+		
+		zc.run(tileImageToZeroCross);
+		ImagePlus tileImageLaplacianZeroCrossed = tileImageToZeroCross.imageplus();
+				
+//		tileImageLaplacianZeroCrossed.show();
+//		tileImageLaplacianZeroCrossed.hide();
 
 
 		//re-scale the laplacian output
-		tileImageLaplacian.setProcessor(tileImageLaplacian.getProcessor().convertToByte(true));
+//		tileImageLaplacian.setProcessor(tileImageLaplacian.getProcessor().convertToByte(true));
 
 
 		//calculate the negative of the laplacian
@@ -113,7 +121,8 @@ public class LaplacianFilterTileReader {
 
 
 		//next step: threshold the tile image, use Huang (we might change this once we move to large scale tests)   
-		Toolbox.turnImageBW_Huang_auto(laplacianDifference);
+		//Toolbox.turnImageBW_Huang_auto(laplacianDifference);
+		Toolbox.turnImageBW_Huang_auto(tileImageLaplacianZeroCrossed);
 
 
 
@@ -123,7 +132,7 @@ public class LaplacianFilterTileReader {
 
 		//analyze the particles in the image, this includes filling in holes (which we expect using the above pipeline)
 		ResultsTable resultsTable = new ResultsTable();
-		RoiManager roiManager = particleAnalysis_fillHoles(laplacianDifference, resultsTable);
+		RoiManager roiManager = particleAnalysis_fillHoles(tileImageLaplacianZeroCrossed, resultsTable);
 
 		if(roiManager==null){ //no particles found
 			output.emptyResulsTable = true; // this is highly abnormal

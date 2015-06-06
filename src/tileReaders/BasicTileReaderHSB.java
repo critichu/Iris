@@ -9,6 +9,7 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
+import ij.plugin.Hough_Circles;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
@@ -127,21 +128,18 @@ public class BasicTileReaderHSB {
 
 			return(output);//returns the biggest result
 		}
-		else{ //there's a colony here, but we need to employ KC's laplacian filter method to get it out
+		else{ //there's a colony here, but we need to employ Hough to get it right
 
 			//but only if the user wishes to do so
+			input.settings.useHoughCircles=false; //it's better to fall back to KC's method as a backup
 			if(input.settings.useHoughCircles){
 
 				input.tileImage = tileCopy;
 				//input.tileImage.setRoi(rois[getIndexOfBiggestParticle(resultsTable)], false);
 
-				
-				//Hough_Circles.centerX = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
-				//Hough_Circles.centerY = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
-				//return(MyHoughCircleFinder.processTile(input));
-				
-				return(LaplacianFilterTileReader.processTile(input));
-				
+				Hough_Circles.centerX = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
+				Hough_Circles.centerY = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
+				return(MyHoughCircleFinder.processTile(input));
 			}
 			else{
 				//give up and return that the tile is empty

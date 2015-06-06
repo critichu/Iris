@@ -251,7 +251,7 @@ public class ColorProfileEcoliNaturalIsolates extends Profile{
 							new ColorTileReaderInput2(colourCroppedImage, BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
 
 					//opacity -- to check if colony darkness correlates with colour information
-					opacityTileReaderOutputs[i][j] = OpacityTileReader.processThresholdedTile(
+					opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
 							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
 									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 

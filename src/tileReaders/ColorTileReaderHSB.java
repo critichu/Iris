@@ -161,9 +161,9 @@ public class ColorTileReaderHSB {
 
 
 		//dilate 3 times to remove the colony periphery
-		input.tileImage.getProcessor().dilate();
-		input.tileImage.getProcessor().dilate();
-		input.tileImage.getProcessor().dilate();
+//		input.tileImage.getProcessor().dilate();
+//		input.tileImage.getProcessor().dilate();
+//		input.tileImage.getProcessor().dilate();
 		//
 		//--------------------------------------------------
 		//
@@ -251,9 +251,9 @@ public class ColorTileReaderHSB {
 
 
 		//dilate 3 times to remove the colony periphery
-//		input.tileImage.getProcessor().dilate();
-//		input.tileImage.getProcessor().dilate();
-//		input.tileImage.getProcessor().dilate();
+		input.tileImage.getProcessor().dilate();
+		input.tileImage.getProcessor().dilate();
+		input.tileImage.getProcessor().dilate();
 		//
 		//--------------------------------------------------
 		//
