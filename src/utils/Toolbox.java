@@ -10,6 +10,7 @@ import ij.gui.Roi;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
+import ij.measure.ResultsTable;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
@@ -730,6 +731,101 @@ public class Toolbox {
 
 		savePicture(tileImage, tileImageFilename);
 
+	}
+
+
+	
+
+
+	public static int getIndexOfBiggestParticle(ResultsTable resultsTable){
+		//get the areas of all the particles the particle analyzer has found
+		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = getIndexOfMaximumElement(areas);
+
+		return(indexOfMax);
+	}
+
+
+	/**
+	 * Returns the area of the biggest particle in the results table
+	 */
+	public static int getBiggestParticleArea(ResultsTable resultsTable, int indexOfBiggestParticle) {
+
+		//get the areas of all the particles the particle analyzer has found
+		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
+
+
+		int largestParticleArea = Math.round(areas[indexOfBiggestParticle]);
+
+		return(largestParticleArea);
+	}
+
+
+	/**
+	 * Returns the area of the biggest particle in the results table.
+	 * This function compensates for a mildly stringent thresholding algorithm (such as Otsu),
+	 * in which it is known that the outer pixels of the colony are missing.
+	 * By adding back pixels that equal the periphery in number, we compensate for those missing pixels.
+	 * This in round colonies equals to the increase in diameter by 1. Warning: in colonies of highly abnormal
+	 * shape (such as colonies that form a biofilm), this could add much more than just an outer layer of pixels,
+	 * thus overcorrecting the stringency of the thresholding algorithm. 
+	 */
+	public static int getBiggestParticleAreaPlusPerimeter(ResultsTable resultsTable, int indexOfBiggestParticle) {
+
+		//get the areas and perimeters of all the particles the particle analyzer has found
+		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
+		float perimeters[] = resultsTable.getColumn(resultsTable.getColumnIndex("Perim."));
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
+
+		//get the area and perimeter of the biggest particle
+		int largestParticleArea = Math.round(areas[indexOfMax]);
+		int largestParticlePerimeter = Math.round(perimeters[indexOfMax]);
+
+		return(largestParticleArea+largestParticlePerimeter);
+	}
+
+
+
+	/**
+	 * Returns the circularity of the biggest particle in the results table.
+	 */
+	public static float getBiggestParticleCircularity(ResultsTable resultsTable, int indexOfBiggestParticle) {
+
+		//get the areas and perimeters of all the particles the particle analyzer has found
+		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
+		float circularities[] = resultsTable.getColumn(resultsTable.getColumnIndex("Circ."));
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
+
+		return(circularities[indexOfMax]);
+	}
+
+
+
+	/**
+	 * This method simply iterates through this array and finds the index
+	 * of the largest element
+	 */
+	public static int getIndexOfMaximumElement(float[] areas) {
+		int index = -1;
+		float max = -Float.MAX_VALUE;
+
+		for (int i = 0; i < areas.length; i++) {
+			if(areas[i]>max){
+				max = areas[i];
+				index = i;
+			}
+		}
+
+		return(index);
 	}
 
 

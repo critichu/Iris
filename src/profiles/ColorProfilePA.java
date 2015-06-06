@@ -36,6 +36,7 @@ import tileReaderOutputs.ColorTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.BasicTileReaderHSB;
 import tileReaders.ColorTileReaderHSB;
+import tileReaders.LaplacianFilterTileReader;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
@@ -247,6 +248,14 @@ public class ColorProfilePA extends Profile{
 				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
 						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
 
+				
+				//try once more using the laplacian method
+				if(basicTileReaderOutputs[i][j].colonySize==0){
+					basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
+							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+				}
+				
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
 					//colour
@@ -254,8 +263,9 @@ public class ColorProfilePA extends Profile{
 							new ColorTileReaderInput2(colourCroppedImage, BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
 
 					//opacity -- to check if colony darkness correlates with colour information
-					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
-							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					opacityTileReaderOutputs[i][j] = OpacityTileReader.processThresholdedTile(
+							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 
 				}
 				else{

@@ -255,7 +255,7 @@ public class ColorProfileEcoli extends Profile{
 							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 
 					//opacity -- to check if colony darkness correlates with colour information
-					opacityTileReaderOutputs[i][j] = OpacityTileReader.processTile(
+					opacityTileReaderOutputs[i][j] = OpacityTileReader.processThresholdedTile(
 							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 					//					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 					//					opacityTileReaderOutputs[i][j].colonySize = basicTileReaderOutputs[i][j].colonySize;

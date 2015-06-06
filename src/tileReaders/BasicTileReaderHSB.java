@@ -9,7 +9,6 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
-import ij.plugin.Hough_Circles;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
@@ -119,16 +118,16 @@ public class BasicTileReaderHSB {
 			//3.2 if there was a colony there, return the area of the biggest particle
 			//this should also clear away contaminations, because normally the contamination
 			//area will be smaller than the colony area, so the contamination will never be reported
-			int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-			output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
-			output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+			int indexOfBiggestParticle = Toolbox.getIndexOfBiggestParticle(resultsTable);
+			output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
+			output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 			output.colonyROI = rois[indexOfBiggestParticle];
 
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
 
 			return(output);//returns the biggest result
 		}
-		else{ //there's a colony here, but we need to employ Hough to get it right
+		else{ //there's a colony here, but we need to employ KC's laplacian filter method to get it out
 
 			//but only if the user wishes to do so
 			if(input.settings.useHoughCircles){
@@ -136,9 +135,13 @@ public class BasicTileReaderHSB {
 				input.tileImage = tileCopy;
 				//input.tileImage.setRoi(rois[getIndexOfBiggestParticle(resultsTable)], false);
 
-				Hough_Circles.centerX = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
-				Hough_Circles.centerY = rois[getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
-				return(MyHoughCircleFinder.processTile(input));
+				
+				//Hough_Circles.centerX = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
+				//Hough_Circles.centerY = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
+				//return(MyHoughCircleFinder.processTile(input));
+				
+				return(LaplacianFilterTileReader.processTile(input));
+				
 			}
 			else{
 				//give up and return that the tile is empty
@@ -173,7 +176,7 @@ public class BasicTileReaderHSB {
 
 		//for the following, we only check the largest particle
 		//which is the one who would be reported either way if we decide that this spot is not empty
-		int indexOfMax = getIndexOfMaximumElement(areas);
+		int indexOfMax = Toolbox.getIndexOfMaximumElement(areas);
 
 		//check for the circularity of the largest particle
 		//usually, colonies have roundnesses that start from 0.50 (faint colonies)
@@ -384,7 +387,7 @@ public class BasicTileReaderHSB {
 
 		//for the following, we only check the largest particle
 		//which is the one who would be reported either way if we decide that this spot is not empty
-		int indexOfMax = getIndexOfMaximumElement(areas);
+		int indexOfMax = Toolbox.getIndexOfMaximumElement(areas);
 
 
 		//check for unusually high aspect ratio
@@ -453,99 +456,6 @@ public class BasicTileReaderHSB {
 		return(false);//it's not empty
 	}
 
-
-	private static int getIndexOfBiggestParticle(ResultsTable resultsTable){
-		//get the areas of all the particles the particle analyzer has found
-		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
-
-		//get the index of the biggest particle (in area in pixels)
-		int indexOfMax = getIndexOfMaximumElement(areas);
-
-		return(indexOfMax);
-	}
-
-
-	/**
-	 * Returns the area of the biggest particle in the results table
-	 */
-	private static int getBiggestParticleArea(ResultsTable resultsTable, int indexOfBiggestParticle) {
-
-		//get the areas of all the particles the particle analyzer has found
-		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
-
-		//get the index of the biggest particle (in area in pixels)
-		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
-
-
-		int largestParticleArea = Math.round(areas[indexOfBiggestParticle]);
-
-		return(largestParticleArea);
-	}
-
-
-	/**
-	 * Returns the area of the biggest particle in the results table.
-	 * This function compensates for a mildly stringent thresholding algorithm (such as Otsu),
-	 * in which it is known that the outer pixels of the colony are missing.
-	 * By adding back pixels that equal the periphery in number, we compensate for those missing pixels.
-	 * This in round colonies equals to the increase in diameter by 1. Warning: in colonies of highly abnormal
-	 * shape (such as colonies that form a biofilm), this could add much more than just an outer layer of pixels,
-	 * thus overcorrecting the stringency of the thresholding algorithm. 
-	 */
-	private static int getBiggestParticleAreaPlusPerimeter(ResultsTable resultsTable, int indexOfBiggestParticle) {
-
-		//get the areas and perimeters of all the particles the particle analyzer has found
-		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
-		float perimeters[] = resultsTable.getColumn(resultsTable.getColumnIndex("Perim."));
-
-		//get the index of the biggest particle (in area in pixels)
-		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
-
-		//get the area and perimeter of the biggest particle
-		int largestParticleArea = Math.round(areas[indexOfMax]);
-		int largestParticlePerimeter = Math.round(perimeters[indexOfMax]);
-
-		return(largestParticleArea+largestParticlePerimeter);
-	}
-
-
-
-	/**
-	 * Returns the circularity of the biggest particle in the results table.
-	 */
-	private static float getBiggestParticleCircularity(ResultsTable resultsTable, int indexOfBiggestParticle) {
-
-		//get the areas and perimeters of all the particles the particle analyzer has found
-		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
-		float circularities[] = resultsTable.getColumn(resultsTable.getColumnIndex("Circ."));
-
-		//get the index of the biggest particle (in area in pixels)
-		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
-
-		return(circularities[indexOfMax]);
-	}
-
-
-
-	/**
-	 * This method simply iterates through this array and finds the index
-	 * of the largest element
-	 */
-	private static int getIndexOfMaximumElement(float[] areas) {
-		int index = -1;
-		float max = -Float.MAX_VALUE;
-
-		for (int i = 0; i < areas.length; i++) {
-			if(areas[i]>max){
-				max = areas[i];
-				index = i;
-			}
-		}
-
-		return(index);
-	}
-
-
 	/**
 	 * This function uses the results table produced by the particle analyzer to
 	 * find out whether this tile has a colony in it or it's empty.
@@ -610,7 +520,7 @@ public class BasicTileReaderHSB {
 
 		//for the following, we only check the largest particle
 		//which is the one who would be reported either way if we decide that this spot is not empty
-		int indexOfMax = getIndexOfMaximumElement(areas);
+		int indexOfMax = Toolbox.getIndexOfMaximumElement(areas);
 
 
 		//check for unusually high aspect ratio

@@ -13,6 +13,9 @@ import settings.BasicSettings;
  */
 public class OpacityTileReaderInput extends BasicTileReaderInput {
 
+	public Roi colonyRoi;
+	public int colonySize;
+	
 	/**
 	 * @param tileImage_
 	 * @param settings_
@@ -27,9 +30,22 @@ public class OpacityTileReaderInput extends BasicTileReaderInput {
 	 * @param roi_
 	 * @param settings_
 	 */
-	public OpacityTileReaderInput(ImagePlus croppedImage_, Roi roi_, BasicSettings settings_) {
-		super(croppedImage_, roi_, settings_);
+	public OpacityTileReaderInput(ImagePlus croppedImage_, Roi tile_roi_, BasicSettings settings_) {
+		super(croppedImage_, tile_roi_, settings_);
 		// TODO Auto-generated constructor stub
 	}
+	
+	/**
+	 * @param tileImage_
+	 * @param roi_
+	 * @param settings_
+	 */
+	public OpacityTileReaderInput(ImagePlus croppedImage_, Roi tile_roi_, Roi colonyRoi_, int colonySize_, BasicSettings settings_) {
+		super(croppedImage_, tile_roi_, settings_);
+		this.colonyRoi = colonyRoi_;
+		this.colonySize = colonySize_;
+		// TODO Auto-generated constructor stub
+	}
+	
 
 }

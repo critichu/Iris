@@ -42,12 +42,12 @@ public class OpacityTileReader {
 		//--------------------------------------------------
 		//
 		//
-		
-		
+
+
 		//1. apply a threshold at the tile, using the Otsu algorithm
 		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
-		
-		
+
+
 
 		//
 		//--------------------------------------------------
@@ -81,50 +81,50 @@ public class OpacityTileReader {
 
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
 			grayscaleTileCopy.flush();
-			
+
 			return(output);
 		}
 
 		//3.2 check to see if the tile was empty. If so, return a colony size of zero
 		if(isTileEmpty(resultsTable, input.tileImage)){
-		//if(OpacityTileReaderForHazyColonies_old.isTileEmpty_simple(input.tileImage)){
+			//if(OpacityTileReaderForHazyColonies_old.isTileEmpty_simple(input.tileImage)){
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
 			output.circularity = 0;
 			output.opacity = 0;
-			
+
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
 			grayscaleTileCopy.flush();
-			
+
 			return(output);
 		}
 
-		
+
 		//3.3 if there was a colony there, return the area of the biggest particle
 		//this should also clear away contaminations, because normally the contamination
 		//area will be smaller than the colony area, so the contamination will never be reported
 		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-		
-		
+
+
 		//3.4 get the opacity of the colony
 		//for this, we need the Roi (region of interest) that corresponds to the colony
 		//so as to exclude the brightness of any contaminations
 		Roi colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
-		
+
 		output.opacity = getBiggestParticleOpacicity(grayscaleTileCopy, colonyRoi);
 		output.colonyROI = colonyRoi;
-		
+
 		if(output.opacity==0){
 			//this cannot be zero, unless we have an empty tile, 
 			//in which case this code shouldn't be reached
 			output.errorGettingOpacity=true;
 		}
-		
+
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
-		
+
 		return(output);
 
 
@@ -133,6 +133,66 @@ public class OpacityTileReader {
 		//should be very far from the center of the tile
 
 	}
+
+
+	/**
+	 * This function will take as input a tile plus it's thresholded version from a previous run of a similar method.
+	 * It will perform particle analysis and measure the color in the thresholded area.
+	 * @param input
+	 * @return
+	 */
+	public static OpacityTileReaderOutput processThresholdedTile(OpacityTileReaderInput input){
+		
+		//in case no-one's done this for us, get the ROI the traditional way
+		if(input.colonyRoi==null){
+			return(processTile(input));
+		}
+		
+		
+		//0. create the output object
+		OpacityTileReaderOutput output = new OpacityTileReaderOutput();
+
+		//get a copy of this tile, before it gets thresholded
+		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
+		//
+		//--------------------------------------------------
+		//
+		//
+
+
+		
+		
+		/// DONT check if its empty
+
+
+		//3.3 if there was a colony there, return the area of the biggest particle
+		//this should also clear away contaminations, because normally the contamination
+		//area will be smaller than the colony area, so the contamination will never be reported
+		
+		output.colonySize = input.colonySize;
+		output.circularity = 0;
+
+
+		//3.4 get the opacity of the colony
+		//for this, we need the Roi (region of interest) that corresponds to the colony
+		//so as to exclude the brightness of any contaminations
+
+		output.opacity = getBiggestParticleOpacicity(grayscaleTileCopy, input.colonyRoi);
+		output.colonyROI = input.colonyRoi;
+
+		if(output.opacity==0){
+			//this cannot be zero, unless we have an empty tile, 
+			//in which case this code shouldn't be reached
+			output.errorGettingOpacity=true;
+		}
+
+		input.cleanup(); //clear the tile image here, since we don't need it anymore
+		grayscaleTileCopy.flush();
+
+		return(output);
+
+	}
+
 
 
 
@@ -144,15 +204,15 @@ public class OpacityTileReader {
 	 * @return
 	 */
 	private static int getBiggestParticleOpacicity(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
-		
+
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
-		
+
 		//2. check sanity of the given Roi
 		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
 			return(0);
 		}
-		
+
 		//3. set the Roi and paint eveything outside it as black
 		grayscaleTileCopy.setRoi(colonyRoi);
 		try {
@@ -160,28 +220,28 @@ public class OpacityTileReader {
 		} catch (Exception e) {
 			return(0);
 		}
-		
+
 		//4. get the pixel values of the image
 		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
 		byte[] imageBytes = (byte[]) processor.getPixels();
-		
+
 		int size = imageBytes.length;
-		
+
 		int sumOfBrightness = 0;
-		
+
 		for(int i=0;i<size;i++){
 			int pixelValue = imageBytes[i]&0xFF;
-			
+
 			//subtract the threshold and put the pixels in the sum
 			//every pixel inside the colony should normally be above the threshold
 			//but just in case, we'll just take 0 if a colony pixel turns out to be below the threshold
 			//Also all the pixels outside the Roi would have a negative value after subtraction 
 			//(they are already zero) because of the mask process
-			
+
 			sumOfBrightness += Math.max(0, pixelValue-background_level);
 		}
-		
-		
+
+
 		return (sumOfBrightness);
 	}
 
@@ -203,10 +263,10 @@ public class OpacityTileReader {
 		//use that histogram to find a threshold
 		AutoThresholder at = new AutoThresholder();
 		int threshold = at.getThreshold(Method.Otsu, histogram);
-		
+
 		return(threshold);
 	}
-	
+
 
 	/**
 	 * This function will convert the given picture into black and white
@@ -400,14 +460,14 @@ public class OpacityTileReader {
 		return(false);//it's not empty
 	}
 
-	
+
 	private static int getIndexOfBiggestParticle(ResultsTable resultsTable){
 		//get the areas of all the particles the particle analyzer has found
 		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
 
 		//get the index of the biggest particle (in area in pixels)
 		int indexOfMax = getIndexOfMaximumElement(areas);
-		
+
 		return(indexOfMax);
 	}
 
@@ -419,17 +479,17 @@ public class OpacityTileReader {
 
 		//get the areas of all the particles the particle analyzer has found
 		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
-		
+
 		//get the index of the biggest particle (in area in pixels)
 		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
-		
-		
+
+
 		int largestParticleArea = Math.round(areas[indexOfBiggestParticle]);
 
 		return(largestParticleArea);
 	}
-	
-	
+
+
 	/**
 	 * Returns the area of the biggest particle in the results table.
 	 * This function compensates for a mildly stringent thresholding algorithm (such as Otsu),
@@ -444,19 +504,19 @@ public class OpacityTileReader {
 		//get the areas and perimeters of all the particles the particle analyzer has found
 		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
 		float perimeters[] = resultsTable.getColumn(resultsTable.getColumnIndex("Perim."));
-		
+
 		//get the index of the biggest particle (in area in pixels)
 		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
-		
+
 		//get the area and perimeter of the biggest particle
 		int largestParticleArea = Math.round(areas[indexOfMax]);
 		int largestParticlePerimeter = Math.round(perimeters[indexOfMax]);
 
 		return(largestParticleArea+largestParticlePerimeter);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Returns the circularity of the biggest particle in the results table.
 	 */
@@ -465,7 +525,7 @@ public class OpacityTileReader {
 		//get the areas and perimeters of all the particles the particle analyzer has found
 		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
 		float circularities[] = resultsTable.getColumn(resultsTable.getColumnIndex("Circ."));
-		
+
 		//get the index of the biggest particle (in area in pixels)
 		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
 

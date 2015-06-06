@@ -201,8 +201,9 @@ public class BasicProfile extends Profile {
 
 				if(readerOutputs[i][j].colonySize>0){
 
-					opacityReaderOutputs[i][j] = OpacityTileReader.processTile(
-							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					opacityReaderOutputs[i][j] = OpacityTileReader.processThresholdedTile(
+							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], 
+									readerOutputs[i][j].colonyROI, readerOutputs[i][j].colonySize, settings));
 				}
 				else
 				{

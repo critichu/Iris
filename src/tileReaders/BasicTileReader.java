@@ -5,15 +5,11 @@ package tileReaders;
 
 import ij.ImagePlus;
 import ij.gui.Roi;
-import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
-import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import utils.Toolbox;
@@ -38,7 +34,7 @@ public class BasicTileReader {
 
 		//1. apply a threshold at the tile, using the Otsu algorithm
 		ImagePlus originalTileImage = input.tileImage.duplicate();
-		turnImageBW_Otsu_auto(input.tileImage);
+		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
 
 
 
@@ -104,86 +100,6 @@ public class BasicTileReader {
 
 	}
 	
-	
-	
-	
-	
-	
-
-
-
-
-	/**
-	 * This function will convert the given picture into black and white
-	 * using the image's histogram. This version will also return the threshold found.
-	 * @param 
-	 */
-	private static int turnImageBW_Otsu(ImagePlus BW_croppedImage) {
-
-		//get all the objects required: calibration, imageProcessor and histogram
-		Calibration calibration = new Calibration(BW_croppedImage);		
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();
-		ImageStatistics statistics = ImageStatistics.getStatistics(imageProcessor, ij.measure.Measurements.MEAN, calibration);
-		int[] histogram = statistics.histogram;
-
-		//use that histogram to find a threshold
-		AutoThresholder at = new AutoThresholder();
-		int threshold = at.getThreshold(Method.Otsu, histogram);
-
-		imageProcessor.threshold(threshold);
-
-		return(threshold);
-	}
-
-
-
-	/**
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the Otsu algorithm. 
-	 * This function does not return the threshold
-	 * @param 
-	 */
-	private static void turnImageBW_Otsu_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.Otsu, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
-
-
-	/**
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the Huang algorithm
-	 * This function does not return the threshold
-	 * @param 
-	 */
-	private static void turnImageBW_Huang_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.Huang, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
-
-
-	/**
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the Minimum algorithm
-	 * This function does not return the threshold
-	 * @param 
-	 */
-	private static void turnImageBW_Minimum_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.Minimum, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
-
-
-	/**
-	 * @deprecated: see Evernote note on how this algorithm performs on overgrown colonies
-	 * This function will convert the given picture into black and white
-	 * using ImageProcessor's auto thresholding function, employing the MinError algorithm
-	 * This function does not return the threshold
-	 * @param
-	 */
-	private static void turnImageBW_MinError_auto(ImagePlus BW_croppedImage) {
-		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
-		imageProcessor.setAutoThreshold(Method.MinError, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-	}
 
 
 	/**
