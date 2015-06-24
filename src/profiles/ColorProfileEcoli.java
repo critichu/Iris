@@ -143,7 +143,7 @@ public class ColorProfileEcoli extends Profile{
 
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 
 		//check if something went wrong with the segmenting process, then try out different croppers
