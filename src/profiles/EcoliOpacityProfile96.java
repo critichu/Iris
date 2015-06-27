@@ -16,8 +16,8 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
-import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
+import imageSegmenters.SimpleImageSegmenter;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -36,12 +36,12 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class EcoliOpacityProfile extends Profile {
+public class EcoliOpacityProfile96 extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "E.coli Opacity Profile";
+	public static String profileName = "E.coli Opacity Profile for 384 plates";
 
 
 	/**
@@ -55,6 +55,7 @@ public class EcoliOpacityProfile extends Profile {
 	 */
 	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
+
 	/**
 	 * This function will analyze the picture using the basic profile
 	 * The end result will be a file with the same name as the input filename,
@@ -63,6 +64,17 @@ public class EcoliOpacityProfile extends Profile {
 	 */
 	public void analyzePicture(String filename){
 		
+		
+		//0. initialize settings and open files for input and output
+		//since this is a 384 plate, make sure the settings are redefined to match our setup
+		settings.numberOfColumnsOfColonies = 12;
+		settings.numberOfRowsOfColonies = 8;
+		
+		//
+		//--------------------------------------------------
+		//
+		//
+
 		File file = new File(filename);
 		String justFilename = file.getName();
 
@@ -72,7 +84,7 @@ public class EcoliOpacityProfile extends Profile {
 		StringBuffer output = new StringBuffer();
 		output.append("#Iris output\n");
 		output.append("#Profile: " + profileName + "\n");
-		output.append("#Iris version: " + IrisFrontend.IrisVersion + ", build id: " + IrisFrontend.IrisBuild + "\n");
+		output.append("#Iris version: " + IrisFrontend.IrisVersion + ", revision id: " + IrisFrontend.IrisBuild + "\n");
 		output.append("#"+filename+"\n");
 
 
@@ -85,6 +97,10 @@ public class EcoliOpacityProfile extends Profile {
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
+		
+		
+		
+		
 		//
 		//--------------------------------------------------
 		//
@@ -101,8 +117,6 @@ public class EcoliOpacityProfile extends Profile {
 		if(imageAngle!=0){
 			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
 		}
-
-
 
 
 		//
@@ -135,27 +149,28 @@ public class EcoliOpacityProfile extends Profile {
 		//
 		//
 
-
-		//change the settings so that the distance between the colonies can now be smaller
-		//		settings.minimumDistanceBetweenRows = 22;
-		//		//..or larger
-		//		settings.maximumDistanceBetweenRows = 55;
-
+		//calculate the minimum and maximum grid spacings according to the cropped image size 
+		//and the number of rows and columns, save the results in the settings object
 		calculateGridSpacing(settings, croppedImage);
+
+//		//change the settings so that the distance between the colonies can now be smaller
+//		settings.minimumDistanceBetweenRows = 40;
+//		//..or larger
+//		settings.maximumDistanceBetweenRows = 100;
+
+
+
+
+
 
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
-
-		//let colonies breathe
-		ColonyBreathing.breathingSpace = 8;
-		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
-
+		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
 
-			System.err.println("\nE.coli opacity profile: unable to process picture " + justFilename);
+			System.err.println("\n"+profileName+": unable to process picture " + justFilename);
 
 			System.err.print("Image segmentation algorithm failed:\n");
 
@@ -174,15 +189,11 @@ public class EcoliOpacityProfile extends Profile {
 
 
 			//save the grid before exiting
-			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
+			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
 		}
-
-		//6. colony breathing
-		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
-
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
 		int y = segmentationOutput.getTopLeftRoi().getBounds().y;
@@ -200,7 +211,7 @@ public class EcoliOpacityProfile extends Profile {
 		//
 		//
 
-		//7. analyze each tile
+		//6. analyze each tile
 
 		//create an array of measurement outputs
 		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -231,15 +242,14 @@ public class EcoliOpacityProfile extends Profile {
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
-			return;
+			///HACK for Alex: removing the next return statement will make Iris print out the result even though the gridding failed  
+			//return;
+			///HACK end
 		}
 
+		//7. output the results
 
-
-
-		//8. output the results
-
-		//8.1 output the colony measurements as a text file
+		//7.1 output the colony measurements as a text file
 		output.append("row\tcolumn\tsize\tcircularity\topacity\n");
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -264,11 +274,10 @@ public class EcoliOpacityProfile extends Profile {
 
 
 
-		//8.2 save any intermediate picture files, if requested
+		//7.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
@@ -281,7 +290,7 @@ public class EcoliOpacityProfile extends Profile {
 	 * cropped image size and
 	 * the number of rows and columns that need to be found.
 	 * Since the cropped image needs to be segmented roughly in equal distances, the
-	 * nominal distance in which the columns will be spaced apart will be
+	 * nominal distance in which the coluns will be spaced apart will be
 	 * nominal distance = image width / number of columns
 	 * this should be equal to the (image height / number of rows), which is not calculated separately.
 	 * Using this nominal distance, we can calculate the minimum and maximum distances, which are then used
@@ -295,44 +304,16 @@ public class EcoliOpacityProfile extends Profile {
 	 */
 	private void calculateGridSpacing(BasicSettings settings_,
 			ImagePlus croppedImage) {
-
+		
 		int image_width = croppedImage.getWidth();
 		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
-
+		
 		//save the results directly to the settings object
 		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
-		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*3/2);
-
+		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*4/3);
+		
 	}
 
-	/**
-	 * This function will create a copy of the original image, and rotate that copy.
-	 * The original image should be flushed by the caller if not reused
-	 * @param originalImage
-	 * @param angle
-	 * @return
-	 */
-	private ImagePlus rotateImage(ImagePlus originalImage, double angle) {
-
-		originalImage.deleteRoi();
-		ImagePlus aDuplicate = originalImage.duplicate();//because the caller is going to flush the original image
-
-		aDuplicate.getProcessor().setBackgroundValue(0);
-
-		IJ.run(aDuplicate, "Arbitrarily...", "angle=" + angle + " grid=0 interpolate enlarge");  
-
-		aDuplicate.updateImage();
-
-		return(aDuplicate);
-
-
-
-		//		ImagePlus rotatedOriginalImage = originalImage.duplicate();
-		//		rotatedOriginalImage.getProcessor().rotate(angle);
-		//		rotatedOriginalImage.updateImage();
-		//		
-		//		return(rotatedOriginalImage);
-	}
 
 	/**
 	 * This function will check if there is any row or any column with more than half of it's tiles being empty.
@@ -381,6 +362,37 @@ public class EcoliOpacityProfile extends Profile {
 
 		return(false);
 	}
+
+
+	/**
+	 * This function will create a copy of the original image, and rotate that copy.
+	 * The original image should be flushed by the caller if not reused
+	 * @param originalImage
+	 * @param angle
+	 * @return
+	 */
+	private ImagePlus rotateImage(ImagePlus originalImage, double angle) {
+
+		originalImage.deleteRoi();
+		ImagePlus aDuplicate = originalImage.duplicate();//because the caller is going to flush the original image
+
+		aDuplicate.getProcessor().setBackgroundValue(0);
+
+		IJ.run(aDuplicate, "Arbitrarily...", "angle=" + angle + " grid=0 interpolate enlarge");  
+
+		aDuplicate.updateImage();
+
+		return(aDuplicate);
+
+
+
+		//		ImagePlus rotatedOriginalImage = originalImage.duplicate();
+		//		rotatedOriginalImage.getProcessor().rotate(angle);
+		//		rotatedOriginalImage.updateImage();
+		//		
+		//		return(rotatedOriginalImage);
+	}
+
 
 	/**
 	 * This method gets a subset of that picture (for faster execution), and calculates the rotation of that part

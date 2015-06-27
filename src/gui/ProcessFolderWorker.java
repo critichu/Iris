@@ -28,6 +28,7 @@ import profiles.EcoliGrowthProfile;
 import profiles.EcoliOpacityProfile;
 import profiles.EcoliOpacityProfile384;
 import profiles.EcoliOpacityProfile384_HazyColonies;
+import profiles.EcoliOpacityProfile96;
 import profiles.MorphologyProfileCandida96;
 import profiles.OpacityProfile;
 import profiles.OpacityProfile2;
@@ -167,6 +168,11 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		else if(profileName.equals("Ecoli opacity 384 - hazy colonies")){
 			EcoliOpacityProfile384_HazyColonies ecoliOpacity384_hazy = new EcoliOpacityProfile384_HazyColonies();
 			ecoliOpacity384_hazy.analyzePicture(filename);			
+		}
+		
+		else if(profileName.equals("Ecoli opacity 96")){
+			EcoliOpacityProfile96 ecoliOpacity96 = new EcoliOpacityProfile96();
+			ecoliOpacity96.analyzePicture(filename);			
 		}
 
 		else if(profileName.equals("Xgal assay")){

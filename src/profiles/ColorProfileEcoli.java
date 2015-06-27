@@ -21,7 +21,6 @@ import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
-import imageSegmenters.RisingTideSegmenter_variance;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -39,7 +38,6 @@ import tileReaders.BasicTileReaderHSB_darkColonies;
 import tileReaders.ColorTileReaderHSB;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
-
 /**
  * @author George Kritikos
  *
@@ -153,7 +151,7 @@ public class ColorProfileEcoli extends Profile{
 			colourCroppedImage = GenericImageCropper.cropPlate(rotatedImage);
 			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);			
 			segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
-			segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
+			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 		}
 
@@ -163,7 +161,7 @@ public class ColorProfileEcoli extends Profile{
 			colourCroppedImage = NaiveImageCropper.cropPlate(rotatedImage);
 			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 			segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
-			segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
+			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 		}
 

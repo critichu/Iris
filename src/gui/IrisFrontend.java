@@ -45,9 +45,10 @@ public class IrisFrontend {
 	public static String[] profileCollection = {
 		"Stm growth",
 		"Ecoli growth",
-		"Ecoli opacity",
+		"Ecoli opacity 96",
 		"Ecoli opacity 384",
-		"Ecoli opacity 384 - hazy colonies",
+		"Ecoli opacity 1536",
+		//"Ecoli opacity 384 - hazy colonies",
 		"B.subtilis Opacity (HSB)",
 		"B.subtilis Sporulation (HSB)",
 		//"CPRG 384",
@@ -78,12 +79,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4.61";
+	public static String IrisVersion = "0.9.4.66";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "6de68f7";
+	public static String IrisBuild = "67ef2c6";
 
 
 	/**

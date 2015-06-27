@@ -72,7 +72,6 @@ public class ColorProfilePA extends Profile{
 	 */
 	public void analyzePicture(String filename){
 
-
 		File file = new File(filename);
 		String path = file.getParent();
 		String justFilename = file.getName();
