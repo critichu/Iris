@@ -34,8 +34,9 @@ import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
-import tileReaders.BasicTileReaderHSB_darkColonies;
+import tileReaders.BasicTileReaderHSB;
 import tileReaders.ColorTileReaderHSB;
+import tileReaders.LaplacianFilterTileReader;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 /**
@@ -134,6 +135,10 @@ public class ColorProfileEcoli extends Profile{
 		//This is how you do it the HSB way		
 		ImagePlus grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 
+		//get a copy of the picture thresholded using a local algorithm
+		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
+
+		
 		//
 		//--------------------------------------------------
 		//
@@ -242,24 +247,31 @@ public class ColorProfileEcoli extends Profile{
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 
-				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
-				basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
-						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				//first get the colony size using one method
+
+				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+
+
+
+				//try once more using the other
+				if(basicTileReaderOutputs[i][j].colonySize==0){
+					basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
+							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+				}
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
 					//colour
 					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
-							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
+							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], 
+									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 
 					//opacity -- to check if colony darkness correlates with colour information
 					opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
-							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
-					//					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
-					//					opacityTileReaderOutputs[i][j].colonySize = basicTileReaderOutputs[i][j].colonySize;
-					//					opacityTileReaderOutputs[i][j].circularity = basicTileReaderOutputs[i][j].circularity;
-					//					opacityTileReaderOutputs[i][j].colonyROI = basicTileReaderOutputs[i][j].colonyROI;
-					//					opacityTileReaderOutputs[i][j].opacity=0;
+							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 
 				}
 				else{
