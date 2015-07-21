@@ -285,6 +285,92 @@ public class ColorProfilePA extends Profile{
 				//each generated tile image is cleaned up inside the tile reader
 			}
 		}
+		
+		
+
+		//6.2 -- double-check the results
+		
+		double minimumSizeNormalizedOpacityThreshold=4;
+		double maximumDarkColonySizeNormalizedOpacityThreshold=-1.5;
+		double minimumCircularityThreshold=0.25;
+		boolean colony_flagged=false;
+		//for all rows
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			//for all columns
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				colony_flagged=false;
+				
+				
+				if(basicTileReaderOutputs[i][j].colonySize==0){
+					continue; //colony is already empty
+				}
+				
+				
+				
+				
+				double SNO = (double)opacityTileReaderOutputs[i][j].opacity / (double)opacityTileReaderOutputs[i][j].colonySize;
+				
+				if( SNO < minimumSizeNormalizedOpacityThreshold 
+						&& 
+					basicTileReaderOutputs[i][j].circularity<minimumCircularityThreshold)
+				{
+					colony_flagged=true; 
+					//discard the colony only if both criteria are met
+					//see https://www.dropbox.com/s/mwkkkeppeqix5lt/Screenshot%202015-07-21%2015.29.34.png?dl=0
+				}
+				
+				//second round of filtering
+				if( SNO < 2 
+						&& 
+					basicTileReaderOutputs[i][j].circularity< 0.2)
+				{
+					colony_flagged=true; 
+					//discard the colony only if both criteria are met
+					//see https://www.dropbox.com/s/mwkkkeppeqix5lt/Screenshot%202015-07-21%2015.29.34.png?dl=0
+				}
+				
+				//third round of filtering: remove colonies that are too close to the background
+				if( SNO < 0.5 && SNO > -0.5)
+				{
+					colony_flagged=true;
+				}
+				
+				/*
+				//check if a colony is too close to the background 
+				if( SNO < maximumDarkColonySizeNormalizedOpacityThreshold){
+					continue; //we spare the very dark colonies
+				}
+				
+				if( SNO < minimumSizeNormalizedOpacityThreshold){					
+					colony_flagged=true; //if not much darker than the background, and also still close to the background, then it's background
+				}
+				
+				if( basicTileReaderOutputs[i][j].circularity < minimumCircularityThreshold){					
+					colony_flagged=true; //if it's really low in circularity, then just discard it
+				}
+				*/
+				
+				//if we flagged the colony in any of the previous steps, remove it from the results
+				if(colony_flagged){
+					//System.err.println("Warning: removing colony "+ (i+1) + " " + (j+1) + " in file "+ justFilename);
+					//System.err.println("Warning: removing colony "+ (i+1) + " " + (j+1) + " SNO= "+ SNO);
+					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+					basicTileReaderOutputs[i][j].colonySize=0;
+					basicTileReaderOutputs[i][j].circularity=0;
+					basicTileReaderOutputs[i][j].colonyROI = null;
+					basicTileReaderOutputs[i][j].emptyTile=true;
+					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
+					colourTileReaderOutputs[i][j].biofilmArea=0;
+					colourTileReaderOutputs[i][j].colorIntensitySum=0;
+					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
+					opacityTileReaderOutputs[i][j].colonySize=0;
+					opacityTileReaderOutputs[i][j].circularity=0;
+					opacityTileReaderOutputs[i][j].opacity=0;
+					opacityTileReaderOutputs[i][j].max10percentOpacity=0;
+				}
+				
+			}
+		}
 
 
 		//check if a row or a column has most of it's tiles empty (then there was a problem with gridding)

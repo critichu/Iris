@@ -140,7 +140,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			basicProfile.analyzePicture(filename);
 		}
 
-		else if(profileName.equals("Ecoli opacity")){
+		else if(profileName.equals("Ecoli opacity 1536")){
 			EcoliOpacityProfile ecoliOpacityProfile = new EcoliOpacityProfile();
 			ecoliOpacityProfile.analyzePicture(filename);			
 		}			

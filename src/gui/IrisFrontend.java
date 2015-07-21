@@ -79,12 +79,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4.67";
+	public static String IrisVersion = "0.9.4.68";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "34dc81d";
+	public static String IrisBuild = "bf45e36";
 
 
 	/**
@@ -95,7 +95,7 @@ public class IrisFrontend {
 	/**
 	 * This value calls whether Iris will not overwrite existing iris files (nice) or not
 	 */
-	public static boolean nice = false;
+	public static boolean nice = true;
 	
 	
 

@@ -15,6 +15,11 @@ import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import utils.Toolbox;
@@ -113,7 +118,7 @@ public class OpacityTileReader {
 		//so as to exclude the brightness of any contaminations
 		Roi colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
 
-		output.opacity = getBiggestParticleOpacicity(grayscaleTileCopy, colonyRoi);
+		output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
 		output.colonyROI = colonyRoi;
 
 		if(output.opacity==0){
@@ -142,13 +147,24 @@ public class OpacityTileReader {
 	 * @return
 	 */
 	public static OpacityTileReaderOutput processDefinedColonyTile(OpacityTileReaderInput input){
-		
+		return(processDefinedColonyTile(input, false));
+	}
+
+
+	/**
+	 * This function will take as input a tile plus it's thresholded version from a previous run of a similar method.
+	 * It will perform particle analysis and measure the color in the thresholded area.
+	 * @param input
+	 * @return
+	 */
+	public static OpacityTileReaderOutput processDefinedColonyTile(OpacityTileReaderInput input, boolean useDarkColonies){
+
 		//in case no-one's done this for us, get the ROI the traditional way
 		if(input.colonyRoi==null){
 			return(processTile(input));
 		}
-		
-		
+
+
 		//0. create the output object
 		OpacityTileReaderOutput output = new OpacityTileReaderOutput();
 
@@ -160,15 +176,15 @@ public class OpacityTileReader {
 		//
 
 
-		
-		
+
+
 		/// DONT check if its empty
 
 
 		//3.3 if there was a colony there, return the area of the biggest particle
 		//this should also clear away contaminations, because normally the contamination
 		//area will be smaller than the colony area, so the contamination will never be reported
-		
+
 		output.colonySize = input.colonySize;
 		output.circularity = 0;
 
@@ -177,7 +193,15 @@ public class OpacityTileReader {
 		//for this, we need the Roi (region of interest) that corresponds to the colony
 		//so as to exclude the brightness of any contaminations
 
-		output.opacity = getBiggestParticleOpacicity(grayscaleTileCopy, input.colonyRoi);
+		if(useDarkColonies==true){
+			output.opacity = getBiggestParticleOpacity_darkColonies(grayscaleTileCopy, input.colonyRoi);
+		}
+		else{
+			output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, input.colonyRoi);
+		}
+
+		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, input.colonyRoi);
+
 		output.colonyROI = input.colonyRoi;
 
 		if(output.opacity==0){
@@ -195,6 +219,59 @@ public class OpacityTileReader {
 
 
 
+	/**
+	 * This method finds the Otsu threshold of the picture.
+	 * Then, it sums the brightness (0 to 255) value of each pixel in the image, as long as it's inside the colony.
+	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
+	 * @param grayscaleTileCopy
+	 * @return
+	 */
+	private static double getLargestTenPercentOpacityMedian(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
+
+		//1. find the background level, which is the threshold set by Otsu
+		int background_level = getThresholdOtsu(grayscaleTileCopy);
+
+		//2. check sanity of the given Roi
+		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
+			return(0);
+		}
+
+		//3. set the Roi and paint eveything outside it as black
+		grayscaleTileCopy.setRoi(colonyRoi);
+		try {
+			grayscaleTileCopy.getProcessor().fillOutside(colonyRoi);
+		} catch (Exception e) {
+			return(0);
+		}
+
+		//4. get the pixel values of the image
+		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
+		byte[] imageBytes = (byte[]) processor.getPixels();
+
+		int size = imageBytes.length;
+
+		//sort the bytes according to opacity
+		Arrays.sort(imageBytes);
+		ArrayList<Integer> pixelIntValues = new ArrayList<Integer>();
+
+		for(int i=0;i<size;i++){
+			int pixelValue = imageBytes[i]&0xFF;
+			pixelIntValues.add(pixelValue);
+		}
+
+		Collections.sort(pixelIntValues, Collections.reverseOrder());
+		//get the mean of the top 10%
+		int sumOfBrightness = 0;
+		int size_subset = (int)Math.ceil((double)size/(double)10);
+		for(int i=0;i<size_subset;i++){
+			sumOfBrightness += Math.max(0, pixelIntValues.get(i)-background_level);
+		}
+		double top10percentMean = (double)sumOfBrightness/(double)size_subset;
+
+		return(top10percentMean);
+	}
+
+
 
 	/**
 	 * This method finds the Otsu threshold of the picture.
@@ -203,7 +280,7 @@ public class OpacityTileReader {
 	 * @param grayscaleTileCopy
 	 * @return
 	 */
-	private static int getBiggestParticleOpacicity(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
+	private static int getBiggestParticleOpacity(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
 
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
@@ -230,6 +307,7 @@ public class OpacityTileReader {
 		int sumOfBrightness = 0;
 
 		for(int i=0;i<size;i++){
+			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
 			int pixelValue = imageBytes[i]&0xFF;
 
 			//subtract the threshold and put the pixels in the sum
@@ -244,6 +322,61 @@ public class OpacityTileReader {
 
 		return (sumOfBrightness);
 	}
+
+
+	/**
+	 * This method finds the Otsu threshold of the picture.
+	 * Then, it sums the brightness (0 to 255) value of each pixel in the image, as long as it's inside the colony.
+	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
+	 * @param grayscaleTileCopy
+	 * @return
+	 */
+	private static int getBiggestParticleOpacity_darkColonies(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
+
+		//1. find the background level, which is the threshold set by Otsu
+		int background_level = getThresholdOtsu(grayscaleTileCopy);
+
+		//2. check sanity of the given Roi
+		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
+			return(0);
+		}
+
+		//3. set the Roi and paint eveything outside it as black
+		grayscaleTileCopy.setRoi(colonyRoi);
+		try {
+			grayscaleTileCopy.getProcessor().fillOutside(colonyRoi);
+		} catch (Exception e) {
+			return(0);
+		}
+
+		//4. get the pixel values of the image
+		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
+		byte[] imageBytes = (byte[]) processor.getPixels();
+
+		int size = imageBytes.length;
+
+		int sumOfBrightness = 0;
+
+		for(int i=0;i<size;i++){
+			int pixelValue = imageBytes[i]&0xFF;		
+
+			//if a pixel value is zero, then it's either a really dark spot in the colony --improbable--
+			//or its outside the colony (see fillOutside above) --much more probable--
+
+			if(pixelValue==0){
+				continue; //we don't want to count the background pixels
+			}
+
+			//sum up the pixel values, after subtracting the (Otsu defined background level).
+			//if a colony is darker than the background, it will get a negative value here
+
+			sumOfBrightness += pixelValue-background_level;
+		}
+
+
+		return (sumOfBrightness);
+	}
+
 
 
 

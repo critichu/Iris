@@ -59,22 +59,22 @@ public class LaplacianFilterTileReader {
 		Image tileImageAsImage = Image.wrap(input.tileImage);
 		Laplacian laplacianFilter = new Laplacian();
 		ZeroCrosser zc = new ZeroCrosser();
-		
+
 		Image tileImageToZeroCross = laplacianFilter.run(tileImageAsImage, scale);
-		
+
 		ImagePlus tileImageLaplacian = tileImageToZeroCross.imageplus();
-//		tileImageLaplacian.show();
-//		tileImageLaplacian.hide();
-		
+		//		tileImageLaplacian.show();
+		//		tileImageLaplacian.hide();
+
 		zc.run(tileImageToZeroCross);
 		ImagePlus tileImageLaplacianZeroCrossed = tileImageToZeroCross.imageplus();
-				
-//		tileImageLaplacianZeroCrossed.show();
-//		tileImageLaplacianZeroCrossed.hide();
+
+		//		tileImageLaplacianZeroCrossed.show();
+		//		tileImageLaplacianZeroCrossed.hide();
 
 
 		//re-scale the laplacian output
-//		tileImageLaplacian.setProcessor(tileImageLaplacian.getProcessor().convertToByte(true));
+		//		tileImageLaplacian.setProcessor(tileImageLaplacian.getProcessor().convertToByte(true));
 
 
 		//calculate the negative of the laplacian
@@ -96,27 +96,27 @@ public class LaplacianFilterTileReader {
 		tileImageLaplacianNegative.flush();
 
 
-//		laplacianDifference.updateImage();
-//		laplacianDifference.show();
-//		laplacianDifference.hide();
+		//		laplacianDifference.updateImage();
+		//		laplacianDifference.show();
+		//		laplacianDifference.hide();
 
 
 
 		//Sobel edge detection, try to find the "halo" around the colonies, nicely given by the laplacian diff
 		laplacianDifference.getProcessor().findEdges();
 
-//		laplacianDifference.updateImage();
-//		laplacianDifference.show();
-//		laplacianDifference.hide();
+		//		laplacianDifference.updateImage();
+		//		laplacianDifference.show();
+		//		laplacianDifference.hide();
 
 		//blur the edge detection a bit
 		GaussianBlur blur = new GaussianBlur();
 		ByteProcessor laplacianDifferenceProcessor = (ByteProcessor) laplacianDifference.getProcessor();
 		blur.blurGaussian(laplacianDifferenceProcessor, sigma, sigma, 0.02);
 
-//		laplacianDifference.updateImage();
-//		laplacianDifference.show();
-//		laplacianDifference.hide();
+		//		laplacianDifference.updateImage();
+		//		laplacianDifference.show();
+		//		laplacianDifference.hide();
 
 
 
@@ -126,9 +126,9 @@ public class LaplacianFilterTileReader {
 
 
 
-//		laplacianDifference.updateImage();
-//		laplacianDifference.show();
-//		laplacianDifference.hide();
+		//		laplacianDifference.updateImage();
+		//		laplacianDifference.show();
+		//		laplacianDifference.hide();
 
 		//analyze the particles in the image, this includes filling in holes (which we expect using the above pipeline)
 		ResultsTable resultsTable = new ResultsTable();
@@ -154,16 +154,19 @@ public class LaplacianFilterTileReader {
 		laplacianDifference.flush();
 
 		//check if the tile is empty
-		if(output.circularity<0.30 || output.colonySize<100){
-			output.emptyTile = true;
-			output.colonySize = 0;//return a colony size of zero
-			output.circularity = 0;
-			output.colonyROI = null;
+		if(false){ //HACK: don't check MH results!
+			if(output.circularity<0.30 || output.colonySize<100){
 
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-			laplacianDifference.flush();
+				output.emptyTile = true;
+				output.colonySize = 0;//return a colony size of zero
+				output.circularity = 0;
+				output.colonyROI = null;
 
-			return(output);
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+				laplacianDifference.flush();
+
+				return(output);
+			}
 		}
 
 		return(output);//returns the biggest result

@@ -22,5 +22,11 @@ public class OpacityTileReaderOutput extends BasicTileReaderOutput {
 	 * This is set to true if something went wrong getting the colony opacity levels
 	 */
 	public boolean errorGettingOpacity = false;
+
+
+	/**
+	 * This holds the mean of the brightest 10% pixels in the colony
+	 */
+	public double max10percentOpacity = 0;
 	
 }
