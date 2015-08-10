@@ -487,10 +487,21 @@ public class ColorProfileEcoli extends Profile{
 			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 				//for all columns
 				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+					
+					//output all the tiles that fulfill the above criteria
 					if(basicTileReaderOutputs[i][j].circularity<circularityThreshold_max &&
 							basicTileReaderOutputs[i][j].circularity>circularityThreshold_min &&
 							basicTileReaderOutputs[i][j].colonySize>sizeThreshold){
 
+						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
+						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
+								basicTileReaderOutputs[i][j].circularity, basicTileReaderOutputs[i][j].colonySize, i+1, j+1) + justFilename;
+
+						Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
+					}
+					
+					//also output all the empty tiles
+					if(basicTileReaderOutputs[i][j].colonySize==0){
 						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
 						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
 								basicTileReaderOutputs[i][j].circularity, basicTileReaderOutputs[i][j].colonySize, i+1, j+1) + justFilename;

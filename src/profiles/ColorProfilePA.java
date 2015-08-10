@@ -519,6 +519,17 @@ public class ColorProfilePA extends Profile{
 							Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
 						}
 					}
+					
+					//also output all the empty tiles
+					if(basicTileReaderOutputs[i][j].colonySize==0){
+						//get the output filename, keep in mind: i and j are zero-based, user wants to see them 1-based
+						String tileFilename = path + File.separator + String.format("tile_%.3f_%04d_%02d_%02d_", 
+								basicTileReaderOutputs[i][j].circularity, basicTileReaderOutputs[i][j].colonySize, i+1, j+1) + justFilename;
+
+						Toolbox.saveColonyPicture(i,j,colourCroppedImage, segmentationOutput, basicTileReaderOutputs, tileFilename);
+					}
+					
+					
 				}
 			}
 		}
