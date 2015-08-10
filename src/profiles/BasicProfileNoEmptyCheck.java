@@ -16,8 +16,8 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
-import imageSegmenters.SimpleImageSegmenter;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -25,8 +25,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import settings.BasicSettings;
+import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.OpacityTileReaderInput;
+import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
+import tileReaders.BasicTileReader;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
@@ -36,25 +39,23 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class EcoliOpacityProfile96 extends Profile {
+public class BasicProfileNoEmptyCheck extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "E.coli Opacity Profile for 96 plates";
+	public static String profileName = "Ecoli growth profile -- no empty check";
 
 
 	/**
 	 * this is a description of the profile that will be shown to the user on hovering the profile name 
 	 */
-	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes and opacities of E. coli in 96 plates";
-
+	public static String profileNotes = "This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates";
 
 	/**
 	 * This holds access to the settings object
 	 */
 	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
-
 
 	/**
 	 * This function will analyze the picture using the basic profile
@@ -63,22 +64,12 @@ public class EcoliOpacityProfile96 extends Profile {
 	 * @param filename
 	 */
 	public void analyzePicture(String filename){
-		
-		
-		//0. initialize settings and open files for input and output
-		//since this is a 384 plate, make sure the settings are redefined to match our setup
-		settings.numberOfColumnsOfColonies = 12;
-		settings.numberOfRowsOfColonies = 8;
-		
-		//
-		//--------------------------------------------------
-		//
-		//
 
 		File file = new File(filename);
 		String justFilename = file.getName();
 
 		System.out.println("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
+		//IrisFrontend.writeToLog("\n\n[" + profileName + "] analyzing picture:\n  "+justFilename);
 
 		//initialize results file output
 		StringBuffer output = new StringBuffer();
@@ -97,14 +88,11 @@ public class EcoliOpacityProfile96 extends Profile {
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
-		
-		
-		
-		
 		//
 		//--------------------------------------------------
 		//
-		//
+		// 
+
 
 		//2. rotate the whole image
 		double imageAngle = calculateImageRotation(originalImage);
@@ -119,14 +107,9 @@ public class EcoliOpacityProfile96 extends Profile {
 		}
 
 
-		//
-		//--------------------------------------------------
-		//
-		//
-
 		//3. crop the plate to keep only the colonies
 		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
-
+//		ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
 
@@ -139,7 +122,7 @@ public class EcoliOpacityProfile96 extends Profile {
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale)
-		ImagePlus colourCroppedImage = croppedImage.duplicate();
+		ImagePlus croppedImageColor = croppedImage.duplicate();
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -149,23 +132,12 @@ public class EcoliOpacityProfile96 extends Profile {
 		//
 		//
 
-		//calculate the minimum and maximum grid spacings according to the cropped image size 
-		//and the number of rows and columns, save the results in the settings object
-		calculateGridSpacing(settings, croppedImage);
-
-//		//change the settings so that the distance between the colonies can now be smaller
-//		settings.minimumDistanceBetweenRows = 40;
-//		//..or larger
-//		settings.maximumDistanceBetweenRows = 100;
-
-
-
-
-
-
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
-		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+
+		//let colonies breathe
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -189,8 +161,11 @@ public class EcoliOpacityProfile96 extends Profile {
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput); //calculate grid image
+			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
+
+			croppedImageColor.flush();
+			paintedImage.flush();
 
 			return;
 		}
@@ -214,19 +189,30 @@ public class EcoliOpacityProfile96 extends Profile {
 		//6. analyze each tile
 
 		//create an array of measurement outputs
-		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		BasicTileReaderOutput [][] readerOutputs = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		OpacityTileReaderOutput [][] opacityReaderOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = OpacityTileReader.processTile(
-						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				readerOutputs[i][j] = BasicTileReader.processTile(
+						new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
+				if(readerOutputs[i][j].colonySize>0){
+
+					opacityReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
+							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], 
+									readerOutputs[i][j].colonyROI, readerOutputs[i][j].colonySize, settings));
+				}
+				else
+				{
+					opacityReaderOutputs[i][j] = new OpacityTileReaderOutput();
+				}
 				//each generated tile image is cleaned up inside the tile reader
 			}
 		}
-
 
 
 		//check if a row or a column has most of it's tiles empty (then there was a problem with gridding)
@@ -235,22 +221,29 @@ public class EcoliOpacityProfile96 extends Profile {
 			//something was wrong with the gridding.
 			//just print an error message, save grid for debugging reasons and exit
 			System.err.println("\n"+profileName+": unable to process picture " + justFilename);
-			System.err.print("Image segmentation algorithm failed:\n");
+			System.err.print("Image segmentation algorithm warning:\n");
 			System.err.println("\ttoo many empty rows/columns");
+			System.err.println("\tThis profile will output an iris file anyway\n");
 
 			//calculate and save grid image
-			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
-			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
-
-			///HACK for Alex: removing the next return statement will make Iris print out the result even though the gridding failed  
-			//return;
-			///HACK end
+			
+//			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
+//			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
+//			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
+//
+//			return;
 		}
+
 
 		//7. output the results
 
 		//7.1 output the colony measurements as a text file
-		output.append("row\tcolumn\tsize\tcircularity\topacity\n");
+		output.append("row\t" +
+				"column\t" +
+				"size\t" +
+				"circularity\t" +
+				"opacity\n");
+
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -258,7 +251,7 @@ public class EcoliOpacityProfile96 extends Profile {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].opacity) + "\n");
+						+ Integer.toString(opacityReaderOutputs[i][j].opacity) + "\n");
 			}
 		}
 
@@ -278,42 +271,13 @@ public class EcoliOpacityProfile96 extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
-			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
+			///ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+
+			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 		}
 
 	}
-
-
-	/**
-	 * This function calculates the minimum and maximum grid distances according to the
-	 * cropped image size and
-	 * the number of rows and columns that need to be found.
-	 * Since the cropped image needs to be segmented roughly in equal distances, the
-	 * nominal distance in which the coluns will be spaced apart will be
-	 * nominal distance = image width / number of columns
-	 * this should be equal to the (image height / number of rows), which is not calculated separately.
-	 * Using this nominal distance, we can calculate the minimum and maximum distances, which are then used
-	 * by the image segmentation algorithm. Distances that do in practice lead the segmentation algorithm
-	 * to a legitimate segmentation of the picture are:
-	 * minimum = 2/3 * nominal distance
-	 * maximum = 4/3 * nominal distance
-	 * 
-	 * @param settings_
-	 * @param croppedImage
-	 */
-	private void calculateGridSpacing(BasicSettings settings_,
-			ImagePlus croppedImage) {
-		
-		int image_width = croppedImage.getWidth();
-		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
-		
-		//save the results directly to the settings object
-		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
-		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*4/3);
-		
-	}
-
 
 	/**
 	 * This function will check if there is any row or any column with more than half of it's tiles being empty.
@@ -322,7 +286,7 @@ public class EcoliOpacityProfile96 extends Profile {
 	 * @return
 	 */
 	private boolean checkRowsColumnsIncorrectGridding(
-			OpacityTileReaderOutput[][] readerOutputs) {
+			BasicTileReaderOutput[][] readerOutputs) {
 
 		int numberOfRows = readerOutputs.length;		
 		if(numberOfRows==0)
@@ -363,35 +327,29 @@ public class EcoliOpacityProfile96 extends Profile {
 		return(false);
 	}
 
-
 	/**
-	 * This function will create a copy of the original image, and rotate that copy.
-	 * The original image should be flushed by the caller if not reused
-	 * @param originalImage
-	 * @param angle
+	 * This function writes the contents of the string buffer to the file with the given filename.
+	 * This function was written solely to hide the ugliness of the Exception catching from the Profile code.
+	 * @param outputFilename
+	 * @param output
 	 * @return
 	 */
-	private ImagePlus rotateImage(ImagePlus originalImage, double angle) {
+	private boolean writeOutputFile(String outputFilename, StringBuffer output) {
 
-		originalImage.deleteRoi();
-		ImagePlus aDuplicate = originalImage.duplicate();//because the caller is going to flush the original image
+		FileWriter writer;
 
-		aDuplicate.getProcessor().setBackgroundValue(0);
+		try {
+			writer = new FileWriter(outputFilename);
+			writer.write(output.toString());
+			writer.close();
 
-		IJ.run(aDuplicate, "Arbitrarily...", "angle=" + angle + " grid=0 interpolate enlarge");  
+		} catch (IOException e) {
+			return(false); //operation failed
+		}
 
-		aDuplicate.updateImage();
-
-		return(aDuplicate);
-
-
-
-		//		ImagePlus rotatedOriginalImage = originalImage.duplicate();
-		//		rotatedOriginalImage.getProcessor().rotate(angle);
-		//		rotatedOriginalImage.updateImage();
-		//		
-		//		return(rotatedOriginalImage);
+		return(true); //operation succeeded
 	}
+
 
 
 	/**
@@ -582,6 +540,7 @@ public class EcoliOpacityProfile96 extends Profile {
 	}
 
 
+
 	/**
 	 * This function will convert the given picture into black and white
 	 * using the Otsu method. This version will also return the threshold found.
@@ -606,29 +565,35 @@ public class EcoliOpacityProfile96 extends Profile {
 		return(threshold);
 	}
 
+
 	/**
-	 * This function writes the contents of the string buffer to the file with the given filename.
-	 * This function was written solely to hide the ugliness of the Exception catching from the Profile code.
-	 * @param outputFilename
-	 * @param output
+	 * This function will create a copy of the original image, and rotate that copy.
+	 * The original image should be flushed by the caller if not reused
+	 * @param originalImage
+	 * @param angle
 	 * @return
 	 */
-	private boolean writeOutputFile(String outputFilename, StringBuffer output) {
+	private ImagePlus rotateImage(ImagePlus originalImage, double angle) {
 
-		FileWriter writer;
+		originalImage.deleteRoi();
+		ImagePlus aDuplicate = originalImage.duplicate();//because the caller is going to flush the original image
 
-		try {
-			writer = new FileWriter(outputFilename);
-			writer.write(output.toString());
-			writer.close();
+		aDuplicate.getProcessor().setBackgroundValue(0);
 
-		} catch (IOException e) {
-			return(false); //operation failed
-		}
+		IJ.run(aDuplicate, "Arbitrarily...", "angle=" + angle + " grid=0 interpolate enlarge");  
 
-		return(true); //operation succeeded
+		aDuplicate.updateImage();
+
+		return(aDuplicate);
+
+
+
+		//		ImagePlus rotatedOriginalImage = originalImage.duplicate();
+		//		rotatedOriginalImage.getProcessor().rotate(angle);
+		//		rotatedOriginalImage.updateImage();
+		//		
+		//		return(rotatedOriginalImage);
 	}
-
 
 
 }

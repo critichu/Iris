@@ -16,6 +16,7 @@ import javax.swing.SwingWorker;
 
 import profiles.BasicProfile;
 import profiles.BasicProfileInverted;
+import profiles.BasicProfileNoEmptyCheck;
 import profiles.BsubtilisHazyProfileHSB;
 import profiles.BsubtilisSporulationProfile;
 import profiles.CPRGProfile384;
@@ -138,6 +139,11 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		if(profileName.equals("Stm growth")){
 			BasicProfile basicProfile = new BasicProfile();
 			basicProfile.analyzePicture(filename);
+		}
+		
+		if(profileName.equals("Ecoli growth -- no empty check")){
+			BasicProfileNoEmptyCheck basicProfileNoEmptyCheck = new BasicProfileNoEmptyCheck();
+			basicProfileNoEmptyCheck.analyzePicture(filename);
 		}
 
 		else if(profileName.equals("Ecoli opacity 1536")){
