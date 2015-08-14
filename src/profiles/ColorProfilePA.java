@@ -274,6 +274,7 @@ public class ColorProfilePA extends Profile{
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
 					colourTileReaderOutputs[i][j].biofilmArea=0;
 					colourTileReaderOutputs[i][j].colorIntensitySum=0;
+					colourTileReaderOutputs[i][j].meanSampleColor=0;
 
 					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 					opacityTileReaderOutputs[i][j].colonySize=0;
@@ -359,9 +360,12 @@ public class ColorProfilePA extends Profile{
 					basicTileReaderOutputs[i][j].circularity=0;
 					basicTileReaderOutputs[i][j].colonyROI = null;
 					basicTileReaderOutputs[i][j].emptyTile=true;
+					
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
 					colourTileReaderOutputs[i][j].biofilmArea=0;
 					colourTileReaderOutputs[i][j].colorIntensitySum=0;
+					colourTileReaderOutputs[i][j].meanSampleColor=0;
+					
 					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 					opacityTileReaderOutputs[i][j].colonySize=0;
 					opacityTileReaderOutputs[i][j].circularity=0;
@@ -409,6 +413,7 @@ public class ColorProfilePA extends Profile{
 				"biofilm color intensity\t" +
 				"biofilm area ratio\t" +
 				"size normalized color intensity\t" +
+				"mean sample color intensity\t" +
 				"opacity\n");
 
 
@@ -432,6 +437,7 @@ public class ColorProfilePA extends Profile{
 						+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
 						+ String.format("%.3f", biofilmAreaRatio) + "\t"
 						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\t" 
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].meanSampleColor) + "\t" 
 						+ Integer.toString(opacityTileReaderOutputs[i][j].opacity) + "\n");
 			}
 		}

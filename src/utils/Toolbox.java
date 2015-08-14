@@ -21,6 +21,7 @@ import ij.process.ImageStatistics;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 
@@ -33,7 +34,75 @@ import tileReaderOutputs.BasicTileReaderOutput;
  *
  */
 public class Toolbox {
-	
+
+
+
+
+	/**
+	 * This function will give you the pixel values (rgb, HSB, or l for luma) for the specific ROI
+	 * @param imp
+	 * @param roi
+	 * @param channelToGet
+	 * @return
+	 */
+	public static Float[] getRoiPixels(ImagePlus imp, Roi roi, char channelToGet){
+
+		if (roi!=null && !roi.isArea()) roi = null;
+		ImageProcessor ip = imp.getProcessor();
+		ImageProcessor mask = roi!=null?roi.getMask():null;
+		Rectangle r = roi!=null?roi.getBounds():new Rectangle(0,0,ip.getWidth(),ip.getHeight());
+
+
+		ArrayList<Float> pixelList = new ArrayList<Float>();
+
+		for (int y=0; y<r.height; y++) {
+			for (int x=0; x<r.width; x++) {
+				if (mask==null||mask.getPixel(x,y)!=0) {
+
+					
+					//get the rgb values
+					int[] rgb = new int[3];
+					ip.getPixel(x+r.x, y+r.y,rgb);
+					
+					//get the corresponding HSB values
+					float[] HSB = java.awt.Color.RGBtoHSB(rgb[0], rgb[1], rgb[2], null); 
+					
+
+					switch(channelToGet){
+					case('l'): //luminence/brightness
+						pixelList.add(ip.getPixelValue(x+r.x, y+r.y));
+					break;
+					case('r'): //red
+						pixelList.add((float)rgb[0]); ///RGB values are in the range of 0...255
+					break;
+					case('g'): //green
+						pixelList.add((float)rgb[1]);
+					break;
+					case('b'): //blue
+						pixelList.add((float)rgb[2]);
+					break;
+					case('H'): //Hue
+						pixelList.add((float)HSB[0]*(float)255); //HSB values are from 0...1, convert that to 0...255
+					break;
+					case('S'): //Saturation
+						pixelList.add((float)HSB[1]*(float)255);
+					break;
+					case('B'): //Brightness
+						pixelList.add((float)HSB[2]*(float)255);
+					break;
+					}
+				}
+			}
+		}
+		//convert to array
+		Float[] pixelarray = new Float[pixelList.size()];
+		pixelarray = pixelList.toArray(pixelarray);
+
+		return(pixelarray);
+
+	}
+
+
 	/**
 	 * This function will convert the given picture into black and white
 	 * using a fancy local thresholding algorithm, as described here:
@@ -44,10 +113,10 @@ public class Toolbox {
 		ImagePlus imageToThreshold = originalImage.duplicate();
 		Auto_Local_Threshold.Mean(imageToThreshold, radius, 0, 0, true);
 		imageToThreshold.setTitle(originalImage.getTitle());
-		
+
 		return(imageToThreshold);
 	}
-	
+
 	/**
 	 * This function will return a grayscale version of the given image, using the
 	 * brightness channel of the HSB conversion of the image.
@@ -56,7 +125,7 @@ public class Toolbox {
 	 * @return
 	 */
 	public static ImagePlus getHSBgrayscaleImageBrightness(ImagePlus originalImage){
-				
+
 		ImagePlus originalImageCopy = originalImage.duplicate();
 		ImageProcessor ip =  originalImageCopy.getProcessor();
 
@@ -80,10 +149,10 @@ public class Toolbox {
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
 		ImagePlus grayscaleImage = new ImagePlus(originalImage.getTitle(), bpBri);
 		originalImageCopy.flush();
-		
+
 		return(grayscaleImage);
 	}
-	
+
 
 	/**
 	 * This function will create a copy of the original image, and invert the colours on that copy.
@@ -93,7 +162,7 @@ public class Toolbox {
 	 * @return
 	 */
 	public static ImagePlus invertImage(ImagePlus originalImage){
-		
+
 		originalImage.deleteRoi();
 		ImagePlus aDuplicate = originalImage.duplicate();//because we don't want to tamper with the original image
 
@@ -247,7 +316,7 @@ public class Toolbox {
 
 
 
-		
+
 
 		//		croppedImage.updateImage();
 		//		croppedImage.show();
@@ -734,7 +803,7 @@ public class Toolbox {
 	}
 
 
-	
+
 
 
 	public static int getIndexOfBiggestParticle(ResultsTable resultsTable){

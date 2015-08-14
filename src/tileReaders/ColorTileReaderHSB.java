@@ -14,10 +14,14 @@ import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+
+import java.util.Random;
+
 import tileReaderInputs.ColorTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput2;
 import tileReaderInputs.ColorTileReaderInput3;
 import tileReaderOutputs.ColorTileReaderOutput;
+import utils.Toolbox;
 
 /**
  * This class provides with methods that output the color of a colony.
@@ -235,6 +239,7 @@ public class ColorTileReaderHSB {
 		//set the pre-calculated ROI (of the largest particle = colony) on the original picture and fill everything around it with black
 		input.tileImage.setRoi(input.colonyRoi);
 		
+				
 
 		try {
 			input.tileImage.getProcessor().fillOutside(input.colonyRoi);
@@ -251,7 +256,7 @@ public class ColorTileReaderHSB {
 
 
 		//dilate 3 times to remove the colony periphery
-		input.tileImage.getProcessor().dilate();
+		input.tileImage.getProcessor().dilate();		
 		input.tileImage.getProcessor().dilate();
 		input.tileImage.getProcessor().dilate();
 		//
@@ -265,6 +270,7 @@ public class ColorTileReaderHSB {
 
 		//but because colonies get darker with accumulation of congo red..		
 
+		
 
 		//
 		//--------------------------------------------------
@@ -301,11 +307,48 @@ public class ColorTileReaderHSB {
 				biofilmColorSum += pixelBiofilmScoreByteValue;
 			}
 		}
+		
+		//get pixel color values again, this time by means of integer values
+		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(input.tileImage, input.colonyRoi, 2, 1, (float)1, (float)2);
+		
+		
+		
+		//7. also get an estimate of the colony color, through random pixel sampling, this should be 1000 pixels but only for colonies that are 
+		int maxSamples = Math.min(1000, input.colonySize);
+		//int maxSamples = 1000;
+		double sampleColorSum = 0;
+		int numerOfSamplesInBounds = 0;
+		
+		Random myrandom = new Random((long) 762827825);// this is a seed I picked at random, but it has to be the same always to get the same results with every Iris run 
+		for(int i=0; i<maxSamples; i++){
+			try {		
+				
+				//pixelID is an integer from 0 to pixelBiofilmScores.length-1 (pixelBiofilmScores[pixelBiofilmScores.length] is out of bounds)
+				int pixelID = (int)Math.round(myrandom.nextDouble()*(double)(pixelBiofilmScores_float.length-1));
+				numerOfSamplesInBounds++;
+				
+				if(pixelBiofilmScores_float[pixelID]==0){
+					//pixel was outside the (eroded) colony bounds
+					continue;
+				}
+				
+				sampleColorSum += pixelBiofilmScores_float[pixelID];				
+			} catch (Exception e) {				
+				System.out.println(e.getMessage());
+				// otherwise do nothing, this is just in case the pixelID is out of bounds
+			}
+		}
+		//divide by the number of samples
+		double meanSampleColor = sampleColorSum/(double)numerOfSamplesInBounds;
+		
+		
+		
 
 		output.colorIntensitySum = colonyColorSum;
 		output.biofilmArea = biofilmPixelCount;
 		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
 		output.colonyROI = input.colonyRoi;
+		output.meanSampleColor = meanSampleColor;
 		//Toolbox.show(input.tileImage, "after processing");
 		
 		
@@ -421,6 +464,73 @@ public class ColorTileReaderHSB {
 
 		return total_biofilm_score;
 	}
+	
+	
+	
+	/**
+	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.
+	 * Default value of the red gain is 2, default value of the blue/green gain is 1.
+	 * This version also takes into account the colony's brightness, since we know now that the more colonies
+	 * accumulate congo red, the darker they become.
+	 * This version uses integer-converted byte values, that are easier to work with, and also don't have the issue that we need to limit our values to 255
+	 * @param channels
+	 * @return
+	 */
+	private static Float[] calculateRelativeColorIntensityUsingSaturationAndBrightness_float(ImagePlus tile, Roi colonyRoi, float red_gain, float blue_green_gain, float color_gain, float brightness_gain) {
+		
+		//Float[] roiPixels_brightness = Toolbox.getRoiPixels(tile, colonyRoi, 'l');
+		Float[] roiPixels_red = Toolbox.getRoiPixels(tile, colonyRoi, 'r');
+		Float[] roiPixels_green = Toolbox.getRoiPixels(tile, colonyRoi, 'g');
+		Float[] roiPixels_blue = Toolbox.getRoiPixels(tile, colonyRoi, 'b');
+		
+		Float[] redWithGain = multiply(red_gain, roiPixels_red);
+		Float[] green_and_blue = multiply(blue_green_gain, add(roiPixels_green, roiPixels_blue));
+		Float[] relative_colour_intensity = subtract(redWithGain, green_and_blue);
+
+		
+		//end of color calculations
+		//------
+		//start calculating brightness contribution
+
+		
+		Float[] roiPixels_saturation = Toolbox.getRoiPixels(tile, colonyRoi, 'S');
+		Float[] roiPixels_brightness = Toolbox.getRoiPixels(tile, colonyRoi, 'B');
+		
+		Float[] roiPixels_darkness = negate_skippingZeros(roiPixels_brightness);
+		
+		Float[] saturationAndDarkness = add(roiPixels_saturation, roiPixels_darkness);
+				
+//		Float[] saturationMinusBrightness = subtract(roiPixels_saturation, roiPixels_brightness);
+//				
+		Float[] relative_colour_intensity_with_gain = multiply(color_gain, relative_colour_intensity);
+		Float[] colonySaturationBrightness_with_gain = multiply(brightness_gain, saturationAndDarkness);//saturationMinusBrightness);
+		
+		Float[] total_biofilm_score = add(relative_colour_intensity_with_gain, colonySaturationBrightness_with_gain);
+
+
+
+		return total_biofilm_score;
+	}
+
+	
+	//for every byte in the given byte array, will convert it to it's corresponding unsigned integer
+	public static int[] convertByteArrayToIntegerArray(byte[] byteArray){
+		
+		int[] toReturn = new int[byteArray.length];
+		
+		for(int i=0; i<byteArray.length; i++){
+			toReturn[i] = byteArray[i]&0xFF;
+			
+			//make sure we're not in under or overflow, normally, if you 0xFF, then it should be from 0 to 255...
+			toReturn[i] = (byte)Math.max(toReturn[i], 0);
+			toReturn[i] = (byte)Math.min(toReturn[i], 255);
+			
+		}
+		
+		return(toReturn);
+	}
+	
+	
 
 	
 	/**
@@ -563,7 +673,11 @@ public class ColorTileReaderHSB {
 
 		for(int i=0;i<array.length;i++){
 
-			result[i] =  (byte)(Math.min((array[i] & 0xff)*factor, 255)); 
+			//avoid overflow
+			result[i] =  (byte)(Math.min((array[i] & 0xff)*factor, 255));
+			
+			//avoid underflow			
+			//result[i] = (byte)(Math.max(result[i], 0));
 		}
 		return(result);
 	}
@@ -584,7 +698,10 @@ public class ColorTileReaderHSB {
 
 			//add the values, but avoid overflow
 			result[i] = (byte)(Math.min( (array1[i]&0xFF)+(array2[i]&0xFF) , 255));
-
+			
+			//also avoid underflow
+			//result[i] = (byte)(Math.max(result[i], 0));
+			
 			//result[i] = (byte) (array1[i]+array2[i]);
 		}
 
@@ -607,11 +724,184 @@ public class ColorTileReaderHSB {
 
 			//subtract the values, but avoid underflow
 			result[i] = (byte)(Math.max( (array1[i]&0xFF)-(array2[i]&0xFF) , 0));
+			
+			//also avoid overflow
+			//result[i] = (byte)(Math.min(result[i], 255));
 		}
 
 		return(result);
 	}
 
+	
+	
+	
+	/**
+	 * This helper function will return the negative of the given array: 255-array[i].
+	 * At the same time, it will skip zeros, meaning that the pixels outside of the colony will
+	 * remain 0. This is because afterwards we will add those values together with the color intensity values.
+	 * @param array
+	 * @return
+	 */
+	private static int[] negate_skippingZeros(int[] array){
+		int[] result = new int[array.length];
+
+		for(int i=0;i<array.length;i++){
+		
+			if(array[i]==(int)0)
+				continue; //keep it zero
+			
+			result[i] =  (int)(Math.min(255-array[i], 255)); 
+		}
+		return(result);
+	}
+	
+	
+	/**
+	 * This helper function will return the negative of the given array: 255-array[i].
+	 * At the same time, it will skip zeros, meaning that the pixels outside of the colony will
+	 * remain 0. This is because afterwards we will add those values together with the color intensity values.
+	 * @param array
+	 * @return
+	 */
+	private static Float[] negate_skippingZeros(Float[] array){
+		Float[] result = new Float[array.length];
+
+		for(int i=0;i<array.length;i++){
+		
+			if(array[i]==(int)0)
+				result[i]=(float)0; //keep it zero
+			
+			result[i] =  Math.min(255-array[i], 255);
+			result[i] = Math.max(result[i], 0); //make sure the result is positive
+		}
+		return(result);
+	}
+	
+	
+
+	/**
+	 * This helper function multiplies a int array by a constant factor
+	 * @param factor
+	 * @param array
+	 * @return
+	 */
+	private static int[] multiply(float factor, int[] array){
+		int[] result = new int[array.length];
+
+		for(int i=0;i<array.length;i++){
+
+			result[i] =  (int)Math.round(array[i]*factor);
+			
+		}
+		return(result);
+	}
+	
+	/**
+	 * This helper function multiplies a int array by a constant factor
+	 * @param factor
+	 * @param array
+	 * @return
+	 */
+	private static Float[] multiply(float factor, Float[] array){
+		Float[] result = new Float[array.length];
+
+		for(int i=0;i<array.length;i++){
+
+			result[i] =  (Float)(array[i]*factor);
+			
+		}
+		return(result);
+	}
+	
+
+	/**
+	 * This helper function adds 2 int arrays
+	 * @param factor
+	 * @param array
+	 * @return
+	 */
+	private static int[] add(int[] array1, int[] array2){
+
+		//if the 2 arrays are not of equal length, this will crash..
+
+		int[] result = new int[array1.length];
+		for(int i=0;i<array1.length;i++){
+
+			//just add the values
+			result[i] = array1[i] + array2[i];
+		}
+
+		return(result);
+	}
+	
+	
+	/**
+	 * This helper function adds 2 int arrays
+	 * @param factor
+	 * @param array
+	 * @return
+	 */
+	private static Float[] add(Float[] array1, Float[] array2){
+
+		//if the 2 arrays are not of equal length, this will crash..
+
+		Float[] result = new Float[array1.length];
+		for(int i=0;i<array1.length;i++){
+
+			//just add the values
+			result[i] = array1[i] + array2[i];
+		}
+
+		return(result);
+	}
+	
+
+	/**
+	 * This helper function subtracts 2 int arrays, taking into account that
+	 * negative values are given the minimum value (0)
+	 * @param factor
+	 * @param array
+	 * @return
+	 */
+	private static int[] subtract(int[] array1, int[] array2){
+
+		//if the 2 arrays are not of equal length, this will crash..
+
+		int[] result = new int[array1.length];
+		for(int i=0;i<array1.length;i++){
+
+			//subtract the values, but avoid underflow
+			result[i] = (int)(Math.max( array1[i] - array2[i] , 0));
+			
+		}
+
+		return(result);
+	}
+	
+	
+	/**
+	 * This helper function subtracts 2 int arrays, taking into account that
+	 * negative values are given the minimum value (0)
+	 * @param factor
+	 * @param array
+	 * @return
+	 */
+	private static Float[] subtract(Float[] array1, Float[] array2){
+
+		//if the 2 arrays are not of equal length, this will crash..
+
+		Float[] result = new Float[array1.length];
+		for(int i=0;i<array1.length;i++){
+
+			//subtract the values, but avoid underflow
+			result[i] = (Math.max( array1[i] - array2[i] , 0));
+			
+		}
+
+		return(result);
+	}
+	
+	
 
 	/**
 	 * This function will convert the given picture into black and white

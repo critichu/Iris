@@ -31,6 +31,12 @@ public class ColorTileReaderOutput extends BasicTileReaderOutput {
 	 * the size of the colony itself
 	 */
 	public double relativeColorIntensity = 0;
+
+	
+	/**
+	 * This is the mean of the color in X randomly sampled pixels, where X doesn't depend on the size of the colony 
+	 */
+	public double meanSampleColor = 0;
 	
 	
 	
