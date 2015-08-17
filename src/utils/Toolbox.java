@@ -23,9 +23,13 @@ import imageSegmenterOutput.BasicImageSegmenterOutput;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
+import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import tileReaderOutputs.BasicTileReaderOutput;
+
+import com.opencsv.CSVReader;
 
 /**
  * This class holds methods that are not profile-specific
@@ -59,14 +63,14 @@ public class Toolbox {
 			for (int x=0; x<r.width; x++) {
 				if (mask==null||mask.getPixel(x,y)!=0) {
 
-					
+
 					//get the rgb values
 					int[] rgb = new int[3];
 					ip.getPixel(x+r.x, y+r.y,rgb);
-					
+
 					//get the corresponding HSB values
 					float[] HSB = java.awt.Color.RGBtoHSB(rgb[0], rgb[1], rgb[2], null); 
-					
+
 
 					switch(channelToGet){
 					case('l'): //luminence/brightness
@@ -896,6 +900,26 @@ public class Toolbox {
 
 		return(index);
 	}
+
+
+	/**
+	 * This function will read a CSV file where the first column is the filename (incl. path)
+	 * the second column is the row, and the third row is the column
+	 * @param csvFilename
+	 * @return
+	 */
+	public static List<String[]> readCSV(String csvFilename) {
+
+		try{
+			CSVReader reader = new CSVReader(new FileReader(csvFilename));
+			List<String[]> myEntries = reader.readAll();
+			reader.close();
+			return(myEntries);
+		} catch (Exception e){
+			return null;
+		}
+	}
+
 
 
 

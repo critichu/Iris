@@ -65,6 +65,9 @@ public class BasicProfileInverted extends Profile {
 	 * @param filename
 	 */
 	public void analyzePicture(String filename){
+		
+		settings.numberOfColumnsOfColonies = 24;
+		settings.numberOfRowsOfColonies = 16;
 
 		File file = new File(filename);
 		String justFilename = file.getName();
