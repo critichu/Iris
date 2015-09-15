@@ -13,7 +13,7 @@ import ij.process.AutoThresholder.Method;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import imageCroppers.NaiveImageCropper2;
+import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -117,7 +117,7 @@ public class BasicProfileInverted extends Profile {
 
 
 		//3. crop the plate to keep only the colonies
-		ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
+		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
 		

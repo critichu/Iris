@@ -516,6 +516,9 @@ public class ColorProfileEcoli extends Profile{
 					}
 				}
 			}
+			
+			
+			
 		}
 
 		colourCroppedImage.flush();
