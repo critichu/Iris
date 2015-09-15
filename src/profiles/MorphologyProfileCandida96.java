@@ -6,7 +6,9 @@ package profiles;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.Roi;
 import ij.process.ImageConverter;
+import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -115,13 +117,13 @@ public class MorphologyProfileCandida96 extends Profile {
 //		GenericImageCropper.searchStart = 0.035;
 //		GenericImageCropper.searchEnd = 0.065;
 //		GenericImageCropper.skip = 20;
-//		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(435, 290, 4200, 2800);
+		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
 		
-		ImagePlus croppedImage = rotatedImage.duplicate(); //it's already rotated
+		ImagePlus colorCroppedImage = croppedImage.duplicate(); //it's already rotated
 		//flush the rotated picture, we won't be needing it anymore
 		rotatedImage.flush();
-
 
 
 
@@ -150,7 +152,7 @@ public class MorphologyProfileCandida96 extends Profile {
 		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
 
 		//let the tile boundaries "breathe"
-		ColonyBreathing.breathingSpace = 20;
+		ColonyBreathing.breathingSpace = 40;//20;
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		
 //		ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
@@ -190,8 +192,6 @@ public class MorphologyProfileCandida96 extends Profile {
 		x = segmentationOutput.getBottomRightRoi().getBounds().x;
 		y = segmentationOutput.getBottomRightRoi().getBounds().y;
 		output.append("#bottom right of the grid found at (" +x+ " , " +y+ ")\n");
-
-
 
 
 		//
@@ -236,9 +236,9 @@ public class MorphologyProfileCandida96 extends Profile {
 
 			return;
 			*/
+			
+			System.err.println("\tWarning: writing iris file anyway");
 		}
-
-
 
 
 		//7. output the results
@@ -266,14 +266,18 @@ public class MorphologyProfileCandida96 extends Profile {
 			//System.out.println("Done processing file " + filename + "\n\n");
 			System.out.println("...done processing!");
 		}
-
-
+		
 
 		//7.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
+			
+			//draw the colony bounds
+			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, readerOutputs);
+			
 			//calculate grid image
-			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
+			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(colorCroppedImage, segmentationOutput);
+			
 			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 		}
 

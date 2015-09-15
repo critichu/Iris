@@ -13,7 +13,7 @@ import ij.process.AutoThresholder.Method;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import imageCroppers.GenericImageCropper;
+import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.RisingTideSegmenter;
@@ -125,7 +125,8 @@ public class EcoliOpacityProfile384 extends Profile {
 		//
 
 		//3. crop the plate to keep only the colonies
-		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+//		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();

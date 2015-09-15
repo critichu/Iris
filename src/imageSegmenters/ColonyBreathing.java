@@ -115,7 +115,6 @@ public class ColonyBreathing {
 
 		ImagePlus paintedImage = input_croppedImage.duplicate();
 		
-		
 		ImageProcessor croppedImageProcessor = paintedImage.getProcessor();		
 		croppedImageProcessor.setColor(java.awt.Color.WHITE);
 
