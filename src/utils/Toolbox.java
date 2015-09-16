@@ -457,74 +457,6 @@ public class Toolbox {
 	}
 
 
-	/**
-	 * Takes the grayscale cropped image and calculates the sum of the
-	 * light intensity of it's columns (for every x)
-	 * @param croppedImage
-	 * @return
-	 */
-	public static ArrayList<Integer> sumOfRows(ImagePlus croppedImage){
-		int dimensions[] = croppedImage.getDimensions();
-
-		//make the sum of rows
-
-		ArrayList<Integer> sumOfRows = new ArrayList<Integer>(dimensions[1]);
-
-		int sum = 0;
-
-		//for all rows
-		for(int y=0; y<dimensions[1]; y++ ){
-			sum = 0;
-
-			//for all columns
-			for(int x=0; x<dimensions[0]; x++ ){
-
-				sum += croppedImage.getPixel(x, y)[0];
-			}
-
-			//sum complete, add it to the list
-			//sumOfRows.set(y, sum);
-			sumOfRows.add(sum);
-		}
-
-		return(sumOfRows);
-	}
-
-
-
-
-
-	/**
-	 * Takes the grayscale cropped image and calculates the sum of the
-	 * light intensity of it's rows (for every y)
-	 * @param croppedImage
-	 * @return
-	 */
-	public static ArrayList<Integer> sumOfColumns(ImagePlus croppedImage){
-		int dimensions[] = croppedImage.getDimensions();
-
-		//make the sum of rows and columns
-		ArrayList<Integer> sumOfColumns = new ArrayList<Integer>(dimensions[0]);
-
-		int sum = 0;
-
-		//for all columns
-		for(int x=0; x<dimensions[0]; x++ ){
-			sum = 0;
-
-			//for all rows
-			for(int y=0; y<dimensions[1]; y++ ){
-
-				sum += croppedImage.getPixel(x, y)[0];
-			}
-
-			//sum complete, add it to the list
-			//sumOfColumns.set(x, sum);
-			sumOfColumns.add(sum);
-		}
-
-		return(sumOfColumns);
-	}
 
 
 	/**
@@ -919,6 +851,169 @@ public class Toolbox {
 			return null;
 		}
 	}
+	
+	
+	
+
+	/**
+	 * This function just checks for circularity. If it's under 0.20, then the tile gets rejected.
+	 * @param resultsTable
+	 * @param tileImage
+	 * @return
+	 */
+	public static boolean isTileEmpty_simple2(ResultsTable resultsTable,
+			ImagePlus tileImage) {
+
+		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));//get the areas of all the particles the particle analyzer has found
+		float circularities[] = resultsTable.getColumn(resultsTable.getColumnIndex("Circ."));//get the circularities of all the particles
+
+
+		//for the following, we only check the largest particle
+		//which is the one who would be reported either way if we decide that this spot is not empty
+		int indexOfMax = getIndexOfMaximumElement(areas);
+
+		//check for the circularity of the largest particle
+		//usually, colonies have roundnesses that start from 0.50 (faint colonies)
+		//and reach 0.92 for normal colonies
+		//for empty spots, this value is usually around 0.07, but there have been cases
+		//where it reached 0.17.
+		//Since this threshold would characterize a spot as empty, we will be more relaxed and set it at 0.20
+		//everything below that, gets characterized as an empty spot
+		if(circularities[indexOfMax]<0.20){
+			return(true); //it's empty
+		}
+
+		return(false);
+	}
+
+
+	/**
+	 * This function checks whether the given tile is empty,
+	 * by summing up it's brightness and calculating the variance of these sums.
+	 * Empty tiles have a very low variance, whereas tiles with colonies have high variances.
+	 * @param tile
+	 * @return
+	 */
+	public static boolean isTileEmpty_simple(ImagePlus tile, double varianceThreshold){
+		//sum up the pixel values (brightness) on the x axis
+		double[] sumOfBrightnessXaxis = Toolbox.sumOfRows_double(tile);
+		double variance = StdStats.varp(sumOfBrightnessXaxis);
+
+		//System.out.println(variance);
+
+		if(variance<varianceThreshold){
+			return(true);
+		}
+		return(false);
+	}
+	
+	
+	/**
+	 * Takes the grayscale cropped image and calculates the sum of the
+	 * light intensity of it's columns (for every x)
+	 * @param croppedImage
+	 * @return
+	 */
+	public static double[] sumOfRows_double(ImagePlus croppedImage){
+		int dimensions[] = croppedImage.getDimensions();
+
+		//make the sum of rows
+
+		double[] sumOfRows = new double[dimensions[1]];
+
+		int sum = 0;
+
+		//for all rows
+		for(int y=0; y<dimensions[1]; y++ ){
+			sum = 0;
+
+			//for all columns
+			for(int x=0; x<dimensions[0]; x++ ){
+
+				sum += croppedImage.getPixel(x, y)[0];
+			}
+
+			//sum complete, add it to the list
+			//sumOfRows.set(y, sum);
+			sumOfRows[y] = sum;
+		}
+
+		return(sumOfRows);
+	}
+
+	
+	
+
+	/**
+	 * Takes the grayscale cropped image and calculates the sum of the
+	 * light intensity of it's columns (for every x)
+	 * @param croppedImage
+	 * @return
+	 */
+	public static ArrayList<Integer> sumOfRows(ImagePlus croppedImage){
+		int dimensions[] = croppedImage.getDimensions();
+
+		//make the sum of rows
+
+		ArrayList<Integer> sumOfRows = new ArrayList<Integer>(dimensions[1]);
+
+		int sum = 0;
+
+		//for all rows
+		for(int y=0; y<dimensions[1]; y++ ){
+			sum = 0;
+
+			//for all columns
+			for(int x=0; x<dimensions[0]; x++ ){
+
+				sum += croppedImage.getPixel(x, y)[0];
+			}
+
+			//sum complete, add it to the list
+			//sumOfRows.set(y, sum);
+			sumOfRows.add(sum);
+		}
+
+		return(sumOfRows);
+	}
+
+
+
+
+
+	/**
+	 * Takes the grayscale cropped image and calculates the sum of the
+	 * light intensity of it's rows (for every y)
+	 * @param croppedImage
+	 * @return
+	 */
+	public static ArrayList<Integer> sumOfColumns(ImagePlus croppedImage){
+		int dimensions[] = croppedImage.getDimensions();
+
+		//make the sum of rows and columns
+		ArrayList<Integer> sumOfColumns = new ArrayList<Integer>(dimensions[0]);
+
+		int sum = 0;
+
+		//for all columns
+		for(int x=0; x<dimensions[0]; x++ ){
+			sum = 0;
+
+			//for all rows
+			for(int y=0; y<dimensions[1]; y++ ){
+
+				sum += croppedImage.getPixel(x, y)[0];
+			}
+
+			//sum complete, add it to the list
+			//sumOfColumns.set(x, sum);
+			sumOfColumns.add(sum);
+		}
+
+		return(sumOfColumns);
+	}
+
+
 
 
 

@@ -253,6 +253,8 @@ public class BasicProfileInverted extends Profile {
 			System.err.print("Image segmentation algorithm failed:\n");
 			System.err.println("\ttoo many empty rows/columns");
 
+			
+			/*
 			//calculate and save grid image
 			
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
@@ -266,6 +268,8 @@ public class BasicProfileInverted extends Profile {
 			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 
 			return;
+			*/
+			System.err.println("\twarning: writing iris file anyway");
 		}
 
 

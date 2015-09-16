@@ -72,7 +72,8 @@ public class BasicTileReaderInverted {
 		}
 
 		//3.2 check to see if the tile was empty. If so, return a colony size of zero
-		if(isTileEmpty(resultsTable, originalTileImage)){
+		//if(isTileEmpty(resultsTable, originalTileImage)){
+		if(Toolbox.isTileEmpty_simple2(resultsTable, originalTileImage)){
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
 

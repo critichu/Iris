@@ -239,13 +239,17 @@ public class EcoliOpacityProfile384 extends Profile {
 			System.err.print("Image segmentation algorithm failed:\n");
 			System.err.println("\ttoo many empty rows/columns");
 
+			
+			/* ///HACK commenting-out the following block will make Iris print out the result even though the gridding failed
 			//calculate and save grid image
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
-			///HACK for Alex: removing the next return statement will make Iris print out the result even though the gridding failed  
-			//return;
-			///HACK end
+			  
+			return;
+			*/ //HACK end
+
+			System.err.println("\twarning: writing iris file anyway");
 		}
 
 		//7. output the results

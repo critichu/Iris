@@ -91,7 +91,8 @@ public class OpacityTileReader {
 		}
 
 		//3.2 check to see if the tile was empty. If so, return a colony size of zero
-		if(isTileEmpty(resultsTable, input.tileImage)){
+		//if(isTileEmpty(resultsTable, input.tileImage)){
+		if(Toolbox.isTileEmpty_simple2(resultsTable, input.tileImage)){
 			//if(OpacityTileReaderForHazyColonies_old.isTileEmpty_simple(input.tileImage)){
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
