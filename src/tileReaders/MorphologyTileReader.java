@@ -269,6 +269,13 @@ public class MorphologyTileReader {
 		output.inAgarROI = manager.getRoisAsArray()[indexOfBiggestParticle];
 		output.inAgarOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.inAgarROI, Toolbox.getThreshold(grayscaleTileCopy, Method.Percentile));
 		
+		
+		
+		//one last thing for the in-agar growth would be to get the total brightness in the tile
+		//40 is the background of our pictures in the August 2015 experiment setup
+		output.wholeTileOpacity = getWholeTileOpacity(grayscaleTileCopy, 40);
+		
+		
 		//
 		//--------------------------------------------------
 		//
@@ -276,10 +283,13 @@ public class MorphologyTileReader {
 		
 		//B: then get the actual over-agar colony
 		
-		//3B. apply a threshold at the tile, using the Percentile algorithm (that will get us the colony+hair) -- get a copy first
+		
+		//3B. set the whole-colony ROI to the tileImage
+		//	then apply a threshold at the ROI-- that should get us just the colony
 		grayscaleTileCopy = inputTileImage.duplicate();
-		Toolbox.turnImageBW_Shanbhag_auto(grayscaleTileCopy);
-
+		grayscaleTileCopy.setRoi(output.inAgarROI);
+		Toolbox.turnImageBW_Otsu_auto(grayscaleTileCopy);
+		
 
 		//4B. perform particle analysis on the thresholded tile
 		resultsTable = new ResultsTable();
@@ -937,6 +947,45 @@ public class MorphologyTileReader {
 			return(0);
 		}
 
+		//4. get the pixel values of the image
+		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
+		byte[] imageBytes = (byte[]) processor.getPixels();
+
+		int size = imageBytes.length;
+
+		int sumOfBrightness = 0;
+
+		for(int i=0;i<size;i++){
+			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
+			int pixelValue = imageBytes[i]&0xFF;
+
+			//subtract the threshold and put the pixels in the sum
+			//every pixel inside the colony should normally be above the threshold
+			//but just in case, we'll just take 0 if a colony pixel turns out to be below the threshold
+			//Also all the pixels outside the Roi would have a negative value after subtraction 
+			//(they are already zero) because of the mask process
+
+			sumOfBrightness += Math.max(0, pixelValue-background_level);
+		}
+
+
+		return (sumOfBrightness);
+	}
+
+	
+
+
+	/**
+	 * This function calculates the sum of pixel brighness per tile, subtracting the given background value
+	 * (typically reported by the thresholding algorithm used to detect the colony) 
+	 * Then, it sums the brightness (0 to 255) value of each pixel in the image, as long as it's inside the colony.
+	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
+	 * @param grayscaleTileCopy
+	 * @return
+	 */
+	private static int getWholeTileOpacity(ImagePlus grayscaleTileCopy, int background_level) {
+
+		
 		//4. get the pixel values of the image
 		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
 		byte[] imageBytes = (byte[]) processor.getPixels();

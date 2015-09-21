@@ -14,6 +14,7 @@ import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
+import imageSegmenters.RisingTideSegmenter_variance;
 import imageSegmenters.SimpleImageSegmenter;
 
 import java.awt.Color;
@@ -120,7 +121,7 @@ public class MorphologyProfileCandida96 extends Profile {
 //		GenericImageCropper.searchStart = 0.035;
 //		GenericImageCropper.searchEnd = 0.065;
 //		GenericImageCropper.skip = 20;
-		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(435, 290, 4200, 2800);
+		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(400, 260, 4250, 2870);
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
 		
@@ -138,7 +139,10 @@ public class MorphologyProfileCandida96 extends Profile {
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
-
+		
+		//4b. also make BW the input to the image segmenter
+		ImagePlus BWimageToSegment = croppedImage.duplicate();
+		Toolbox.turnImageBW_Percentile_auto(BWimageToSegment);
 
 		//
 		//--------------------------------------------------
@@ -150,12 +154,13 @@ public class MorphologyProfileCandida96 extends Profile {
 		//first change the settings, to get a 96 plate segmentation
 		settings.numberOfRowsOfColonies = 8;
 		settings.numberOfColumnsOfColonies = 12;
-		SimpleImageSegmenter.offset = 30;
-		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
-		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+		SimpleImageSegmenter.offset = 10;
+		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
+//		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
 
 		//let the tile boundaries "breathe"
-		ColonyBreathing.breathingSpace = 40;//20;
+		ColonyBreathing.breathingSpace = 80;//20;
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		
 //		ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
@@ -185,6 +190,7 @@ public class MorphologyProfileCandida96 extends Profile {
 			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 			croppedImage.flush();
+			BWimageToSegment.flush();
 			return;
 		}
 
@@ -256,7 +262,9 @@ public class MorphologyProfileCandida96 extends Profile {
 				"column\t" +
 				"colony size\t" +
 				"colony circularity\t" +
-				"in agar opacity\n");
+				"in agar opacity\t" + 
+				"whole tile opacity\n");
+		
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -269,7 +277,8 @@ public class MorphologyProfileCandida96 extends Profile {
 						+ Integer.toString(readerOutputs[i][j].normalizedMorphologyScore) + "\t"
 						+ Integer.toString(readerOutputs[i][j].inAgarSize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].inAgarCircularity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].inAgarOpacity) + "\n");
+						+ Integer.toString(readerOutputs[i][j].inAgarOpacity) + "\t"
+						+ Integer.toString(readerOutputs[i][j].wholeTileOpacity) + "\n");
 			}
 		}
 

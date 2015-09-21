@@ -60,6 +60,12 @@ public class MorphologyTileReaderOutput extends BasicTileReaderOutput {
 	 * The ROI of the total colony -- both in-agar and over-agar
 	 */
 	public Roi inAgarROI = null;
+
+	/**
+	 * The total opacity in the tile; may be a more accurate proxy of the in-agar growth, after subtracting 
+	 * for the detected over-agar growth 
+	 */
+	public int wholeTileOpacity = 0;
 	
 	
 }
