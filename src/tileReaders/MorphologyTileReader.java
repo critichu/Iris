@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.MorphologyTileReaderOutput;
 import utils.StdStats;
+import utils.Toolbox;
 
 /**
  * @author George Kritikos
@@ -190,6 +191,146 @@ public class MorphologyTileReader {
 
 	}
 
+	
+	/**
+	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how
+	 * "wrinkly" a colony is. Flat colonies would get a low morphology score, whereas colonies featuring a complicated structure
+	 * will be given a high score 
+	 * 
+	 * Since colonies featuring complex morphologies are typically not round, I will reuse here the code used for the
+	 * hazy colony detection (vs empty tile).
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static MorphologyTileReaderOutput processTileWrinkly(OpacityTileReaderInput input){
+
+		
+		//0. get a copy of this tile, before it gets processed
+		ImagePlus inputTileImage = input.tileImage.duplicate();
+		
+		//0. first do a simple run using the old tile reader
+		MorphologyTileReaderOutput outputSimple = MorphologyTileReader.processTile(input);
+		
+		input.tileImage = inputTileImage.duplicate();
+		
+		
+		//1. check the output.
+		//if the tile is empty, return immediately
+		//if the tile holds a non-agar-grown colony, return the simple output (no hair)
+		//see this note on how to distinguish the 2 types of colonies: https://www.evernote.com/l/ACigfyvs1zBAo5u0J1_9FA6--2TAwWiZg38
+		//if the tile does indeed have a colony that's grown in agar, 
+		//then we need to process it by running 2 different thresholding algorithms:
+		//Percentile (for the in-agar growth) and Shangbhag for the colony itself
+		//see also here: https://www.evernote.com/l/ACg4M6IXe29K2KbzhXiv1DyhyCRdctOIPFo
+		
+		if(outputSimple.emptyTile){
+			return(outputSimple);
+		}
+		
+		if(outputSimple.circularity>0.6){
+			return(outputSimple);
+		}
+		
+		//if we're still here it means that we need to re-process this colony
+		
+		//2. create the output object
+		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
+		output.colonyHasInAgarGrowth = true;
+			
+		//
+		//--------------------------------------------------
+		//
+		//
+		
+		//A: get the entire colony first (including in-agar and over agar growth)
+		
+		//3A. apply a threshold at the tile, using the Percentile algorithm (that will get us the colony+hair) -- get a copy first
+		ImagePlus grayscaleTileCopy = inputTileImage.duplicate();
+		Toolbox.turnImageBW_Percentile_auto(grayscaleTileCopy);
+
+
+		//4A. perform particle analysis on the thresholded tile
+		ResultsTable resultsTable = new ResultsTable();
+		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
+				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+				resultsTable, 5, Integer.MAX_VALUE);
+		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+		ParticleAnalyzer.setRoiManager(manager);
+		particleAnalyzer.analyze(grayscaleTileCopy);
+		
+		
+		//5A. return the area of the biggest particle
+		//this should also clear away contaminations, because normally the contamination
+		//area will be smaller than the colony area, so the contamination will never be reported
+		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+		output.inAgarSize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
+		output.inAgarCircularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		output.inAgarROI = manager.getRoisAsArray()[indexOfBiggestParticle];
+		output.inAgarOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.inAgarROI, Toolbox.getThreshold(grayscaleTileCopy, Method.Percentile));
+		
+		//
+		//--------------------------------------------------
+		//
+		//
+		
+		//B: then get the actual over-agar colony
+		
+		//3B. apply a threshold at the tile, using the Percentile algorithm (that will get us the colony+hair) -- get a copy first
+		grayscaleTileCopy = inputTileImage.duplicate();
+		Toolbox.turnImageBW_Shanbhag_auto(grayscaleTileCopy);
+
+
+		//4B. perform particle analysis on the thresholded tile
+		resultsTable = new ResultsTable();
+		particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
+				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+				resultsTable, 5, Integer.MAX_VALUE);
+		manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+		ParticleAnalyzer.setRoiManager(manager);
+		particleAnalyzer.analyze(grayscaleTileCopy);
+		
+		
+		//5B. return the area of the biggest particle
+		//this should also clear away contaminations, because normally the contamination
+		//area will be smaller than the colony area, so the contamination will never be reported
+		indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+		output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
+		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
+		output.colonyOpacity = getBiggestParticleOpacity(input.tileImage, output.colonyROI, Toolbox.getThreshold(input.tileImage, Method.Shanbhag));
+		
+	
+		//6B. get the morphology of the over-agar colony
+		
+		//this will give us that the circles will not start in an awkward location, even in cases where
+		//we might have oddly shaped colonies (e.g. budding shaped)
+		Point colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+
+		//for this, we need the Roi (region of interest) that corresponds to the colony
+		//so as to exclude the brightness of any contaminations
+		
+		grayscaleTileCopy.setRoi(output.colonyROI);
+		ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, output.colonyROI, colonyCenter);
+
+		//get the sum of the elevation counts for all circles except the previous circle
+		//that one is likely to get high elevation counts 
+		//just because colony edges tend to be really bright compared to the background
+		output.morphologyScore = sumElevationCounts(elevationCounts, 1);
+		if(elevationCounts.size()-1<=0) 
+			output.normalizedMorphologyScore = 0; 
+		else
+			output.normalizedMorphologyScore = output.morphologyScore / (elevationCounts.size()-1);
+
+		input.cleanup(); //clear the tile image here, since we don't need it anymore
+		grayscaleTileCopy.flush();
+
+		return(output);
+
+	}
+
+	
+	
 
 	/**
 	 * This function will calculate the morphology score for the colony by traversing concentric circles,
@@ -766,6 +907,62 @@ public class MorphologyTileReader {
 
 		return(sumOfRows);
 	}
+	
+	
+	
+
+	/**
+	 * This function calculates the sum of pixel brighness per colony, subtracting the given background value
+	 * (typically reported by the thresholding algorithm used to detect the colony) 
+	 * Then, it sums the brightness (0 to 255) value of each pixel in the image, as long as it's inside the colony.
+	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
+	 * @param grayscaleTileCopy
+	 * @return
+	 */
+	private static int getBiggestParticleOpacity(ImagePlus grayscaleTileCopy, Roi colonyRoi, int background_level) {
+
+		//1. find the background level, which is the threshold set by Otsu
+		//int background_level = getThresholdOtsu(grayscaleTileCopy);
+
+		//2. check sanity of the given Roi
+		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
+			return(0);
+		}
+
+		//3. set the Roi and paint eveything outside it as black
+		grayscaleTileCopy.setRoi(colonyRoi);
+		try {
+			grayscaleTileCopy.getProcessor().fillOutside(colonyRoi);
+		} catch (Exception e) {
+			return(0);
+		}
+
+		//4. get the pixel values of the image
+		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
+		byte[] imageBytes = (byte[]) processor.getPixels();
+
+		int size = imageBytes.length;
+
+		int sumOfBrightness = 0;
+
+		for(int i=0;i<size;i++){
+			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
+			int pixelValue = imageBytes[i]&0xFF;
+
+			//subtract the threshold and put the pixels in the sum
+			//every pixel inside the colony should normally be above the threshold
+			//but just in case, we'll just take 0 if a colony pixel turns out to be below the threshold
+			//Also all the pixels outside the Roi would have a negative value after subtraction 
+			//(they are already zero) because of the mask process
+
+			sumOfBrightness += Math.max(0, pixelValue-background_level);
+		}
+
+
+		return (sumOfBrightness);
+	}
+
+
 
 
 }

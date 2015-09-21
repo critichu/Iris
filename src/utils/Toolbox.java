@@ -538,6 +538,31 @@ public class Toolbox {
 		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
 		imageProcessor.setAutoThreshold(Method.Otsu, true, ImageProcessor.BLACK_AND_WHITE_LUT);
 	}
+	
+
+	/**
+	 * This function will convert the given picture into black and white
+	 * using ImageProcessor's auto thresholding function, employing the Percentile algorithm. 
+	 * This function does not return the threshold
+	 * @param 
+	 */
+	public static void turnImageBW_Percentile_auto(ImagePlus BW_croppedImage) {
+		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
+		imageProcessor.setAutoThreshold(Method.Percentile, true, ImageProcessor.BLACK_AND_WHITE_LUT);
+	}
+	
+
+	/**
+	 * This function will convert the given picture into black and white
+	 * using ImageProcessor's auto thresholding function, employing the Shanbhag algorithm. 
+	 * This function does not return the threshold
+	 * @param 
+	 */
+	public static void turnImageBW_Shanbhag_auto(ImagePlus BW_croppedImage) {
+		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
+		imageProcessor.setAutoThreshold(Method.Shanbhag, true, ImageProcessor.BLACK_AND_WHITE_LUT);
+	}
+
 
 
 	/**
@@ -598,7 +623,7 @@ public class Toolbox {
 
 
 	/**
-	 * This method will return the threshold found by the Otsu method and do nothing else
+	 * This method will return the threshold found by the given method and do nothing else
 	 * @param grayscale_image
 	 * @return
 	 */

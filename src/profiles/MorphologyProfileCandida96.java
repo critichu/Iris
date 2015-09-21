@@ -7,13 +7,16 @@ import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
+import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
+import ij.process.ImageProcessor;
 import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
 import imageSegmenters.SimpleImageSegmenter;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -208,7 +211,7 @@ public class MorphologyProfileCandida96 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = MorphologyTileReader.processTile(
+				readerOutputs[i][j] = MorphologyTileReader.processTileWrinkly(
 						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//each generated tile image is cleaned up inside the tile reader
@@ -243,8 +246,17 @@ public class MorphologyProfileCandida96 extends Profile {
 
 		//7. output the results
 
+		
 		//7.1 output the colony measurements as a text file
-		output.append("row\tcolumn\tsize\tcircularity\tmorphology score\tnormalized morphology score\n");
+		output.append("row\tcolumn\tcolony size\tcolony circularity\tcolony morphology score\tcolony normalized morphology score\t\n");
+		output.append("row\t" +
+				"column\t" +
+				"colony size\t" +
+				"colony circularity\t" +
+				"column\t" +
+				"colony size\t" +
+				"colony circularity\t" +
+				"in agar opacity\n");
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -252,8 +264,12 @@ public class MorphologyProfileCandida96 extends Profile {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
+						+ Integer.toString(readerOutputs[i][j].colonyOpacity) + "\t"
 						+ Integer.toString(readerOutputs[i][j].morphologyScore) + "\t"
-						+ Integer.toString(readerOutputs[i][j].normalizedMorphologyScore) + "\n");
+						+ Integer.toString(readerOutputs[i][j].normalizedMorphologyScore) + "\t"
+						+ Integer.toString(readerOutputs[i][j].inAgarSize) + "\t"
+						+ String.format("%.3f", readerOutputs[i][j].inAgarCircularity) + "\t"
+						+ Integer.toString(readerOutputs[i][j].inAgarOpacity) + "\n");
 			}
 		}
 
@@ -272,8 +288,9 @@ public class MorphologyProfileCandida96 extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			
-			//draw the colony bounds
+			//draw the colony bounds, and the in-agar growth bounds
 			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, readerOutputs);
+			drawInAgarGrowthBounds(colorCroppedImage, segmentationOutput, readerOutputs);
 			
 			//calculate grid image
 			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(colorCroppedImage, segmentationOutput);
@@ -283,6 +300,109 @@ public class MorphologyProfileCandida96 extends Profile {
 
 	}
 
+	
+
+	/**
+	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
+	 * offsets found in the segmenterOutput.  
+	 * @param segmentedImage
+	 * @param segmenterOutput
+	 */
+	public static void drawInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
+
+
+		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
+		ByteProcessor[][] colonyBounds = getInAgarGrowthBounds(croppedImage, segmenterOutput, tileReaderOutputs);
+
+
+		//paint those bounds on the original cropped image
+		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
+		//bigPictureProcessor.setColor(Color.black);
+		bigPictureProcessor.setColor(Color.red);
+		bigPictureProcessor.setLineWidth(1);
+
+
+		//for all rows
+		for(int i=0; i<tileReaderOutputs.length; i++){
+			//for all columns
+			for(int j=0; j<tileReaderOutputs[0].length; j++) {
+
+				if(tileReaderOutputs[i][j].colonySize==0)
+					continue; //don't go through the trouble for emtpy tiles
+
+				//get tile offsets
+				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
+				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
+				int tileWidth = segmenterOutput.ROImatrix[i][j].getBounds().width;
+				int tileHeight = segmenterOutput.ROImatrix[i][j].getBounds().height;
+
+
+				//for each pixel, if it is colony bounds, paint it on the big picture
+				for(int x=0; x<tileWidth; x++){
+					for(int y=0; y<tileHeight; y++){
+						if(colonyBounds[i][j].getPixel(x, y)==255){ //it is a colony bounds pixel
+							bigPictureProcessor.drawDot(x+tile_x_offset, y+tile_y_offset); //paint it on the big picture
+						}
+					}
+				}
+
+			}
+
+		}
+	}
+	
+
+	/**
+	 * This function will get original picture, segment it into tiles.
+	 * For each one, it will apply the colony ROI on it (except it it was empty -- add an empty ROI).
+	 * Then, it will get the mask from the ROI and find it's bounds.
+	 * At the end, for each original tile, we'll have 0/1 tiles, with 1s where the colony bounds are.
+	 * @param croppedImage
+	 * @param segmenterOutput
+	 * @param colonyRoi
+	 * @return
+	 */
+	public static ByteProcessor[][] getInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
+
+		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
+
+		//for all rows
+		for(int i=0;i<tileReaderOutputs.length; i++){
+			//for all columns
+			for (int j = 0; j<tileReaderOutputs[0].length; j++) {
+
+				//get the tile
+				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
+				croppedImage.copy(false);
+				ImagePlus tile = ImagePlus.getClipboard();
+
+
+				//apply the ROI, get the mask
+				ImageProcessor tileProcessor = tile.getProcessor();
+				tileProcessor.setRoi(tileReaderOutputs[i][j].inAgarROI);
+
+				tileProcessor.setColor(Color.white);
+				tileProcessor.setBackgroundValue(0);
+				tileProcessor.fill(tileProcessor.getMask());
+				//tileProcessor.fill(tileReaderOutputs[i][j].colonyROI.getMask());
+
+				//get the bounds of the mask, that's it, save it
+				tileProcessor.findEdges();
+				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
+
+
+			}
+		}
+
+		croppedImage.deleteRoi();
+
+		return(colonyBounds);
+	}
+
+
+
+
+	
 
 	/**
 	 * This function will check if there is any row or any column with more than half of it's tiles being empty.
