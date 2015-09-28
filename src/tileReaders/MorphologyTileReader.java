@@ -172,10 +172,16 @@ public class MorphologyTileReader {
 
 		ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, colonyRoi, colonyCenter);
 
-		//get the sum of the elevation counts for all circles except the previous circle
-		//that one is likely to get high elevation counts 
-		//just because colony edges tend to be really bright compared to the background
-		output.morphologyScore = sumElevationCounts(elevationCounts, 1);
+		if(elevationCounts.size()==0){
+			//check if we've hit empty space with the first circle already
+			output.morphologyScore=0;
+		}else {
+			//get the sum of the elevation counts for all circles except the previous circle
+			//that one is likely to get high elevation counts 
+			//just because colony edges tend to be really bright compared to the background
+			output.morphologyScore = sumElevationCounts_limited(elevationCounts, 8);
+		}
+		
 		if(elevationCounts.size()-1<=0) 
 			output.normalizedMorphologyScore = 0; 
 		else
@@ -323,10 +329,17 @@ public class MorphologyTileReader {
 		grayscaleTileCopy.setRoi(output.colonyROI);
 		ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, output.colonyROI, colonyCenter);
 
-		//get the sum of the elevation counts for all circles except the previous circle
-		//that one is likely to get high elevation counts 
-		//just because colony edges tend to be really bright compared to the background
-		output.morphologyScore = sumElevationCounts(elevationCounts, 1);
+		if(elevationCounts.size()==0){
+			//check if we've hit empty space with the first circle already
+			output.morphologyScore=0;
+		}else {
+			//get the sum of the elevation counts for all circles except the previous circle
+			//that one is likely to get high elevation counts 
+			//just because colony edges tend to be really bright compared to the background
+			output.morphologyScore = sumElevationCounts_limited(elevationCounts, 8);
+		}
+		
+		
 		if(elevationCounts.size()-1<=0) 
 			output.normalizedMorphologyScore = 0; 
 		else
@@ -388,7 +401,7 @@ public class MorphologyTileReader {
 				meanPixelValues.add(getBrightnessAverage9pixels(grayscale_image, point));
 			}
 			
-			elevationCounts.add(countBrightnessChanges(meanPixelValues, minimumBrightnessStep));
+			elevationCounts.add(new Integer(countBrightnessChanges(meanPixelValues, minimumBrightnessStep)));
 			
 			number_of_circles++;
 		}
@@ -409,6 +422,23 @@ public class MorphologyTileReader {
 	private static int sumElevationCounts(ArrayList<Integer> elevationCounts, int circlesToIgnore){
 		int sum = 0;
 		for (int i = 0; i < elevationCounts.size() - circlesToIgnore; i++) {
+			sum += elevationCounts.get(i);
+		}
+	
+		return(sum);
+	}
+	
+	
+	/**
+	 * This function just sums the elements of the given ArrayList, ignoring the last circlesToIgnore elements
+	 * @param elevationCounts
+	 * @param circlesToIgnore
+	 * @return
+	 */
+	private static int sumElevationCounts_limited(ArrayList<Integer> elevationCounts, int maxCirclesToCount){
+		int sum = 0;
+		int circlesToActuallyCount = Math.min(elevationCounts.size(), maxCirclesToCount);
+		for (int i = 0; i < circlesToActuallyCount; i++) {
 			sum += elevationCounts.get(i);
 		}
 	

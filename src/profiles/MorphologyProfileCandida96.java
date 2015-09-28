@@ -14,7 +14,6 @@ import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
-import imageSegmenters.RisingTideSegmenter_variance;
 import imageSegmenters.SimpleImageSegmenter;
 
 import java.awt.Color;
@@ -53,6 +52,9 @@ public class MorphologyProfileCandida96 extends Profile {
 	 */
 	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
+	
+	
+	
 
 	/**
 	 * This function will analyze the picture using the basic profile
@@ -156,8 +158,8 @@ public class MorphologyProfileCandida96 extends Profile {
 		settings.numberOfColumnsOfColonies = 12;
 		SimpleImageSegmenter.offset = 10;
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
-//		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+//		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
 
 		//let the tile boundaries "breathe"
 		ColonyBreathing.breathingSpace = 80;//20;
@@ -217,9 +219,13 @@ public class MorphologyProfileCandida96 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = MorphologyTileReader.processTileWrinkly(
-						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
-
+				try{
+					readerOutputs[i][j] = MorphologyTileReader.processTileWrinkly(
+							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				}catch(Exception e){
+					System.err.print("\tError getting morphology at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
+					readerOutputs[i][j] = new MorphologyTileReaderOutput();
+				}
 				//each generated tile image is cleaned up inside the tile reader
 			}
 		}
@@ -254,14 +260,16 @@ public class MorphologyProfileCandida96 extends Profile {
 
 		
 		//7.1 output the colony measurements as a text file
-		output.append("row\tcolumn\tcolony size\tcolony circularity\tcolony morphology score\tcolony normalized morphology score\t\n");
+		//output.append("row\tcolumn\tcolony size\tcolony circularity\tcolony morphology score\tcolony normalized morphology score\t\n");
 		output.append("row\t" +
 				"column\t" +
 				"colony size\t" +
 				"colony circularity\t" +
-				"column\t" +
-				"colony size\t" +
-				"colony circularity\t" +
+				"colony opacity\t" +
+				"morphology score\t" +
+				"normalized morphology score\t" +
+				"in agar size\t" +
+				"in agar circularity\t" +
 				"in agar opacity\t" + 
 				"whole tile opacity\n");
 		
