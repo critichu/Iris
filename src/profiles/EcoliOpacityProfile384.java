@@ -16,6 +16,7 @@ import ij.process.ImageStatistics;
 import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 import imageSegmenters.SimpleImageSegmenter;
 
@@ -255,7 +256,15 @@ public class EcoliOpacityProfile384 extends Profile {
 		//7. output the results
 
 		//7.1 output the colony measurements as a text file
-		output.append("row\tcolumn\tsize\tcircularity\topacity\n");
+		output.append("row\t" +
+				"column\t" +
+				"size\t" +
+				"circularity\t" +
+				"opacity\t"+
+				"center opacity\t" +
+				"max 10% opacity\n");
+		
+
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -263,7 +272,9 @@ public class EcoliOpacityProfile384 extends Profile {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].opacity) + "\n");
+						+ Integer.toString(readerOutputs[i][j].opacity) + "\t" 
+						+ Integer.toString(readerOutputs[i][j].centerAreaOpacity) + "\t"
+						+ String.format("%.3f",readerOutputs[i][j].max10percentOpacity) + "\n");
 			}
 		}
 
@@ -283,6 +294,8 @@ public class EcoliOpacityProfile384 extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
+			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
+			
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}

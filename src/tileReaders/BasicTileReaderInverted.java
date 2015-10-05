@@ -14,6 +14,9 @@ import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+
+import java.awt.Point;
+
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import utils.Toolbox;
@@ -92,7 +95,7 @@ public class BasicTileReaderInverted {
 		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = rois[indexOfBiggestParticle];
-		
+		output.colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
 		
 		originalTileImage.flush();
 		
@@ -106,6 +109,25 @@ public class BasicTileReaderInverted {
 	}
 	
 	
+
+	/**
+	 * Returns the center of mass of the biggest particle in the results table
+	 */
+	private static Point getBiggestParticleCenterOfMass(ResultsTable resultsTable, int indexOfBiggestParticle) {
+
+		//get the coordinates of all the particles the particle analyzer has found		
+		float X_center_of_mass[] = resultsTable.getColumn(resultsTable.getColumnIndex("XM"));//get the X of the center of mass of all the particles
+		float Y_center_of_mass[] = resultsTable.getColumn(resultsTable.getColumnIndex("YM"));//get the Y of the center of mass of all the particles
+
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
+
+		return( new Point(	Math.round(X_center_of_mass[indexOfMax]),
+				Math.round(Y_center_of_mass[indexOfMax])));
+	}
+
+
 	
 	
 	

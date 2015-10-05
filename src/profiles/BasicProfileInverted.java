@@ -151,15 +151,15 @@ public class BasicProfileInverted extends Profile {
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput;
-		if(settings.numberOfColumnsOfColonies==24){
-			SimpleImageSegmenter.offset=65;
-			segmentationOutput = SimpleImageSegmenter.segmentPicture_colonyDistance(segmentationInput, 170);
-		}
-		else{
+//		if(settings.numberOfColumnsOfColonies==24){
+//			SimpleImageSegmenter.offset=65;
+//			segmentationOutput = SimpleImageSegmenter.segmentPicture_colonyDistance(segmentationInput, 170);
+//		}
+//		else{
 			SimpleImageSegmenter.offset=35;
 			//ColonyBreathing.breathingSpace = 20;
 			segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
-		}
+//		}
 			
 
 		//let colonies breathe
@@ -231,9 +231,8 @@ public class BasicProfileInverted extends Profile {
 
 				if(readerOutputs[i][j].colonySize>0){
 
-					opacityReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
-							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j],
-									readerOutputs[i][j].colonyROI, readerOutputs[i][j].colonySize, settings));
+					opacityReaderOutputs[i][j] = OpacityTileReader.processTile(
+							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j],settings));
 				}
 				else
 				{
@@ -280,7 +279,9 @@ public class BasicProfileInverted extends Profile {
 				"column\t" +
 				"size\t" +
 				"circularity\t" +
-				"opacity\n");
+				"opacity\t"+
+				"center opacity\t" +
+				"max 10% opacity\n");
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -289,7 +290,9 @@ public class BasicProfileInverted extends Profile {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
-						+ Integer.toString(opacityReaderOutputs[i][j].opacity) + "\n");
+						+ Integer.toString(opacityReaderOutputs[i][j].opacity) + "\t" 
+						+ Integer.toString(opacityReaderOutputs[i][j].centerAreaOpacity) + "\t"
+						+ String.format("%.3f",opacityReaderOutputs[i][j].max10percentOpacity) + "\n");
 			}
 		}
 

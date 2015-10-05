@@ -4,6 +4,7 @@
 package tileReaders;
 
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
@@ -16,6 +17,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +31,8 @@ import utils.Toolbox;
  *
  */
 public class OpacityTileReader {
+
+	public static int radius = 8;
 
 	/**
 	 * This tile reader gets the size of the colony in pixels, as well as the sum of it's brightness.
@@ -110,17 +114,19 @@ public class OpacityTileReader {
 		//this should also clear away contaminations, because normally the contamination
 		//area will be smaller than the colony area, so the contamination will never be reported
 		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
-		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-
-
 		//3.4 get the opacity of the colony
 		//for this, we need the Roi (region of interest) that corresponds to the colony
 		//so as to exclude the brightness of any contaminations
 		Roi colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
 
+		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
+		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		output.colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
 		output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
+		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
+		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, radius);
 		output.colonyROI = colonyRoi;
+		
 
 		if(output.opacity==0){
 			//this cannot be zero, unless we have an empty tile, 
@@ -130,6 +136,14 @@ public class OpacityTileReader {
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
+
+
+		//HACK: this is just for illustration purposes, should be removed afterwards
+//		Roi centerRoi = new OvalRoi(
+//				output.colonyCenter.x-radius/2, 
+//				output.colonyCenter.y -radius/2, 
+//				radius, radius);
+//		output.colonyROI = centerRoi;
 
 		return(output);
 
@@ -203,6 +217,7 @@ public class OpacityTileReader {
 
 		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, input.colonyRoi);
 
+
 		output.colonyROI = input.colonyRoi;
 
 		if(output.opacity==0){
@@ -221,14 +236,92 @@ public class OpacityTileReader {
 
 
 	/**
+	 * Returns the center of mass of the biggest particle in the results table
+	 */
+	private static Point getBiggestParticleCenterOfMass(ResultsTable resultsTable, int indexOfBiggestParticle) {
+
+		//get the coordinates of all the particles the particle analyzer has found		
+		float X_center_of_mass[] = resultsTable.getColumn(resultsTable.getColumnIndex("XM"));//get the X of the center of mass of all the particles
+		float Y_center_of_mass[] = resultsTable.getColumn(resultsTable.getColumnIndex("YM"));//get the Y of the center of mass of all the particles
+
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
+
+		return( new Point(	Math.round(X_center_of_mass[indexOfMax]),
+				Math.round(Y_center_of_mass[indexOfMax])));
+	}
+
+
+
+
+	/**
+	 * @param grayscaleTileCopy
+	 * @param colonyRoi
+	 * @param i
+	 * @return
+	 */
+	private static int getCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int radius) {
+
+		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
+		
+		//1. find the background level, which is the threshold set by Otsu
+		int background_level = getThresholdOtsu(grayscaleTileCopy);
+
+
+		//3. get the colony center of mass, this will be the center of the circle
+		//OvalRoi(xc-r/2,yc-r/2,r,r)
+		Roi centerRoi = new OvalRoi(
+				colonyCenter.x-radius/2, 
+				colonyCenter.y -radius/2, 
+				radius, radius);
+
+		//4. set the center Roi and paint eveything outside it as black
+		grayscaleTileCopy.setRoi(centerRoi);
+		try {
+			grayscaleTileCopy.getProcessor().fillOutside(centerRoi);
+		} catch (Exception e) {
+			return(0);
+		}
+
+		//4. get the pixel values of the image
+		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
+		byte[] imageBytes = (byte[]) processor.getPixels();
+
+		int size = imageBytes.length;
+
+		int sumOfBrightness = 0;
+
+		for(int i=0;i<size;i++){
+			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
+			int pixelValue = imageBytes[i]&0xFF;
+
+			//subtract the threshold and put the pixels in the sum
+			//every pixel inside the colony should normally be above the threshold
+			//but just in case, we'll just take 0 if a colony pixel turns out to be below the threshold
+			//Also all the pixels outside the Roi would have a negative value after subtraction 
+			//(they are already zero) because of the mask process
+
+			sumOfBrightness += Math.max(0, pixelValue-background_level);
+		}
+
+		grayscaleTileCopy.flush();
+		
+		return (sumOfBrightness);
+	}
+
+
+	/**
 	 * This method finds the Otsu threshold of the picture.
 	 * Then, it sums the brightness (0 to 255) value of each pixel in the image, as long as it's inside the colony.
 	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
 	 * @param grayscaleTileCopy
 	 * @return
 	 */
-	private static double getLargestTenPercentOpacityMedian(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
-
+	private static double getLargestTenPercentOpacityMedian(ImagePlus grayscaleTile, Roi colonyRoi) {
+		
+		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
+		
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
 
@@ -267,8 +360,10 @@ public class OpacityTileReader {
 		for(int i=0;i<size_subset;i++){
 			sumOfBrightness += Math.max(0, pixelIntValues.get(i)-background_level);
 		}
+		//int top10percentMean = (int) Math.round((double)sumOfBrightness/(double)size_subset);
 		double top10percentMean = (double)sumOfBrightness/(double)size_subset;
 
+		grayscaleTileCopy.flush();
 		return(top10percentMean);
 	}
 
@@ -281,8 +376,10 @@ public class OpacityTileReader {
 	 * @param grayscaleTileCopy
 	 * @return
 	 */
-	private static int getBiggestParticleOpacity(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
+	private static int getBiggestParticleOpacity(ImagePlus grayscaleTile, Roi colonyRoi) {
 
+		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
+		
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
 
@@ -320,6 +417,7 @@ public class OpacityTileReader {
 			sumOfBrightness += Math.max(0, pixelValue-background_level);
 		}
 
+		grayscaleTileCopy.flush();
 
 		return (sumOfBrightness);
 	}
@@ -332,8 +430,10 @@ public class OpacityTileReader {
 	 * @param grayscaleTileCopy
 	 * @return
 	 */
-	private static int getBiggestParticleOpacity_darkColonies(ImagePlus grayscaleTileCopy, Roi colonyRoi) {
+	private static int getBiggestParticleOpacity_darkColonies(ImagePlus grayscaleTile, Roi colonyRoi) {
 
+		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
+		
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
 
@@ -373,6 +473,8 @@ public class OpacityTileReader {
 
 			sumOfBrightness += pixelValue-background_level;
 		}
+		
+		grayscaleTileCopy.flush();
 
 
 		return (sumOfBrightness);

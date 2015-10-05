@@ -5,6 +5,8 @@ package tileReaderOutputs;
 
 import ij.gui.Roi;
 
+import java.awt.Point;
+
 /**
  * 
  * @author George Kritikos
@@ -57,4 +59,15 @@ public class BasicTileReaderOutput{
 	 * This value is true if the specific tile has no colonies in it.
 	 */
 	public boolean emptyTile = false;
+	
+	
+
+	/**
+	 * This holds the coordinates of the colony center. 
+	 * It's useful so as not to re-discover it if we need to access it again on calling a
+	 * "process defined tile" function 
+	 */
+	public Point colonyCenter = null;
+	
+	
 }

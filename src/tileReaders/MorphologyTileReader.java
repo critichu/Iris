@@ -155,7 +155,7 @@ public class MorphologyTileReader {
 		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-
+		
 		//this will give us that the circles will not start in an awkward location, even in cases where
 		//we might have oddly shaped colonies (e.g. budding shaped)
 		Point colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
@@ -189,7 +189,8 @@ public class MorphologyTileReader {
 
 
 		output.colonyROI = colonyRoi;
-
+		output.colonyOpacity = getBiggestParticleOpacity(input.tileImage, output.colonyROI, Toolbox.getThreshold(input.tileImage, Method.Shanbhag));
+		
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
 
@@ -401,7 +402,7 @@ public class MorphologyTileReader {
 				meanPixelValues.add(getBrightnessAverage9pixels(grayscale_image, point));
 			}
 			
-			elevationCounts.add(new Integer(countBrightnessChanges(meanPixelValues, minimumBrightnessStep)));
+			elevationCounts.add(new Integer(countBrightnessChanges(meanPixelValues, minimumBrightnessStep, 2)));
 			
 			number_of_circles++;
 		}
@@ -449,16 +450,17 @@ public class MorphologyTileReader {
 	/**
 	 * This function will get a sequence of measurements and count the times there's a difference
 	 * greater or equal to threshold, when subtracting a measurement from it's previous
-	 * @param series
-	 * @param threshold
+	 * @param series:	the pixel brightness values
+	 * @param threshold:	above which brightness difference is it going to be picked up as a brightness change
+	 * @param offset:	skip these number of pixels. Default value is 1	
 	 * @return
 	 */
-	private static int countBrightnessChanges(ArrayList<Integer> series, int threshold){
+	private static int countBrightnessChanges(ArrayList<Integer> series, int threshold, int offset){
 		
 		int changesOverThreshold = 0;
 		
-		for (int i = 0; i < series.size()-1; i++) {
-			int difference = Math.abs(series.get(i+1) - series.get(i));
+		for (int i = 0; i < series.size()-offset; i++) {
+			int difference = Math.abs(series.get(i+offset) - series.get(i));
 			if(difference>threshold){
 				changesOverThreshold++;
 			}
