@@ -144,7 +144,7 @@ public class MorphologyProfileCandida96 extends Profile {
 		
 		//4b. also make BW the input to the image segmenter
 		ImagePlus BWimageToSegment = croppedImage.duplicate();
-		Toolbox.turnImageBW_Percentile_auto(BWimageToSegment);
+		//Toolbox.turnImageBW_Percentile_auto(BWimageToSegment);
 
 		//
 		//--------------------------------------------------
@@ -162,7 +162,8 @@ public class MorphologyProfileCandida96 extends Profile {
 //		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
 
 		//let the tile boundaries "breathe"
-		ColonyBreathing.breathingSpace = 80;//20;
+		ColonyBreathing.breathingSpace = 120;//20;
+		segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		
 //		ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image

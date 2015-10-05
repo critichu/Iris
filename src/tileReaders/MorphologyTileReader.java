@@ -295,7 +295,8 @@ public class MorphologyTileReader {
 		//	then apply a threshold at the ROI-- that should get us just the colony
 		grayscaleTileCopy = inputTileImage.duplicate();
 		grayscaleTileCopy.setRoi(output.inAgarROI);
-		Toolbox.turnImageBW_Otsu_auto(grayscaleTileCopy);
+		Toolbox.turnImageBW_Minimum_auto(grayscaleTileCopy);
+		
 		
 
 		//4B. perform particle analysis on the thresholded tile

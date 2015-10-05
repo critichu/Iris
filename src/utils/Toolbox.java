@@ -11,6 +11,8 @@ import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.ParticleAnalyzer;
+import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
@@ -115,6 +117,12 @@ public class Toolbox {
 	 */
 	public static ImagePlus turnImageBW_Local_auto(ImagePlus originalImage, int radius){
 		ImagePlus imageToThreshold = originalImage.duplicate();
+		
+		//convert the image to grayscale
+		ImageConverter converter = new ImageConverter(imageToThreshold);
+		converter.convertToGray8();
+		
+		
 		Auto_Local_Threshold.Mean(imageToThreshold, radius, 0, 0, true);
 		imageToThreshold.setTitle(originalImage.getTitle());
 
@@ -1039,6 +1047,34 @@ public class Toolbox {
 	}
 
 
+
+	/**
+	 * a very commonly used procedure across tile readers: particle analysis
+	 * @param inputImage
+	 * @param resultsTable
+	 * @return
+	 */
+	public static RoiManager particleAnalysis_fillHoles(ImagePlus inputImage, ResultsTable resultsTable){
+		//create the results table, where the results of the particle analysis will be shown
+		//ResultsTable resultsTable = new ResultsTable();
+		RoiManager roiManager = new RoiManager(true);
+
+		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
+		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
+				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+				resultsTable, 5, Integer.MAX_VALUE);
+
+		ParticleAnalyzer.setRoiManager(roiManager);
+
+		particleAnalyzer.analyze(inputImage);
+
+		//3.1 check if the returned results table is empty
+		if(resultsTable.getCounter()==0){
+			return(null);
+		}
+
+		return(roiManager);
+	}
 
 
 

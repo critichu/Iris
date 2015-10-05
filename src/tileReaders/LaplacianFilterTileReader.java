@@ -4,14 +4,9 @@
 package tileReaders;
 
 import ij.ImagePlus;
-import ij.measure.Measurements;
 import ij.measure.ResultsTable;
-import ij.plugin.ImageCalculator;
-import ij.plugin.filter.GaussianBlur;
-import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.filter.RankFilters;
 import ij.plugin.frame.RoiManager;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import imagescience.feature.Laplacian;
 import imagescience.image.Image;
@@ -62,13 +57,14 @@ public class LaplacianFilterTileReader {
 
 		Image tileImageToZeroCross = laplacianFilter.run(tileImageAsImage, scale);
 
-		ImagePlus tileImageLaplacian = tileImageToZeroCross.imageplus();
+		///ImagePlus tileImageLaplacian = tileImageToZeroCross.imageplus();
 		//		tileImageLaplacian.show();
 		//		tileImageLaplacian.hide();
 
 		zc.run(tileImageToZeroCross);
 		ImagePlus tileImageLaplacianZeroCrossed = tileImageToZeroCross.imageplus();
 
+		/*
 		//		tileImageLaplacianZeroCrossed.show();
 		//		tileImageLaplacianZeroCrossed.hide();
 
@@ -117,7 +113,7 @@ public class LaplacianFilterTileReader {
 		//		laplacianDifference.updateImage();
 		//		laplacianDifference.show();
 		//		laplacianDifference.hide();
-
+		 */
 
 
 		//next step: threshold the tile image, use Huang (we might change this once we move to large scale tests)   
@@ -132,14 +128,14 @@ public class LaplacianFilterTileReader {
 
 		//analyze the particles in the image, this includes filling in holes (which we expect using the above pipeline)
 		ResultsTable resultsTable = new ResultsTable();
-		RoiManager roiManager = particleAnalysis_fillHoles(tileImageLaplacianZeroCrossed, resultsTable);
+		RoiManager roiManager = Toolbox.particleAnalysis_fillHoles(tileImageLaplacianZeroCrossed, resultsTable);
 
 		if(roiManager==null){ //no particles found
 			output.emptyResulsTable = true; // this is highly abnormal
 			output.colonySize = 0;//return a colony size of zero
 
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
-			laplacianDifference.flush();
+			//laplacianDifference.flush();
 
 			return(output);
 		}
@@ -151,7 +147,7 @@ public class LaplacianFilterTileReader {
 		output.colonyROI = roiManager.getRoisAsArray()[indexOfBiggestParticle];
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
-		laplacianDifference.flush();
+		//laplacianDifference.flush();
 
 		//check if the tile is empty
 		if(false){ //HACK: don't check MH results!
@@ -163,7 +159,7 @@ public class LaplacianFilterTileReader {
 				output.colonyROI = null;
 
 				input.cleanup(); //clear the tile image here, since we don't need it anymore
-				laplacianDifference.flush();
+				//laplacianDifference.flush();
 
 				return(output);
 			}
@@ -172,27 +168,5 @@ public class LaplacianFilterTileReader {
 		return(output);//returns the biggest result
 	}
 
-
-	static RoiManager particleAnalysis_fillHoles(ImagePlus inputImage, ResultsTable resultsTable){
-		//create the results table, where the results of the particle analysis will be shown
-		//ResultsTable resultsTable = new ResultsTable();
-		RoiManager roiManager = new RoiManager(true);
-
-		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
-				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
-				resultsTable, 5, Integer.MAX_VALUE);
-
-		ParticleAnalyzer.setRoiManager(roiManager);
-
-		particleAnalyzer.analyze(inputImage);
-
-		//3.1 check if the returned results table is empty
-		if(resultsTable.getCounter()==0){
-			return(null);
-		}
-
-		return(roiManager);
-	}
 
 }
