@@ -14,6 +14,7 @@ import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
+import imageSegmenters.RisingTideSegmenter;
 import imageSegmenters.SimpleImageSegmenter;
 
 import java.awt.Color;
@@ -144,7 +145,7 @@ public class MorphologyProfileCandida96 extends Profile {
 		
 		//4b. also make BW the input to the image segmenter
 		ImagePlus BWimageToSegment = croppedImage.duplicate();
-		//Toolbox.turnImageBW_Percentile_auto(BWimageToSegment);
+		Toolbox.turnImageBW_Otsu_auto(BWimageToSegment);
 
 		//
 		//--------------------------------------------------
@@ -158,11 +159,15 @@ public class MorphologyProfileCandida96 extends Profile {
 		settings.numberOfColumnsOfColonies = 12;
 		SimpleImageSegmenter.offset = 10;
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
-		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+		
+		segmentationInput.settings.maximumDistanceBetweenRows = 500;
+		segmentationInput.settings.minimumDistanceBetweenRows = 200;
+		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 //		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
 
 		//let the tile boundaries "breathe"
-		ColonyBreathing.breathingSpace = 120;//20;
+		ColonyBreathing.breathingSpace = 100;//20;
 		segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
 		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		
