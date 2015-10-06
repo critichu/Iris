@@ -272,7 +272,8 @@ public class MorphologyProfileCandida96 extends Profile {
 				"colony size\t" +
 				"colony circularity\t" +
 				"colony opacity\t" +
-				"morphology score\t" +
+				"morphology score fixed circles\t" +
+				"morphology score whole colony\t" +
 				"normalized morphology score\t" +
 				"in agar size\t" +
 				"in agar circularity\t" +
@@ -287,8 +288,9 @@ public class MorphologyProfileCandida96 extends Profile {
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
 						+ Integer.toString(readerOutputs[i][j].colonyOpacity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].morphologyScore) + "\t"
-						+ Integer.toString(readerOutputs[i][j].normalizedMorphologyScore) + "\t"
+						+ Integer.toString(readerOutputs[i][j].morphologyScoreFixedNumberOfCircles) + "\t"
+						+ Integer.toString(readerOutputs[i][j].morphologyScoreWholeColony) + "\t"
+						+ String.format("%.3f", readerOutputs[i][j].normalizedMorphologyScore) + "\t"
 						+ Integer.toString(readerOutputs[i][j].inAgarSize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].inAgarCircularity) + "\t"
 						+ Integer.toString(readerOutputs[i][j].inAgarOpacity) + "\t"

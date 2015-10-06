@@ -17,15 +17,24 @@ public class MorphologyTileReaderOutput extends BasicTileReaderOutput {
 	/**
 	 * This return value denotes the "wrinkliness" of the colony.
 	 * The higher this number, the more complicated the colony structure
+	 * This number comes from a pre-set limited number of circles
 	 */
-	public int morphologyScore = 0;
+	public int morphologyScoreFixedNumberOfCircles = 0;
+	
+	/**
+	 * This return value denotes the "wrinkliness" of the colony.
+	 * The higher this number, the more complicated the colony structure
+	 * This number comes from all the circles that fit in the colony and should be normalized by the colony size
+	 */
+	public int morphologyScoreWholeColony = 0;
 	
 	/**
 	 * This return value is the same as the number above, but this time it's normalized
 	 * against the size of the colony (since typically bigger colonies have better chances 
 	 * of getting a higher morphology score)
+	 * This is calculated as: normalizedMorphologyScore =  1000*morphologyScoreWholeColony/ColonySize
 	 */
-	public int normalizedMorphologyScore = 0;
+	public double normalizedMorphologyScore = 0;
 	
 	
 	/**
@@ -65,7 +74,6 @@ public class MorphologyTileReaderOutput extends BasicTileReaderOutput {
 	 * The total opacity in the tile; may be a more accurate proxy of the in-agar growth, after subtracting 
 	 * for the detected over-agar growth 
 	 */
-	public int wholeTileOpacity = 0;
-	
+	public int wholeTileOpacity = 0;	
 	
 }

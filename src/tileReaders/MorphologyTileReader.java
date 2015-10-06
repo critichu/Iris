@@ -57,6 +57,16 @@ public class MorphologyTileReader {
 	 * The tile measurement will stop after this amount of circles
 	 */
 	public static int maximumNumberOfCircles = 50;
+
+	/**
+	 * tile measurement will only measure this number of circles for the "fixed circles" output
+	 */
+	private static int circlesToMeasure = 8;
+
+	/**
+	 * tile measurement will ignore these number of circles from the outmost circle in the colony ROI
+	 */
+	private static int circlesToIgnore = 1;
 	
 	/**
 	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how
@@ -139,7 +149,7 @@ public class MorphologyTileReader {
 			output.emptyTile = true;
 			output.colonySize = 0;//return a colony size of zero
 			output.circularity = 0;
-			output.morphologyScore = 0;
+			output.morphologyScoreFixedNumberOfCircles = 0;
 			output.normalizedMorphologyScore = 0;
 
 			input.cleanup(); //clear the tile image here, since we don't need it anymore
@@ -174,22 +184,29 @@ public class MorphologyTileReader {
 
 		if(elevationCounts.size()==0){
 			//check if we've hit empty space with the first circle already
-			output.morphologyScore=0;
+			output.morphologyScoreFixedNumberOfCircles=0;
 		}else {
 			//get the sum of the elevation counts for all circles except the previous circle
 			//that one is likely to get high elevation counts 
 			//just because colony edges tend to be really bright compared to the background
-			output.morphologyScore = sumElevationCounts_limited(elevationCounts, 8);
+			output.morphologyScoreFixedNumberOfCircles = sumElevationCounts_limited(elevationCounts, circlesToMeasure);
+			output.morphologyScoreWholeColony = sumElevationCounts(elevationCounts, circlesToIgnore );
 		}
 		
-		if(elevationCounts.size()-1<=0) 
+		
+		//if(elevationCounts.size()-1<=0)
+		if(output.colonySize==0)
 			output.normalizedMorphologyScore = 0; 
 		else
-			output.normalizedMorphologyScore = output.morphologyScore / (elevationCounts.size()-1);
+			output.normalizedMorphologyScore = 1000* (double)output.morphologyScoreWholeColony / (double)output.colonySize;//(elevationCounts.size()-1);
 
+		
 
 		output.colonyROI = colonyRoi;
 		output.colonyOpacity = getBiggestParticleOpacity(input.tileImage, output.colonyROI, Toolbox.getThreshold(input.tileImage, Method.Shanbhag));
+		//output.wholeTileOpacity = output.colonyOpacity; --> this is only for colonies with agar invasion 
+		
+		
 		
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
@@ -333,19 +350,21 @@ public class MorphologyTileReader {
 
 		if(elevationCounts.size()==0){
 			//check if we've hit empty space with the first circle already
-			output.morphologyScore=0;
+			output.morphologyScoreFixedNumberOfCircles=0;
 		}else {
 			//get the sum of the elevation counts for all circles except the previous circle
 			//that one is likely to get high elevation counts 
 			//just because colony edges tend to be really bright compared to the background
-			output.morphologyScore = sumElevationCounts_limited(elevationCounts, 8);
+			output.morphologyScoreFixedNumberOfCircles = sumElevationCounts_limited(elevationCounts, circlesToMeasure);
+			output.morphologyScoreWholeColony = sumElevationCounts(elevationCounts, circlesToIgnore );
 		}
 		
 		
-		if(elevationCounts.size()-1<=0) 
+		//if(elevationCounts.size()-1<=0)
+		if(output.colonySize==0)
 			output.normalizedMorphologyScore = 0; 
 		else
-			output.normalizedMorphologyScore = output.morphologyScore / (elevationCounts.size()-1);
+			output.normalizedMorphologyScore = 1000* (double)output.morphologyScoreWholeColony / (double)output.colonySize;//(elevationCounts.size()-1);
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
