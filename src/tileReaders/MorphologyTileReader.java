@@ -272,7 +272,7 @@ public class MorphologyTileReader {
 		//3A. apply a threshold at the tile, using the Percentile algorithm (that will get us the colony+hair) -- get a copy first
 		ImagePlus grayscaleTileCopy = inputTileImage.duplicate();
 		Toolbox.turnImageBW_Percentile_auto(grayscaleTileCopy);
-
+		int inAgarBrightnessThreshold = Toolbox.getThreshold(grayscaleTileCopy, Method.Percentile);
 
 		//4A. perform particle analysis on the thresholded tile
 		ResultsTable resultsTable = new ResultsTable();
@@ -291,13 +291,14 @@ public class MorphologyTileReader {
 		output.inAgarSize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
 		output.inAgarCircularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		output.inAgarROI = manager.getRoisAsArray()[indexOfBiggestParticle];
-		output.inAgarOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.inAgarROI, Toolbox.getThreshold(grayscaleTileCopy, Method.Percentile));
+		output.inAgarOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.inAgarROI, inAgarBrightnessThreshold);
 		
 		
 		
 		//one last thing for the in-agar growth would be to get the total brightness in the tile
 		//40 is the background of our pictures in the August 2015 experiment setup
-		output.wholeTileOpacity = getWholeTileOpacity(grayscaleTileCopy, 40);
+		//but here I want to get the tile opacity without any subtraction, so I set the "background to subtract" to 0
+		output.wholeTileOpacity = getWholeTileOpacity(grayscaleTileCopy, 0);
 		
 		
 		//
@@ -313,7 +314,7 @@ public class MorphologyTileReader {
 		grayscaleTileCopy = inputTileImage.duplicate();
 		grayscaleTileCopy.setRoi(output.inAgarROI);
 		Toolbox.turnImageBW_Minimum_auto(grayscaleTileCopy);
-		
+		int colonyBrightnessThreshold = Toolbox.getThreshold(input.tileImage, Method.Minimum);
 		
 
 		//4B. perform particle analysis on the thresholded tile
@@ -333,7 +334,7 @@ public class MorphologyTileReader {
 		output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
-		output.colonyOpacity = getBiggestParticleOpacity(input.tileImage, output.colonyROI, Toolbox.getThreshold(input.tileImage, Method.Shanbhag));
+		output.colonyOpacity = getBiggestParticleOpacity(input.tileImage, output.colonyROI, colonyBrightnessThreshold);
 		
 	
 		//6B. get the morphology of the over-agar colony
@@ -366,6 +367,14 @@ public class MorphologyTileReader {
 		else
 			output.normalizedMorphologyScore = 1000* (double)output.morphologyScoreWholeColony / (double)output.colonySize;//(elevationCounts.size()-1);
 
+		
+		//before we go, I would like to calculate the difference in the opacity of the whole in-agar growth to the
+		//one due to just the colony. For this, we need to get the colony opacity but using the in-agar growth's background.
+		//see also note: 
+		output.invasionRingOpacity = output.inAgarOpacity - getBiggestParticleOpacity(input.tileImage, output.colonyROI, inAgarBrightnessThreshold);
+		output.invasionRingSize = output.inAgarSize - output.colonySize;
+		
+		
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
 

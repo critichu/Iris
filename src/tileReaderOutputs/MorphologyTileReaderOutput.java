@@ -74,6 +74,17 @@ public class MorphologyTileReaderOutput extends BasicTileReaderOutput {
 	 * The total opacity in the tile; may be a more accurate proxy of the in-agar growth, after subtracting 
 	 * for the detected over-agar growth 
 	 */
-	public int wholeTileOpacity = 0;	
+	public int wholeTileOpacity = 0;
+
+	/**
+	 * This holds the opacity of just the ring
+	 */
+	public int invasionRingOpacity = 0;
+
+	
+	/**
+	 * This holds the size of just the ring
+	 */
+	public int invasionRingSize = 0;	
 	
 }
