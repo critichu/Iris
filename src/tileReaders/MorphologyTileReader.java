@@ -5,16 +5,13 @@ package tileReaders;
 
 import ij.ImagePlus;
 import ij.gui.Roi;
-import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.plugin.frame.RoiManager;
-import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -679,28 +676,6 @@ public class MorphologyTileReader {
 		return(pointsToReturn);
 
 
-	}
-
-
-
-	/**
-	 * This method will return the threshold found by the Otsu method and do nothing else
-	 * @param grayscale_image
-	 * @return
-	 */
-	private static int getThresholdOtsu(ImagePlus grayscale_image){
-
-		//get all the objects required: calibration, imageProcessor and histogram
-		Calibration calibration = new Calibration(grayscale_image);		
-		ImageProcessor imageProcessor = grayscale_image.getProcessor();
-		ImageStatistics statistics = ImageStatistics.getStatistics(imageProcessor, ij.measure.Measurements.MEAN, calibration);
-		int[] histogram = statistics.histogram;
-
-		//use that histogram to find a threshold
-		AutoThresholder at = new AutoThresholder();
-		int threshold = at.getThreshold(Method.Otsu, histogram);
-
-		return(threshold);
 	}
 
 

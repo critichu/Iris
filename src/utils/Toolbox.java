@@ -23,6 +23,7 @@ import ij.process.ImageStatistics;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
 import java.io.FileReader;
@@ -41,6 +42,43 @@ import com.opencsv.CSVReader;
  */
 public class Toolbox {
 
+	
+	/**
+	 * Returns the center of mass of the biggest particle in the results table
+	 */
+	public static Point getBiggestParticleCenterOfMass(ResultsTable resultsTable, int indexOfBiggestParticle) {
+
+		//get the coordinates of all the particles the particle analyzer has found		
+		float X_center_of_mass[] = resultsTable.getColumn(resultsTable.getColumnIndex("XM"));//get the X of the center of mass of all the particles
+		float Y_center_of_mass[] = resultsTable.getColumn(resultsTable.getColumnIndex("YM"));//get the Y of the center of mass of all the particles
+
+
+		//get the index of the biggest particle (in area in pixels)
+		int indexOfMax = indexOfBiggestParticle;//getIndexOfMaximumElement(areas);
+
+		return( new Point(	Math.round(X_center_of_mass[indexOfMax]),
+				Math.round(Y_center_of_mass[indexOfMax])));
+	}
+	
+	/**
+	 * This method will return the threshold found by the Otsu method and do nothing else
+	 * @param grayscale_image
+	 * @return
+	 */
+	public static int getThresholdOtsu(ImagePlus grayscale_image){
+
+		//get all the objects required: calibration, imageProcessor and histogram
+		Calibration calibration = new Calibration(grayscale_image);		
+		ImageProcessor imageProcessor = grayscale_image.getProcessor();
+		ImageStatistics statistics = ImageStatistics.getStatistics(imageProcessor, ij.measure.Measurements.MEAN, calibration);
+		int[] histogram = statistics.histogram;
+
+		//use that histogram to find a threshold
+		AutoThresholder at = new AutoThresholder();
+		int threshold = at.getThreshold(Method.Otsu, histogram);
+
+		return(threshold);
+	}
 
 
 

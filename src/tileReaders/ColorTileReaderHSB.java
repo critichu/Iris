@@ -5,6 +5,7 @@ package tileReaders;
 
 import fiji.threshold.Auto_Local_Threshold;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
@@ -13,8 +14,10 @@ import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 
+import java.awt.Point;
 import java.util.Random;
 
 import tileReaderInputs.ColorTileReaderInput;
@@ -38,6 +41,13 @@ import utils.Toolbox;
  *
  */
 public class ColorTileReaderHSB {
+	
+	/**
+	 * this is the diameter from the center of the colony to measure "center color" in
+	 */
+	public static int diameter = 24;
+	
+	
 
 	public static ColorTileReaderOutput processTile(ColorTileReaderInput input){
 
@@ -94,7 +104,8 @@ public class ColorTileReaderHSB {
 	 */
 	public static ColorTileReaderOutput processThresholdedTile(ColorTileReaderInput2 input){
 
-		//0. create the output object
+		//0. create the output object and make a copy of the color picture for later
+		ImagePlus colorTile = input.tileImage.duplicate();
 		ColorTileReaderOutput output = new ColorTileReaderOutput();
 
 		//1. get the thresholded tile ready from the input
@@ -114,7 +125,7 @@ public class ColorTileReaderHSB {
 
 		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
 		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
-				Measurements.AREA+Measurements.PERIMETER, resultsTable, 5, Integer.MAX_VALUE);
+				Measurements.CENTER_OF_MASS+Measurements.AREA+Measurements.PERIMETER, resultsTable, 5, Integer.MAX_VALUE);
 
 		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
 		ParticleAnalyzer.setRoiManager(manager);
@@ -211,6 +222,7 @@ public class ColorTileReaderHSB {
 			}
 		}
 
+		
 		output.colorIntensitySum = colonyColorSum;
 		output.biofilmArea = biofilmPixelCount;
 		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
@@ -218,10 +230,90 @@ public class ColorTileReaderHSB {
 		if(colonySize!=0)
 			output.relativeColorIntensity = (double) colonyColorSum / (double) colonySize;
 			//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
+		
+		
+		
+		//also get the center area color
+		output.colonyCenter = Toolbox.getBiggestParticleCenterOfMass(resultsTable, biggestParticleIndex);
+		output.centerAreaColor = getCenterAreaColor(colorTile, output.colonyCenter, diameter);
+		
+		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
+		ImagePlus grayscaleTileCopy = colorTile.duplicate();				
+		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
+		imageConverter.convertToGray8();		
+		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
+		
 
+
+		
+		colorTile.flush();
 		input.cleanup();
 		return output;
 	}
+	
+	
+
+	/**
+	 * @param grayscaleTileCopy
+	 * @param colonyRoi
+	 * @param i
+	 * @return
+	 */
+	private static int getCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int diameter) {
+
+		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
+		
+		//1. find the background level, which is the threshold set by Otsu
+		//EDIT: don't correct for background level here, this is mainly to account for lighting spatial effects and can be corrected for later
+		int background_level = 0;//Toolbox.getThresholdOtsu(grayscaleTileCopy);
+
+
+		//3. get the colony center of mass, this will be the center of the circle
+		//OvalRoi(xc-r/2,yc-r/2,r,r)
+		Roi centerRoi = new OvalRoi(
+				colonyCenter.x-diameter/2, 
+				colonyCenter.y -diameter/2, 
+				diameter, diameter);
+
+		//4. set the center Roi and paint eveything outside it as black
+		grayscaleTileCopy.setRoi(centerRoi);
+		try {
+			grayscaleTileCopy.getProcessor().fillOutside(centerRoi);
+		} catch (Exception e) {
+			return(0);
+		}
+
+		//4. get the pixel values of the image
+		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
+		byte[] imageBytes = (byte[]) processor.getPixels();
+
+		int size = imageBytes.length;
+
+		int sumOfBrightness = 0;
+//		int sumOfPixelsOverZero = 0;
+
+		for(int i=0;i<size;i++){
+			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
+			int pixelValue = imageBytes[i]&0xFF;
+
+			//subtract the threshold and put the pixels in the sum
+			//every pixel inside the colony should normally be above the threshold
+			//but just in case, we'll just take 0 if a colony pixel turns out to be below the threshold
+			//Also all the pixels outside the Roi would have a negative value after subtraction 
+			//(they are already zero) because of the mask process
+			
+//			if(pixelValue>0){
+//				sumOfPixelsOverZero++;
+//			}
+
+			sumOfBrightness += Math.max(0, pixelValue-background_level);
+		}
+
+		grayscaleTileCopy.flush();
+		
+		return (sumOfBrightness);
+	}
+
 	
 	
 	
@@ -313,7 +405,7 @@ public class ColorTileReaderHSB {
 		
 		
 		
-		//7. also get an estimate of the colony color, through random pixel sampling, this should be 1000 pixels but only for colonies that are 
+		//7. also get an estimate of the colony color, through random pixel sampling, this should be 1000 pixels 
 		int maxSamples = Math.min(1000, input.colonySize);
 		//int maxSamples = 1000;
 		double sampleColorSum = 0;
@@ -355,9 +447,76 @@ public class ColorTileReaderHSB {
 		if(input.colonySize!=0)
 			output.relativeColorIntensity = (double) colonyColorSum / (double) input.colonySize;
 			//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
+		
+		
+		
+		//also get the center area color
+		output.centerAreaColor = getCenterAreaColor(input.tileImage, input.colonyCenter, diameter);
+		
+		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
+		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
+		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
+		imageConverter.convertToGray8();		
+		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
+		
+
+		
 
 		input.cleanup();
 		return output;
+	}
+	
+	
+	/**
+	 * @param grayscaleTileCopy
+	 * @param colonyRoi
+	 * @param i
+	 * @return
+	 */
+	private static int getCenterAreaColor(ImagePlus colorTile, Point colonyCenter, int diameter) {
+
+		ImagePlus colorTileCopy = colorTile.duplicate();
+		
+		
+		//3. get the colony center of mass, this will be the center of the circle
+		//OvalRoi(xc-r/2,yc-r/2,r,r)
+		Roi centerRoi = new OvalRoi(
+				colonyCenter.x-diameter/2, 
+				colonyCenter.y -diameter/2, 
+				diameter, diameter);
+
+		//4. set the center Roi and paint eveything outside it as black
+		colorTileCopy.setRoi(centerRoi);
+		try {
+			colorTileCopy.getProcessor().fillOutside(centerRoi);
+		} catch (Exception e) {
+			return(0);
+		}
+		
+		
+		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(colorTileCopy, 2, 1, (float)1, (float)2); ///
+
+
+		int size = pixelBiofilmScores.length;
+
+		int sumOfColor = 0;
+//		int sumOfNonZeroColorPixels = 0;
+
+		for(int i=0;i<size;i++){
+			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
+			int pixelValue = pixelBiofilmScores[i]&0xFF;
+
+			sumOfColor += pixelValue;
+			
+//			if(pixelValue>0){
+//				sumOfNonZeroColorPixels++;
+//			}
+		}
+		
+		
+		colorTileCopy.flush();
+		
+		return (sumOfColor);
 	}
 
 	

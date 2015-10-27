@@ -32,7 +32,7 @@ import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.ColorTileReaderOutput;
-import tileReaders.BasicTileReaderHSB;
+import tileReaders.BasicTileReader_Bsu;
 import tileReaders.ColorTileReaderHSB;
 import utils.Toolbox;
 
@@ -247,7 +247,7 @@ public class BsubtilisSporulationProfile extends Profile{
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 
 				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
-				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+				basicTileReaderOutputs[i][j] = BasicTileReader_Bsu.processTile(
 						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//only run the color analysis if there is a colony in the tile

@@ -269,7 +269,8 @@ public class ColorProfileEcoli extends Profile{
 					//colour
 					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
 							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], 
-									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
+									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, 
+									basicTileReaderOutputs[i][j].colonyCenter, settings));
 
 					//opacity -- to check if colony darkness correlates with colour information -- true means opacities can get negative
 					//this is a fix for very dark colonies

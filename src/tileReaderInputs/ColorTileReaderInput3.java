@@ -5,6 +5,9 @@ package tileReaderInputs;
 
 import ij.ImagePlus;
 import ij.gui.Roi;
+
+import java.awt.Point;
+
 import settings.ColorSettings;
 
 /**
@@ -14,8 +17,9 @@ import settings.ColorSettings;
 public class ColorTileReaderInput3 extends TileReaderInput {
 	public ColorSettings settings;
 	public ImagePlus tileImage;
-	public Roi colonyRoi;
+	public Roi colonyRoi;	
 	public int colonySize;
+	public Point colonyCenter;
 	
 	/**
 	 * Creates a BasicTileReaderInput obect, given the cropped, grayscaled image and the ROI
@@ -26,7 +30,7 @@ public class ColorTileReaderInput3 extends TileReaderInput {
 	 * @param roi
 	 * @param settings_
 	 */
-	public ColorTileReaderInput3(ImagePlus croppedImage, Roi tileRoi, Roi colonyRoi_, int colonySize_, ColorSettings settings_){
+	public ColorTileReaderInput3(ImagePlus croppedImage, Roi tileRoi, Roi colonyRoi_, int colonySize_, Point colonyCenter_, ColorSettings settings_){
 		croppedImage.setRoi(tileRoi);
 		croppedImage.copy(false);
 		
@@ -34,6 +38,7 @@ public class ColorTileReaderInput3 extends TileReaderInput {
 		this.settings = settings_;
 		this.colonyRoi = colonyRoi_;
 		this.colonySize = colonySize_;
+		this.colonyCenter = colonyCenter_;
 	}
 	
 	/**	
@@ -41,10 +46,11 @@ public class ColorTileReaderInput3 extends TileReaderInput {
 	 * @param tileImage_
 	 * @param settings_
 	 */
-	public ColorTileReaderInput3(ImagePlus tileImage_, Roi colonyRoi_, int colonySize, ColorSettings settings_){
+	public ColorTileReaderInput3(ImagePlus tileImage_, Roi colonyRoi_, int colonySize, Point colonyCenter_, ColorSettings settings_){
 		tileImage = tileImage_;
 		settings = settings_;
 		this.colonyRoi = colonyRoi_;
+		this.colonyCenter = colonyCenter_;
 	}
 	
 	

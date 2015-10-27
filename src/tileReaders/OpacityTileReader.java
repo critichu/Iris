@@ -32,7 +32,7 @@ import utils.Toolbox;
  */
 public class OpacityTileReader {
 
-	public static int radius = 8;
+	public static int diameter = 16;
 
 	/**
 	 * This tile reader gets the size of the colony in pixels, as well as the sum of it's brightness.
@@ -124,7 +124,7 @@ public class OpacityTileReader {
 		output.colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
 		output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
 		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
-		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, radius);
+		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 		output.colonyROI = colonyRoi;
 		
 
@@ -140,9 +140,9 @@ public class OpacityTileReader {
 
 		//HACK: this is just for illustration purposes, should be removed afterwards
 //		Roi centerRoi = new OvalRoi(
-//				output.colonyCenter.x-radius/2, 
-//				output.colonyCenter.y -radius/2, 
-//				radius, radius);
+//				output.colonyCenter.x-diameter/2, 
+//				output.colonyCenter.y -diameter/2, 
+//				diameter, diameter);
 //		output.colonyROI = centerRoi;
 
 		return(output);
@@ -261,7 +261,7 @@ public class OpacityTileReader {
 	 * @param i
 	 * @return
 	 */
-	private static int getCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int radius) {
+	private static int getCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int diameter) {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
 		
@@ -272,9 +272,9 @@ public class OpacityTileReader {
 		//3. get the colony center of mass, this will be the center of the circle
 		//OvalRoi(xc-r/2,yc-r/2,r,r)
 		Roi centerRoi = new OvalRoi(
-				colonyCenter.x-radius/2, 
-				colonyCenter.y -radius/2, 
-				radius, radius);
+				colonyCenter.x-diameter/2, 
+				colonyCenter.y -diameter/2, 
+				diameter, diameter);
 
 		//4. set the center Roi and paint eveything outside it as black
 		grayscaleTileCopy.setRoi(centerRoi);

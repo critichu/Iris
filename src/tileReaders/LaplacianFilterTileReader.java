@@ -144,6 +144,7 @@ public class LaplacianFilterTileReader {
 		int indexOfBiggestParticle = Toolbox.getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+		output.colonyCenter = Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = roiManager.getRoisAsArray()[indexOfBiggestParticle];
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
