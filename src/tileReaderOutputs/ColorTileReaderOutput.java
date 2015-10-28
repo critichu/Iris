@@ -3,6 +3,8 @@
  */
 package tileReaderOutputs;
 
+import ij.gui.Roi;
+
 /**
  * @author George Kritikos
  *
@@ -37,6 +39,25 @@ public class ColorTileReaderOutput extends BasicTileReaderOutput {
 	 * This is the mean of the color in X randomly sampled pixels, where X doesn't depend on the size of the colony 
 	 */
 	public double meanSampleColor = 0;
+	
+	
+
+	/**
+	 * This value holds the color within a circular area of defined-radius starting from the center of mass of the colony
+	 */
+	public double centerAreaColor = 0;
+	
+	
+	/**
+	 * This value holds the opacity within a circular area of defined-radius starting from the center of mass of the colony
+	 */
+	public double centerAreaOpacity = 0;
+	
+	
+	/**
+	 * This is the ROI that defines the center of the colony
+	 */
+	public Roi centerROI = null;
 	
 	
 	

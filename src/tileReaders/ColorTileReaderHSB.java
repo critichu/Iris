@@ -108,14 +108,13 @@ public class ColorTileReaderHSB {
 		ImagePlus colorTile = input.tileImage.duplicate();
 		ColorTileReaderOutput output = new ColorTileReaderOutput();
 
+		ImagePlus grayscaleTileCopy = colorTile.duplicate();				
+		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
+		imageConverter.convertToGray8();
+		
 		//1. get the thresholded tile ready from the input
 		ImagePlus BW_tile = input.thresholdedTileImage;
 		turnImageBW_Huang_auto(BW_tile);
-//		int width = grayTile.getWidth();
-//		int height = grayTile.getHeight();
-
-//		BW_tile.show();
-//		BW_tile.hide();
 		
 
 		//2.1 perform particle analysis on the thresholded tile
@@ -234,15 +233,18 @@ public class ColorTileReaderHSB {
 		
 		
 		//also get the center area color
-		output.colonyCenter = Toolbox.getBiggestParticleCenterOfMass(resultsTable, biggestParticleIndex);
-		output.centerAreaColor = getCenterAreaColor(colorTile, output.colonyCenter, diameter);
+		///////we need to find a better colony center		
+		output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy.duplicate());//Toolbox.getBiggestParticleCenterOfMass(resultsTable, biggestParticleIndex);
+		output.centerAreaColor = getAverageCenterAreaColor(colorTile, output.colonyCenter, diameter);
 		
-		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
-		ImagePlus grayscaleTileCopy = colorTile.duplicate();				
-		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
-		imageConverter.convertToGray8();		
-		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
+		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate				
+		output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 		
+		
+		output.centerROI = new OvalRoi(
+				output.colonyCenter.x-diameter/2, 
+				output.colonyCenter.y -diameter/2, 
+				diameter, diameter);
 
 
 		
@@ -259,7 +261,7 @@ public class ColorTileReaderHSB {
 	 * @param i
 	 * @return
 	 */
-	private static int getCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int diameter) {
+	private static double getAverageCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int diameter) {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
 		
@@ -311,7 +313,7 @@ public class ColorTileReaderHSB {
 
 		grayscaleTileCopy.flush();
 		
-		return (sumOfBrightness);
+		return ((double)sumOfBrightness/(double)size);
 	}
 
 	
@@ -451,13 +453,13 @@ public class ColorTileReaderHSB {
 		
 		
 		//also get the center area color
-		output.centerAreaColor = getCenterAreaColor(input.tileImage, input.colonyCenter, diameter);
+		output.centerAreaColor = getAverageCenterAreaColor(input.tileImage, input.colonyCenter, diameter);
 		
 		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();		
-		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
+		output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 		
 
 		
@@ -473,7 +475,7 @@ public class ColorTileReaderHSB {
 	 * @param i
 	 * @return
 	 */
-	private static int getCenterAreaColor(ImagePlus colorTile, Point colonyCenter, int diameter) {
+	private static double getAverageCenterAreaColor(ImagePlus colorTile, Point colonyCenter, int diameter) {
 
 		ImagePlus colorTileCopy = colorTile.duplicate();
 		
@@ -516,7 +518,7 @@ public class ColorTileReaderHSB {
 		
 		colorTileCopy.flush();
 		
-		return (sumOfColor);
+		return ((double)sumOfColor/(double)size);
 	}
 
 	

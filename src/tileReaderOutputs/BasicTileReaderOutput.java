@@ -71,16 +71,6 @@ public class BasicTileReaderOutput{
 	
 	
 	
-	/**
-	 * This value holds the color within a circular area of defined-radius starting from the center of mass of the colony
-	 */
-	public double centerAreaColor = 0;
-	
-	
-	/**
-	 * This value holds the opacity within a circular area of defined-radius starting from the center of mass of the colony
-	 */
-	public double centerAreaOpacity = 0;
 	
 	
 }

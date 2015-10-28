@@ -22,6 +22,7 @@ import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -152,16 +153,6 @@ public class BsubtilisSporulationProfile extends Profile{
 
 		croppedImage.flush();
 
-//				grayscaleCroppedImage.show();
-//				grayscaleCroppedImage.hide();
-
-		//get a copy of the picture thresholded using a local algorithm
-//		ImagePlus BW_local_thresholded_picture = grayscaleCroppedImage.duplicate();
-//		turnImageBW_Local_auto(BW_local_thresholded_picture);
-
-		
-//				BW_local_thresholded_picture.show();
-//				BW_local_thresholded_picture.hide();
 
 		//
 		//--------------------------------------------------
@@ -280,6 +271,7 @@ public class BsubtilisSporulationProfile extends Profile{
 			ImagePlus croppedImageSegmented = grayscaleCroppedImage.duplicate();
 
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			drawCenterRoiBounds(colourCroppedImage, segmentationOutput, colourTileReaderOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			croppedImageSegmented.flush();
@@ -298,11 +290,9 @@ public class BsubtilisSporulationProfile extends Profile{
 				"column\t" +
 				"colony size\t" +
 				"circularity\t" +
-//				"colony color intensity\t" +
-//				"biofilm area size\t" +
-//				"biofilm color intensity\t" +
-//				"biofilm area ratio\t" +
-				"sporulation score\n");
+				"sporulation score\t"+
+				"center sporulation score\t"+
+				"center opacity score\n");
 		
 		
 		//for all rows
@@ -320,11 +310,9 @@ public class BsubtilisSporulationProfile extends Profile{
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(basicTileReaderOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", basicTileReaderOutputs[i][j].circularity) + "\t"
-						//+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySum) + "\t"
-						//+ Integer.toString(colourTileReaderOutputs[i][j].biofilmArea) + "\t"
-						//+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
-						//+ String.format("%.3f", biofilmAreaRatio) + "\t"
-						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\n");
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\t" 
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].centerAreaColor) + "\t"
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].centerAreaOpacity) + "\n");
 			}
 		}
 
@@ -348,6 +336,7 @@ public class BsubtilisSporulationProfile extends Profile{
 
 			//RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
+			drawCenterRoiBounds(colourCroppedImage, segmentationOutput, colourTileReaderOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			grayscaleCroppedImage.flush();
@@ -358,6 +347,109 @@ public class BsubtilisSporulationProfile extends Profile{
 		}
 
 	}
+	
+	
+	
+	
+
+	/**
+	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
+	 * offsets found in the segmenterOutput.  
+	 * @param segmentedImage
+	 * @param segmenterOutput
+	 */
+	private static void drawCenterRoiBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, 
+			ColorTileReaderOutput [][] tileReaderOutputs){
+
+
+		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
+		ByteProcessor[][] colonyBounds = getCenterRoiBounds(croppedImage, segmenterOutput, tileReaderOutputs);
+
+
+		//paint those bounds on the original cropped image
+		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
+		//bigPictureProcessor.setColor(Color.black);
+		bigPictureProcessor.setColor(Color.red);
+		bigPictureProcessor.setLineWidth(1);
+
+
+		//for all rows
+		for(int i=0; i<tileReaderOutputs.length; i++){
+			//for all columns
+			for(int j=0; j<tileReaderOutputs[0].length; j++) {
+		
+				//get tile offsets
+				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
+				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
+				int tileWidth = segmenterOutput.ROImatrix[i][j].getBounds().width;
+				int tileHeight = segmenterOutput.ROImatrix[i][j].getBounds().height;
+
+
+				//for each pixel, if it is colony bounds, paint it on the big picture
+				for(int x=0; x<tileWidth; x++){
+					for(int y=0; y<tileHeight; y++){
+						if(colonyBounds[i][j].getPixel(x, y)==255){ //it is a colony bounds pixel
+							bigPictureProcessor.drawDot(x+tile_x_offset, y+tile_y_offset); //paint it on the big picture
+						}
+					}
+				}
+
+			}
+
+		}
+	}
+	
+
+	/**
+	 * 
+	 * @param croppedImage
+	 * @param segmentationOutput
+	 * @param tileReaderOutputs
+	 * @return
+	 */
+	private static ByteProcessor[][] getCenterRoiBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, ColorTileReaderOutput [][] tileReaderOutputs){
+
+		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
+
+		//for all rows
+		for(int i=0;i<tileReaderOutputs.length; i++){
+			//for all columns
+			for (int j = 0; j<tileReaderOutputs[0].length; j++) {
+
+				//get the tile
+				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
+				croppedImage.copy(false);
+				ImagePlus tile = ImagePlus.getClipboard();
+
+
+				//apply the ROI, get the mask
+				ImageProcessor tileProcessor = tile.getProcessor();
+				tileProcessor.setRoi(tileReaderOutputs[i][j].centerROI);
+
+				tileProcessor.setColor(Color.white);
+				tileProcessor.setBackgroundValue(0);
+				tileProcessor.fill(tileProcessor.getMask());
+				
+				
+				//get the bounds of the mask, that's it, save it
+				tileProcessor.findEdges();
+				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
+
+
+			}
+		}
+
+		croppedImage.deleteRoi();
+
+		return(colonyBounds);
+	}
+
+
+
+
+	
+	
+	
 
 	/**
 	 * This method gets a subset of that picture (for faster execution), and calculates the rotation of that part

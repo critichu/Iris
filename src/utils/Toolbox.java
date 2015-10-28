@@ -17,6 +17,7 @@ import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -24,6 +25,7 @@ import imageSegmenterOutput.BasicImageSegmenterOutput;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
 import java.io.FileReader;
@@ -272,13 +274,7 @@ public class Toolbox {
 				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
 				croppedImage.copy(false);
 				ImagePlus tile = ImagePlus.getClipboard();
-
-				//				ImageConverter imageConverter = new ImageConverter(tile);
-				//				imageConverter.convertToGray8();
-
-				//				tile.updateImage();
-				//								tile.show();
-				//								tile.hide();
+				
 
 				//apply the ROI, get the mask
 				ImageProcessor tileProcessor = tile.getProcessor();
@@ -287,25 +283,11 @@ public class Toolbox {
 				tileProcessor.setColor(Color.white);
 				tileProcessor.setBackgroundValue(0);
 				tileProcessor.fill(tileProcessor.getMask());
-				//tileProcessor.fill(tileReaderOutputs[i][j].colonyROI.getMask());
-
-
-				//				tile.updateImage();
-				//								tile.show();
-				//								tile.hide();
-
+				
 
 				//get the bounds of the mask, that's it, save it
 				tileProcessor.findEdges();
 				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
-
-
-				//				tile.setProcessor(colonyBounds[i][j]);
-				//								tile.updateImage();
-				//								tile.show();
-				//								tile.hide();
-
-
 			}
 		}
 
@@ -1112,6 +1094,72 @@ public class Toolbox {
 		}
 
 		return(roiManager);
+	}
+
+	/**
+	 * 
+	 * @param BW_tile: a thresholded tile
+	 * @return it's center, calculated via the Ultimate Erosion Points (via Eucledian Distance Maps)
+	 */
+	public static Point getParticleUltimateErosionPoint(ImagePlus BW_tile) {
+		
+		
+		ImageConverter imageConverter = new ImageConverter(BW_tile);
+		imageConverter.convertToGray8();
+		
+//		turnImageBW_Local_auto(BW_tile, 8);
+		turnImageBW_Otsu_auto(BW_tile);
+		
+		
+		turnImageBW_Huang_auto(BW_tile);
+		
+//		BW_tile.show();
+//		BW_tile.hide();
+		
+		//re-threshold the image for good luck
+		
+		
+//		BW_tile.show();
+//		BW_tile.hide();
+		
+		//fill holes -- could be why UEP fails
+		ij.plugin.filter.Binary my_Binary = new ij.plugin.filter.Binary();
+		my_Binary.setup("Fill Holes", BW_tile);
+		my_Binary.run(BW_tile.getProcessor());
+		
+//		BW_tile.show();
+//		BW_tile.hide();
+//		
+		ij.plugin.filter.EDM my_EDM = new ij.plugin.filter.EDM();
+		FloatProcessor EDM_processor = my_EDM.makeFloatEDM(BW_tile.getProcessor(), 0, true);
+		ij.plugin.filter.MaximumFinder MaximumFinder = new ij.plugin.filter.MaximumFinder();
+		double processorMax = EDM_processor.getMax();
+		Polygon centerPoints = MaximumFinder.getMaxima(EDM_processor, processorMax-1, true);
+		
+		Point pointToReturn = new Point(centerPoints.xpoints[0], centerPoints.ypoints[0]);
+		
+		//if UEP failed miserably, I will erode myself and get the center
+		if(pointToReturn.x==0){
+//			BW_tile.show();
+//			BW_tile.hide();
+			BW_tile.getProcessor().setAutoThreshold(Method.Otsu, true, ImageProcessor.BLACK_AND_WHITE_LUT);
+			
+			BW_tile.getProcessor().erode();
+			BW_tile.getProcessor().erode();
+			BW_tile.getProcessor().erode();
+			BW_tile.getProcessor().erode();
+			
+//			BW_tile.show();
+//			BW_tile.hide();
+			
+			
+			ResultsTable my_ResultsTable = new ResultsTable();
+			RoiManager my_RoiManager = Toolbox.particleAnalysis_fillHoles(BW_tile, my_ResultsTable);
+			
+			int indexOfBiggestParticle = getIndexOfBiggestParticle(my_ResultsTable);
+			pointToReturn = getBiggestParticleCenterOfMass(my_ResultsTable, indexOfBiggestParticle);			
+		}
+		return(pointToReturn);
 	}
 
 
