@@ -44,7 +44,7 @@ import com.opencsv.CSVReader;
  */
 public class Toolbox {
 
-	
+
 	/**
 	 * Returns the center of mass of the biggest particle in the results table
 	 */
@@ -61,7 +61,7 @@ public class Toolbox {
 		return( new Point(	Math.round(X_center_of_mass[indexOfMax]),
 				Math.round(Y_center_of_mass[indexOfMax])));
 	}
-	
+
 	/**
 	 * This method will return the threshold found by the Otsu method and do nothing else
 	 * @param grayscale_image
@@ -157,12 +157,12 @@ public class Toolbox {
 	 */
 	public static ImagePlus turnImageBW_Local_auto(ImagePlus originalImage, int radius){
 		ImagePlus imageToThreshold = originalImage.duplicate();
-		
+
 		//convert the image to grayscale
 		ImageConverter converter = new ImageConverter(imageToThreshold);
 		converter.convertToGray8();
-		
-		
+
+
 		Auto_Local_Threshold.Mean(imageToThreshold, radius, 0, 0, true);
 		imageToThreshold.setTitle(originalImage.getTitle());
 
@@ -274,7 +274,7 @@ public class Toolbox {
 				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
 				croppedImage.copy(false);
 				ImagePlus tile = ImagePlus.getClipboard();
-				
+
 
 				//apply the ROI, get the mask
 				ImageProcessor tileProcessor = tile.getProcessor();
@@ -283,7 +283,7 @@ public class Toolbox {
 				tileProcessor.setColor(Color.white);
 				tileProcessor.setBackgroundValue(0);
 				tileProcessor.fill(tileProcessor.getMask());
-				
+
 
 				//get the bounds of the mask, that's it, save it
 				tileProcessor.findEdges();
@@ -566,7 +566,7 @@ public class Toolbox {
 		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
 		imageProcessor.setAutoThreshold(Method.Otsu, true, ImageProcessor.BLACK_AND_WHITE_LUT);
 	}
-	
+
 
 	/**
 	 * This function will convert the given picture into black and white
@@ -578,7 +578,7 @@ public class Toolbox {
 		ImageProcessor imageProcessor = BW_croppedImage.getProcessor();		
 		imageProcessor.setAutoThreshold(Method.Percentile, true, ImageProcessor.BLACK_AND_WHITE_LUT);
 	}
-	
+
 
 	/**
 	 * This function will convert the given picture into black and white
@@ -904,9 +904,9 @@ public class Toolbox {
 			return null;
 		}
 	}
-	
-	
-	
+
+
+
 
 	/**
 	 * This function just checks for circularity. If it's under 0.20, then the tile gets rejected.
@@ -959,8 +959,8 @@ public class Toolbox {
 		}
 		return(false);
 	}
-	
-	
+
+
 	/**
 	 * Takes the grayscale cropped image and calculates the sum of the
 	 * light intensity of it's columns (for every x)
@@ -994,8 +994,8 @@ public class Toolbox {
 		return(sumOfRows);
 	}
 
-	
-	
+
+
 
 	/**
 	 * Takes the grayscale cropped image and calculates the sum of the
@@ -1102,62 +1102,57 @@ public class Toolbox {
 	 * @return it's center, calculated via the Ultimate Erosion Points (via Eucledian Distance Maps)
 	 */
 	public static Point getParticleUltimateErosionPoint(ImagePlus BW_tile) {
-		
-		
+
+
 		ImageConverter imageConverter = new ImageConverter(BW_tile);
 		imageConverter.convertToGray8();
-		
-//		turnImageBW_Local_auto(BW_tile, 8);
-		turnImageBW_Otsu_auto(BW_tile);
-		
-		
+
+		//		turnImageBW_Local_auto(BW_tile, 8);
+		turnImageBW_Otsu_auto(BW_tile); //almost works
+		//turnImageBW_Shanbhag_auto(BW_tile);
+
+
 		turnImageBW_Huang_auto(BW_tile);
-		
-//		BW_tile.show();
-//		BW_tile.hide();
-		
+
+		//		BW_tile.show();
+		//		BW_tile.hide();
+
 		//re-threshold the image for good luck
-		
-		
-//		BW_tile.show();
-//		BW_tile.hide();
-		
+
+
+		//		BW_tile.show();
+		//		BW_tile.hide();
+
 		//fill holes -- could be why UEP fails
 		ij.plugin.filter.Binary my_Binary = new ij.plugin.filter.Binary();
 		my_Binary.setup("Fill Holes", BW_tile);
 		my_Binary.run(BW_tile.getProcessor());
-		
-//		BW_tile.show();
-//		BW_tile.hide();
-//		
+
+		//		BW_tile.show();
+		//		BW_tile.hide();
+		//		
 		ij.plugin.filter.EDM my_EDM = new ij.plugin.filter.EDM();
 		FloatProcessor EDM_processor = my_EDM.makeFloatEDM(BW_tile.getProcessor(), 0, true);
 		ij.plugin.filter.MaximumFinder MaximumFinder = new ij.plugin.filter.MaximumFinder();
 		double processorMax = EDM_processor.getMax();
 		Polygon centerPoints = MaximumFinder.getMaxima(EDM_processor, processorMax-1, true);
-		
+
 		Point pointToReturn = new Point(centerPoints.xpoints[0], centerPoints.ypoints[0]);
-		
+
 		//if UEP failed miserably, I will erode myself and get the center
 		if(pointToReturn.x==0){
-//			BW_tile.show();
-//			BW_tile.hide();
 			BW_tile.getProcessor().setAutoThreshold(Method.Otsu, true, ImageProcessor.BLACK_AND_WHITE_LUT);
-			
+
 			BW_tile.getProcessor().erode();
 			BW_tile.getProcessor().erode();
 			BW_tile.getProcessor().erode();
 			BW_tile.getProcessor().erode();
-			
-//			BW_tile.show();
-//			BW_tile.hide();
-			
 			
 			ResultsTable my_ResultsTable = new ResultsTable();
 			RoiManager my_RoiManager = Toolbox.particleAnalysis_fillHoles(BW_tile, my_ResultsTable);
 			
 			int indexOfBiggestParticle = getIndexOfBiggestParticle(my_ResultsTable);
-			pointToReturn = getBiggestParticleCenterOfMass(my_ResultsTable, indexOfBiggestParticle);			
+			pointToReturn = getBiggestParticleCenterOfMass(my_ResultsTable, indexOfBiggestParticle);
 		}
 		return(pointToReturn);
 	}

@@ -53,15 +53,17 @@ public class BasicTileReader_Bsu {
 		imageConverter.convertToGray8();
 		
 		ImagePlus thresholded_tile = tileCopy.duplicate();
-		turnImageBW_Local_auto(thresholded_tile);
-		turnImageBW_Huang_auto(thresholded_tile);
+		//turnImageBW_Local_auto(thresholded_tile);
+		Toolbox.turnImageBW_Otsu_auto(thresholded_tile);
+		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
 		
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
 
 		//1. apply a threshold at the tile, using a local thresholding algorithm
-		turnImageBW_Huang_auto(input.tileImage);
+		//turnImageBW_Huang_auto(input.tileImage);
+		
 		//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
 
 
@@ -119,8 +121,9 @@ public class BasicTileReader_Bsu {
 		int indexOfBiggestParticle = Toolbox.getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-		output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy);//Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = rois[indexOfBiggestParticle];
+		output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy);//Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+		
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 
