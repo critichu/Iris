@@ -5,7 +5,11 @@ package tileReaderInputs;
 
 import ij.ImagePlus;
 import ij.gui.Roi;
+
+import java.awt.Point;
+
 import settings.BasicSettings;
+import settings.ColorSettings;
 
 /**
  * This class holds information required by the TileReader
@@ -15,6 +19,7 @@ import settings.BasicSettings;
 public class BasicTileReaderInput extends TileReaderInput {
 	public BasicSettings settings;
 	public ImagePlus tileImage;
+	public Point colonyCenter = null;
 
 	/**
 	 * Creates a BasicTileReaderInput obect, given the cropped, grayscaled whole image and the ROI
@@ -45,6 +50,25 @@ public class BasicTileReaderInput extends TileReaderInput {
 		settings = settings_;
 	}
 
+
+	/**
+	 * @param grayscaleCroppedImage
+	 * @param roi
+	 * @param settings2
+	 * @param point
+	 */
+	public BasicTileReaderInput(ImagePlus croppedImage, Roi roi,
+			ColorSettings settings_, Point colonyCenter_) {
+		synchronized(settings_){
+			croppedImage.setRoi(roi);
+			croppedImage.copy(false);
+			
+			this.tileImage = ImagePlus.getClipboard();
+		}
+		this.settings = settings_;
+		
+		colonyCenter = new Point(colonyCenter_);
+	}
 
 	/**
 	 * this function should be called after the input object has been used, 

@@ -19,10 +19,10 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
-import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -205,7 +205,8 @@ public class BsubtilisSporulationProfile extends Profile{
 
 
 		//6. colony breathing
-		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		//EDIT 02.11.2015 don't breathe, it spoils the RC bounds for the pre-run
+		//segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
@@ -229,8 +230,71 @@ public class BsubtilisSporulationProfile extends Profile{
 		//6. analyze each tile
 
 		//create an array of measurement outputs
+		BasicTileReaderOutput [][] basicTileReaderOutputsCenters = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 		BasicTileReaderOutput [][] basicTileReaderOutputs = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 		ColorTileReaderOutput [][] colourTileReaderOutputs = new ColorTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];	
+
+
+
+		//6.0 do a pre-run to get the centers of the colonies
+
+		//for all rows
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			//for all columns
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				basicTileReaderOutputsCenters[i][j] = BasicTileReader_Bsu.getColonyCenter(
+						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+			}
+		}
+
+		//get the medians of all the rows and columns, ignore zeroes
+		//for all rows
+		ArrayList<Integer> rowYsMedians = new ArrayList<Integer>();
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			ArrayList<Double> rowYs = new ArrayList<Double>();
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					rowYs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.y);
+			}
+			Double[] simpleArray = new Double[ rowYs.size() ];
+			int rowMedian = (int) Toolbox.median(rowYs.toArray(simpleArray), 0.0, true);
+			rowYsMedians.add(rowMedian);
+		}
+		
+		ArrayList<Integer> columnXsMedians = new ArrayList<Integer>();
+		for(int j=0; j<settings.numberOfColumnsOfColonies; j++){
+			ArrayList<Double> columnXs = new ArrayList<Double>();
+			for (int i = 0; i < settings.numberOfRowsOfColonies; i++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					columnXs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.x);
+			}
+			Double[] simpleArray = new Double[ columnXs.size() ];
+			int columnMedian = (int) Toolbox.median(columnXs.toArray(simpleArray), 0.0, true);
+			columnXsMedians.add(columnMedian);
+		}
+		
+		
+		//save the pre-calculated colony centers in a matrix of input to basic tile reader
+		//all the tile readers will get it from there
+		BasicTileReaderInput [][] centeredTileReaderInput = new BasicTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		ColorTileReaderInput [][] centeredColorTileReaderInput = new ColorTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				centeredTileReaderInput[i][j] = new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings,
+						new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
+				centeredColorTileReaderInput[i][j] = new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], settings,
+						new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
+			}
+		}
+		
+		
+		
+		
+
+
+
+		//6.1 now actuall analyze all the tiles
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -238,13 +302,11 @@ public class BsubtilisSporulationProfile extends Profile{
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 
 				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
-				basicTileReaderOutputs[i][j] = BasicTileReader_Bsu.processTile(
-						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				basicTileReaderOutputs[i][j] = BasicTileReader_Bsu.processTile(centeredTileReaderInput[i][j]);
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
-					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processTile(
-							new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processTile(centeredColorTileReaderInput[i][j]);
 				}
 				else{
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
@@ -293,8 +355,8 @@ public class BsubtilisSporulationProfile extends Profile{
 				"sporulation score\t"+
 				"center sporulation score\t"+
 				"center opacity score\n");
-		
-		
+
+
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -347,10 +409,10 @@ public class BsubtilisSporulationProfile extends Profile{
 		}
 
 	}
-	
-	
-	
-	
+
+
+
+
 
 	/**
 	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
@@ -377,7 +439,7 @@ public class BsubtilisSporulationProfile extends Profile{
 		for(int i=0; i<tileReaderOutputs.length; i++){
 			//for all columns
 			for(int j=0; j<tileReaderOutputs[0].length; j++) {
-		
+
 				//get tile offsets
 				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
 				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
@@ -398,7 +460,7 @@ public class BsubtilisSporulationProfile extends Profile{
 
 		}
 	}
-	
+
 
 	/**
 	 * 
@@ -429,8 +491,8 @@ public class BsubtilisSporulationProfile extends Profile{
 				tileProcessor.setColor(Color.white);
 				tileProcessor.setBackgroundValue(0);
 				tileProcessor.fill(tileProcessor.getMask());
-				
-				
+
+
 				//get the bounds of the mask, that's it, save it
 				tileProcessor.findEdges();
 				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
@@ -447,9 +509,9 @@ public class BsubtilisSporulationProfile extends Profile{
 
 
 
-	
-	
-	
+
+
+
 
 	/**
 	 * This method gets a subset of that picture (for faster execution), and calculates the rotation of that part

@@ -41,13 +41,13 @@ import utils.Toolbox;
  *
  */
 public class ColorTileReaderHSB {
-	
+
 	/**
 	 * this is the diameter from the center of the colony to measure "center color" in
 	 */
 	public static int diameter = 24;
-	
-	
+
+
 
 	public static ColorTileReaderOutput processTile(ColorTileReaderInput input){
 
@@ -74,7 +74,7 @@ public class ColorTileReaderHSB {
 		//creates a new image using the bSource (brightness)
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
 		grayTile = new ImagePlus("", bpBri);
-		
+
 
 
 		//
@@ -88,14 +88,14 @@ public class ColorTileReaderHSB {
 		ImagePlus thresholded_tile = grayTile.duplicate();
 		turnImageBW_Local_auto(thresholded_tile);
 		grayTile.flush();
-		
-		ColorTileReaderInput2 input2 = new ColorTileReaderInput2(input.tileImage, thresholded_tile, input.settings);
-		
-		
+
+		ColorTileReaderInput2 input2 = new ColorTileReaderInput2(input.tileImage, thresholded_tile, input.settings, input.colonyCenter);
+
+
 		return (processThresholdedTile(input2));
 	}
 
-	
+
 	/**
 	 * This function will take as input a colored tile, plus a tile which has already been thresholded.
 	 * It will perform particle analysis and measure the color in the thresholded area.
@@ -111,11 +111,11 @@ public class ColorTileReaderHSB {
 		ImagePlus grayscaleTileCopy = colorTile.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
-		
+
 		//1. get the thresholded tile ready from the input
 		ImagePlus BW_tile = input.thresholdedTileImage;
 		turnImageBW_Huang_auto(BW_tile);
-		
+
 
 		//2.1 perform particle analysis on the thresholded tile
 
@@ -136,7 +136,7 @@ public class ColorTileReaderHSB {
 
 		Roi colonyRoi = manager.getRoisAsArray()[biggestParticleIndex];//RoiManager.getInstance().getRoisAsArray()[biggestParticleIndex];
 
-		
+
 		int colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, biggestParticleIndex);
 		//
 		//--------------------------------------------------
@@ -175,9 +175,9 @@ public class ColorTileReaderHSB {
 
 
 		//dilate 3 times to remove the colony periphery
-//		input.tileImage.getProcessor().dilate();
-//		input.tileImage.getProcessor().dilate();
-//		input.tileImage.getProcessor().dilate();
+		//		input.tileImage.getProcessor().dilate();
+		//		input.tileImage.getProcessor().dilate();
+		//		input.tileImage.getProcessor().dilate();
 		//
 		//--------------------------------------------------
 		//
@@ -194,12 +194,12 @@ public class ColorTileReaderHSB {
 		//--------------------------------------------------
 		//
 		//
-		
+
 		//show picture
-//		ByteProcessor biofilmScoreP = new ByteProcessor(width,height,biofilmScorePerPixel);
-//		ImagePlus biofilmScore = new ImagePlus("biofilmScore", biofilmScoreP);
-//		biofilmScore.show();
-//		biofilmScore.hide();
+		//		ByteProcessor biofilmScoreP = new ByteProcessor(width,height,biofilmScorePerPixel);
+		//		ImagePlus biofilmScore = new ImagePlus("biofilmScore", biofilmScoreP);
+		//		biofilmScore.show();
+		//		biofilmScore.hide();
 
 
 		//5. get the sum of remaining color intensity
@@ -221,39 +221,43 @@ public class ColorTileReaderHSB {
 			}
 		}
 
-		
+
 		output.colorIntensitySum = colonyColorSum;
 		output.biofilmArea = biofilmPixelCount;
 		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
 		output.colonyROI = colonyRoi;
 		if(colonySize!=0)
 			output.relativeColorIntensity = (double) colonyColorSum / (double) colonySize;
-			//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
-		
-		
-		
+		//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
+
+
+
 		//also get the center area color
-		///////we need to find a better colony center		
-		output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy.duplicate());//Toolbox.getBiggestParticleCenterOfMass(resultsTable, biggestParticleIndex);
+		if(input.colonyCenter==null){
+			output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy.duplicate());//Toolbox.getBiggestParticleCenterOfMass(resultsTable, biggestParticleIndex);
+		}
+		else{
+			output.colonyCenter = new Point(input.colonyCenter);
+		}
 		output.centerAreaColor = getAverageCenterAreaColor(colorTile, output.colonyCenter, diameter);
-		
+
 		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate				
 		output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
-		
-		
+
+
 		output.centerROI = new OvalRoi(
 				output.colonyCenter.x-diameter/2, 
 				output.colonyCenter.y -diameter/2, 
 				diameter, diameter);
 
 
-		
+
 		colorTile.flush();
 		input.cleanup();
 		return output;
 	}
-	
-	
+
+
 
 	/**
 	 * @param grayscaleTileCopy
@@ -264,7 +268,7 @@ public class ColorTileReaderHSB {
 	private static double getAverageCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int diameter) {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
-		
+
 		//1. find the background level, which is the threshold set by Otsu
 		//EDIT: don't correct for background level here, this is mainly to account for lighting spatial effects and can be corrected for later
 		int background_level = 0;//Toolbox.getThresholdOtsu(grayscaleTileCopy);
@@ -292,7 +296,7 @@ public class ColorTileReaderHSB {
 		int size = imageBytes.length;
 
 		int sumOfBrightness = 0;
-//		int sumOfPixelsOverZero = 0;
+		//		int sumOfPixelsOverZero = 0;
 
 		for(int i=0;i<size;i++){
 			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
@@ -303,22 +307,22 @@ public class ColorTileReaderHSB {
 			//but just in case, we'll just take 0 if a colony pixel turns out to be below the threshold
 			//Also all the pixels outside the Roi would have a negative value after subtraction 
 			//(they are already zero) because of the mask process
-			
-//			if(pixelValue>0){
-//				sumOfPixelsOverZero++;
-//			}
+
+			//			if(pixelValue>0){
+			//				sumOfPixelsOverZero++;
+			//			}
 
 			sumOfBrightness += Math.max(0, pixelValue-background_level);
 		}
 
 		grayscaleTileCopy.flush();
-		
+
 		return ((double)sumOfBrightness/(double)size);
 	}
 
-	
-	
-	
+
+
+
 	/**
 	 * This function will take as input a colored tile, plus a tile which has already been thresholded.
 	 * It will perform particle analysis and measure the color in the thresholded area.
@@ -332,8 +336,8 @@ public class ColorTileReaderHSB {
 
 		//set the pre-calculated ROI (of the largest particle = colony) on the original picture and fill everything around it with black
 		input.tileImage.setRoi(input.colonyRoi);
-		
-				
+
+
 
 		try {
 			input.tileImage.getProcessor().fillOutside(input.colonyRoi);
@@ -364,18 +368,18 @@ public class ColorTileReaderHSB {
 
 		//but because colonies get darker with accumulation of congo red..		
 
-		
+
 
 		//
 		//--------------------------------------------------
 		//
 		//
-		
+
 		//show picture
-//		ByteProcessor biofilmScoreP = new ByteProcessor(width,height,biofilmScorePerPixel);
-//		ImagePlus biofilmScore = new ImagePlus("biofilmScore", biofilmScoreP);
-//		biofilmScore.show();
-//		biofilmScore.hide();
+		//		ByteProcessor biofilmScoreP = new ByteProcessor(width,height,biofilmScorePerPixel);
+		//		ImagePlus biofilmScore = new ImagePlus("biofilmScore", biofilmScoreP);
+		//		biofilmScore.show();
+		//		biofilmScore.hide();
 
 
 		//5. get the sum of remaining color intensity
@@ -401,31 +405,31 @@ public class ColorTileReaderHSB {
 				biofilmColorSum += pixelBiofilmScoreByteValue;
 			}
 		}
-		
+
 		//get pixel color values again, this time by means of integer values
 		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(input.tileImage, input.colonyRoi, 2, 1, (float)1, (float)2);
-		
-		
-		
+
+
+
 		//7. also get an estimate of the colony color, through random pixel sampling, this should be 1000 pixels 
 		int maxSamples = Math.min(1000, input.colonySize);
 		//int maxSamples = 1000;
 		double sampleColorSum = 0;
 		int numerOfSamplesInBounds = 0;
-		
+
 		Random myrandom = new Random((long) 762827825);// this is a seed I picked at random, but it has to be the same always to get the same results with every Iris run 
 		for(int i=0; i<maxSamples; i++){
 			try {		
-				
+
 				//pixelID is an integer from 0 to pixelBiofilmScores.length-1 (pixelBiofilmScores[pixelBiofilmScores.length] is out of bounds)
 				int pixelID = (int)Math.round(myrandom.nextDouble()*(double)(pixelBiofilmScores_float.length-1));
 				numerOfSamplesInBounds++;
-				
+
 				if(pixelBiofilmScores_float[pixelID]==0){
 					//pixel was outside the (eroded) colony bounds
 					continue;
 				}
-				
+
 				sampleColorSum += pixelBiofilmScores_float[pixelID];				
 			} catch (Exception e) {				
 				System.out.println(e.getMessage());
@@ -434,9 +438,9 @@ public class ColorTileReaderHSB {
 		}
 		//divide by the number of samples
 		double meanSampleColor = sampleColorSum/(double)numerOfSamplesInBounds;
-		
-		
-		
+
+
+
 
 		output.colorIntensitySum = colonyColorSum;
 		output.biofilmArea = biofilmPixelCount;
@@ -444,31 +448,31 @@ public class ColorTileReaderHSB {
 		output.colonyROI = input.colonyRoi;
 		output.meanSampleColor = meanSampleColor;
 		//Toolbox.show(input.tileImage, "after processing");
-		
-		
+
+
 		if(input.colonySize!=0)
 			output.relativeColorIntensity = (double) colonyColorSum / (double) input.colonySize;
-			//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
-		
-		
-		
+		//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
+
+
+
 		//also get the center area color
 		output.centerAreaColor = getAverageCenterAreaColor(input.tileImage, input.colonyCenter, diameter);
-		
+
 		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();		
 		output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
-		
 
-		
+
+
 
 		input.cleanup();
 		return output;
 	}
-	
-	
+
+
 	/**
 	 * @param grayscaleTileCopy
 	 * @param colonyRoi
@@ -478,8 +482,8 @@ public class ColorTileReaderHSB {
 	private static double getAverageCenterAreaColor(ImagePlus colorTile, Point colonyCenter, int diameter) {
 
 		ImagePlus colorTileCopy = colorTile.duplicate();
-		
-		
+
+
 		//3. get the colony center of mass, this will be the center of the circle
 		//OvalRoi(xc-r/2,yc-r/2,r,r)
 		Roi centerRoi = new OvalRoi(
@@ -494,34 +498,34 @@ public class ColorTileReaderHSB {
 		} catch (Exception e) {
 			return(0);
 		}
-		
-		
+
+
 		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(colorTileCopy, 2, 1, (float)1, (float)2); ///
 
 
 		int size = pixelBiofilmScores.length;
 
 		int sumOfColor = 0;
-//		int sumOfNonZeroColorPixels = 0;
+		//		int sumOfNonZeroColorPixels = 0;
 
 		for(int i=0;i<size;i++){
 			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
 			int pixelValue = pixelBiofilmScores[i]&0xFF;
 
 			sumOfColor += pixelValue;
-			
-//			if(pixelValue>0){
-//				sumOfNonZeroColorPixels++;
-//			}
+
+			//			if(pixelValue>0){
+			//				sumOfNonZeroColorPixels++;
+			//			}
 		}
-		
-		
+
+
 		colorTileCopy.flush();
-		
+
 		return ((double)sumOfColor/(double)size);
 	}
 
-	
+
 
 	/**
 	 * Returns the area of the biggest particle in the results table.
@@ -547,9 +551,9 @@ public class ColorTileReaderHSB {
 
 		return(largestParticleArea+largestParticlePerimeter);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.
 	 * Default value of the red gain is 2, default value of the blue/green gain is 1
@@ -571,8 +575,8 @@ public class ColorTileReaderHSB {
 
 		return relative_colour_intensity;
 	}
-	
-	
+
+
 	/**
 	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.
 	 * Default value of the red gain is 2, default value of the blue/green gain is 1.
@@ -593,11 +597,11 @@ public class ColorTileReaderHSB {
 		byte[] green_and_blue = multiply(blue_green_gain, add(green, blue));
 		byte[] relative_colour_intensity = subtract(redWithGain, green_and_blue);
 
-		
+
 		//end of color calculations
 		//------
 		//start calculating brightness contribution
-		
+
 		ImageProcessor ip =  tile.getProcessor();
 		ColorProcessor cp = (ColorProcessor)ip;
 
@@ -613,21 +617,21 @@ public class ColorTileReaderHSB {
 
 		//saves the channels of the cp into the h, s, bSource
 		cp.getHSB(hSource,sSource,bSource);
-		
+
 		byte[] saturationMinusBrightness = subtract(sSource, bSource);
-				
+
 		byte[] relative_colour_intensity_with_gain = multiply(color_gain, relative_colour_intensity);
 		byte[] colonySaturationBrightness_with_gain = multiply(brightness_gain, saturationMinusBrightness);
-		
+
 		byte[] total_biofilm_score = add(relative_colour_intensity_with_gain, colonySaturationBrightness_with_gain);
 
 
 
 		return total_biofilm_score;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.
 	 * Default value of the red gain is 2, default value of the blue/green gain is 1.
@@ -638,34 +642,34 @@ public class ColorTileReaderHSB {
 	 * @return
 	 */
 	private static Float[] calculateRelativeColorIntensityUsingSaturationAndBrightness_float(ImagePlus tile, Roi colonyRoi, float red_gain, float blue_green_gain, float color_gain, float brightness_gain) {
-		
+
 		//Float[] roiPixels_brightness = Toolbox.getRoiPixels(tile, colonyRoi, 'l');
 		Float[] roiPixels_red = Toolbox.getRoiPixels(tile, colonyRoi, 'r');
 		Float[] roiPixels_green = Toolbox.getRoiPixels(tile, colonyRoi, 'g');
 		Float[] roiPixels_blue = Toolbox.getRoiPixels(tile, colonyRoi, 'b');
-		
+
 		Float[] redWithGain = multiply(red_gain, roiPixels_red);
 		Float[] green_and_blue = multiply(blue_green_gain, add(roiPixels_green, roiPixels_blue));
 		Float[] relative_colour_intensity = subtract(redWithGain, green_and_blue);
 
-		
+
 		//end of color calculations
 		//------
 		//start calculating brightness contribution
 
-		
+
 		Float[] roiPixels_saturation = Toolbox.getRoiPixels(tile, colonyRoi, 'S');
 		Float[] roiPixels_brightness = Toolbox.getRoiPixels(tile, colonyRoi, 'B');
-		
+
 		Float[] roiPixels_darkness = negate_skippingZeros(roiPixels_brightness);
-		
+
 		Float[] saturationAndDarkness = add(roiPixels_saturation, roiPixels_darkness);
-				
-//		Float[] saturationMinusBrightness = subtract(roiPixels_saturation, roiPixels_brightness);
-//				
+
+		//		Float[] saturationMinusBrightness = subtract(roiPixels_saturation, roiPixels_brightness);
+		//				
 		Float[] relative_colour_intensity_with_gain = multiply(color_gain, relative_colour_intensity);
 		Float[] colonySaturationBrightness_with_gain = multiply(brightness_gain, saturationAndDarkness);//saturationMinusBrightness);
-		
+
 		Float[] total_biofilm_score = add(relative_colour_intensity_with_gain, colonySaturationBrightness_with_gain);
 
 
@@ -673,27 +677,27 @@ public class ColorTileReaderHSB {
 		return total_biofilm_score;
 	}
 
-	
+
 	//for every byte in the given byte array, will convert it to it's corresponding unsigned integer
 	public static int[] convertByteArrayToIntegerArray(byte[] byteArray){
-		
+
 		int[] toReturn = new int[byteArray.length];
-		
+
 		for(int i=0; i<byteArray.length; i++){
 			toReturn[i] = byteArray[i]&0xFF;
-			
+
 			//make sure we're not in under or overflow, normally, if you 0xFF, then it should be from 0 to 255...
 			toReturn[i] = (byte)Math.max(toReturn[i], 0);
 			toReturn[i] = (byte)Math.min(toReturn[i], 255);
-			
+
 		}
-		
+
 		return(toReturn);
 	}
-	
-	
 
-	
+
+
+
 	/**
 	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.
 	 * Default value of the red gain is 2, default value of the blue/green gain is 1.
@@ -714,11 +718,11 @@ public class ColorTileReaderHSB {
 		byte[] green_and_blue = multiply(blue_green_gain, add(green, blue));
 		byte[] relative_colour_intensity = subtract(redWithGain, green_and_blue);
 
-		
+
 		//end of color calculations
 		//------
 		//start calculating brightness contribution
-		
+
 		ImageProcessor ip =  tile.getProcessor();
 		ColorProcessor cp = (ColorProcessor)ip;
 
@@ -734,17 +738,17 @@ public class ColorTileReaderHSB {
 
 		//saves the channels of the cp into the h, s, bSource
 		cp.getHSB(hSource,sSource,bSource);
-				
+
 		byte[] relative_colour_intensity_with_gain = multiply(color_gain,relative_colour_intensity);
 		byte[] colonySaturation_with_gain = multiply(brightness_gain,sSource);
-		
+
 		byte[] total_biofilm_score = add(relative_colour_intensity_with_gain, colonySaturation_with_gain);
 
 
 
 		return total_biofilm_score;
 	}
-	
+
 
 	/**
 	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.
@@ -766,11 +770,11 @@ public class ColorTileReaderHSB {
 		byte[] green_and_blue = multiply(blue_green_gain, add(green, blue));
 		byte[] relative_colour_intensity = subtract(redWithGain, green_and_blue);
 
-		
+
 		//end of color calculations
 		//------
 		//start calculating brightness contribution
-		
+
 		ImageProcessor ip =  tile.getProcessor();
 		ColorProcessor cp = (ColorProcessor)ip;
 
@@ -789,10 +793,10 @@ public class ColorTileReaderHSB {
 
 		byte[] colonyDarkness = negate_skippingZeros(bSource); //get directly the Brightness value calculated earlier for the HSB
 
-		
+
 		byte[] relative_colour_intensity_with_gain = multiply(color_gain,relative_colour_intensity);
 		byte[] colonyDarkness_with_gain = multiply(brightness_gain,colonyDarkness);
-		
+
 		byte[] total_biofilm_score = add(relative_colour_intensity_with_gain, colonyDarkness_with_gain);
 
 
@@ -800,8 +804,8 @@ public class ColorTileReaderHSB {
 		return total_biofilm_score;
 	}
 
-	
-	
+
+
 	/**
 	 * This helper function will return the negative of the given array: 255-array[i].
 	 * At the same time, it will skip zeros, meaning that the pixels outside of the colony will
@@ -813,10 +817,10 @@ public class ColorTileReaderHSB {
 		byte[] result = new byte[array.length];
 
 		for(int i=0;i<array.length;i++){
-		
+
 			if(array[i]==(byte)0)
 				continue; //keep it zero
-			
+
 			result[i] =  (byte)(Math.min(255-(array[i] & 0xff), 255)); 
 		}
 		return(result);
@@ -836,7 +840,7 @@ public class ColorTileReaderHSB {
 
 			//avoid overflow
 			result[i] =  (byte)(Math.min((array[i] & 0xff)*factor, 255));
-			
+
 			//avoid underflow			
 			//result[i] = (byte)(Math.max(result[i], 0));
 		}
@@ -859,10 +863,10 @@ public class ColorTileReaderHSB {
 
 			//add the values, but avoid overflow
 			result[i] = (byte)(Math.min( (array1[i]&0xFF)+(array2[i]&0xFF) , 255));
-			
+
 			//also avoid underflow
 			//result[i] = (byte)(Math.max(result[i], 0));
-			
+
 			//result[i] = (byte) (array1[i]+array2[i]);
 		}
 
@@ -885,7 +889,7 @@ public class ColorTileReaderHSB {
 
 			//subtract the values, but avoid underflow
 			result[i] = (byte)(Math.max( (array1[i]&0xFF)-(array2[i]&0xFF) , 0));
-			
+
 			//also avoid overflow
 			//result[i] = (byte)(Math.min(result[i], 255));
 		}
@@ -893,9 +897,9 @@ public class ColorTileReaderHSB {
 		return(result);
 	}
 
-	
-	
-	
+
+
+
 	/**
 	 * This helper function will return the negative of the given array: 255-array[i].
 	 * At the same time, it will skip zeros, meaning that the pixels outside of the colony will
@@ -907,16 +911,16 @@ public class ColorTileReaderHSB {
 		int[] result = new int[array.length];
 
 		for(int i=0;i<array.length;i++){
-		
+
 			if(array[i]==(int)0)
 				continue; //keep it zero
-			
+
 			result[i] =  (int)(Math.min(255-array[i], 255)); 
 		}
 		return(result);
 	}
-	
-	
+
+
 	/**
 	 * This helper function will return the negative of the given array: 255-array[i].
 	 * At the same time, it will skip zeros, meaning that the pixels outside of the colony will
@@ -928,17 +932,17 @@ public class ColorTileReaderHSB {
 		Float[] result = new Float[array.length];
 
 		for(int i=0;i<array.length;i++){
-		
+
 			if(array[i]==(int)0)
 				result[i]=(float)0; //keep it zero
-			
+
 			result[i] =  Math.min(255-array[i], 255);
 			result[i] = Math.max(result[i], 0); //make sure the result is positive
 		}
 		return(result);
 	}
-	
-	
+
+
 
 	/**
 	 * This helper function multiplies a int array by a constant factor
@@ -952,11 +956,11 @@ public class ColorTileReaderHSB {
 		for(int i=0;i<array.length;i++){
 
 			result[i] =  (int)Math.round(array[i]*factor);
-			
+
 		}
 		return(result);
 	}
-	
+
 	/**
 	 * This helper function multiplies a int array by a constant factor
 	 * @param factor
@@ -969,11 +973,11 @@ public class ColorTileReaderHSB {
 		for(int i=0;i<array.length;i++){
 
 			result[i] =  (Float)(array[i]*factor);
-			
+
 		}
 		return(result);
 	}
-	
+
 
 	/**
 	 * This helper function adds 2 int arrays
@@ -994,8 +998,8 @@ public class ColorTileReaderHSB {
 
 		return(result);
 	}
-	
-	
+
+
 	/**
 	 * This helper function adds 2 int arrays
 	 * @param factor
@@ -1015,7 +1019,7 @@ public class ColorTileReaderHSB {
 
 		return(result);
 	}
-	
+
 
 	/**
 	 * This helper function subtracts 2 int arrays, taking into account that
@@ -1033,13 +1037,13 @@ public class ColorTileReaderHSB {
 
 			//subtract the values, but avoid underflow
 			result[i] = (int)(Math.max( array1[i] - array2[i] , 0));
-			
+
 		}
 
 		return(result);
 	}
-	
-	
+
+
 	/**
 	 * This helper function subtracts 2 int arrays, taking into account that
 	 * negative values are given the minimum value (0)
@@ -1056,13 +1060,13 @@ public class ColorTileReaderHSB {
 
 			//subtract the values, but avoid underflow
 			result[i] = (Math.max( array1[i] - array2[i] , 0));
-			
+
 		}
 
 		return(result);
 	}
-	
-	
+
+
 
 	/**
 	 * This function will convert the given picture into black and white

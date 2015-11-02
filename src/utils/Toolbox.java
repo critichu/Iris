@@ -30,6 +30,8 @@ import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import tileReaderOutputs.BasicTileReaderOutput;
@@ -1156,6 +1158,70 @@ public class Toolbox {
 		}
 		return(pointToReturn);
 	}
+	
+	
+	
+	/**
+     * Calculates the median of the given values. For a sample with an odd
+     * number of elements the median is the mid-point value of the 
+     * sorted sample. For an even number of elements it is the mean of
+     * the two values on either side of the mid-point. 
+     * 
+     * Modified from org.jaitools.SampleStats.
+     * 
+     * 
+     * @param values sample values (need not be pre-sorted)
+     * @param valueToIgnore this value will be removed from the set before calculating the median
+     * @param ignoreValue whether or not to ignore the given value
+     * @return median value or Double.NaN if the sample is empty
+     * 
+     * 
+     */
+    @SuppressWarnings("empty-statement")
+    public static double median(Double[] values, Double valueToIgnore, boolean ignoreValue) {
+        if (values == null) {
+            return Double.NaN;
+        }
+        
+        List<Double> nonNaNValues = org.jaitools.CollectionFactory.list();
+        nonNaNValues.addAll(Arrays.asList(values));
+        if (ignoreValue) {
+            while (nonNaNValues.remove(valueToIgnore)) /* deliberately empty */ ;
+        }
+        
+        if (nonNaNValues.isEmpty()) {
+            return Double.NaN;
+        } else if (nonNaNValues.size() == 1) {
+            return nonNaNValues.get(0);
+        } else if (nonNaNValues.size() == 2) {
+            return (nonNaNValues.get(0) + nonNaNValues.get(1)) / 2;
+        }
+        
+        Collections.sort(nonNaNValues);
+        
+        int midHi = nonNaNValues.size() / 2;
+        int midLo = midHi - 1;
+        boolean even = nonNaNValues.size() % 2 == 0;
+
+        Double result = 0.0d;
+        int k = 0;
+        for (Double val : nonNaNValues) {
+            if (k == midHi) {
+                if (!even) {
+                    return val;
+                } else {
+                    result += val;
+                    return result / 2;
+                }
+            } else if (even && k == midLo) {
+                result += val;
+            }
+            k++ ;
+        }
+        
+        return 0;  // to suppress compiler warning
+    }
+
 
 
 
