@@ -19,7 +19,7 @@ import profiles.BasicProfileInverted;
 import profiles.BasicProfileNoEmptyCheck;
 import profiles.BsubtilisHazyProfileHSB;
 import profiles.BsubtilisSporulationProfile;
-import profiles.CPRGProfile384;
+import profiles.CPRGProfile384_ourCamera2;
 import profiles.ColorProfile;
 import profiles.ColorProfileEcoli;
 import profiles.ColorProfileEcoliNaturalIsolates;
@@ -187,8 +187,10 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		}
 
 		else if(profileName.equals("CPRG 384")){
-			CPRGProfile384 cprgProfile384 = new CPRGProfile384();
-			cprgProfile384.analyzePicture(filename);			
+//			CPRGProfile384 cprgProfile384 = new CPRGProfile384();
+//			cprgProfile384.analyzePicture(filename);
+			CPRGProfile384_ourCamera2 cprgProfile384_ourCamera2 = new CPRGProfile384_ourCamera2();
+			cprgProfile384_ourCamera2.analyzePicture(filename);
 		}
 
 		else if(profileName.equals("Biofilm formation")){
