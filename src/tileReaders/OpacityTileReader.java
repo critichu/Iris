@@ -121,7 +121,13 @@ public class OpacityTileReader {
 
 		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-		output.colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+		
+		if(input.colonyCenter==null){ //if the center's preset for us, don't recalculate it
+			output.colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);	
+		} else {
+			output.colonyCenter = new Point(input.colonyCenter);
+		}
+		
 		output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
 		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
 		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
@@ -137,13 +143,10 @@ public class OpacityTileReader {
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
 
-
-		//HACK: this is just for illustration purposes, should be removed afterwards
-//		Roi centerRoi = new OvalRoi(
-//				output.colonyCenter.x-diameter/2, 
-//				output.colonyCenter.y -diameter/2, 
-//				diameter, diameter);
-//		output.colonyROI = centerRoi;
+		output.centerROI = new OvalRoi(
+				output.colonyCenter.x-diameter/2, 
+				output.colonyCenter.y -diameter/2, 
+				diameter, diameter);
 
 		return(output);
 

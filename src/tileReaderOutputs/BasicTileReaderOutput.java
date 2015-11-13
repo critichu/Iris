@@ -28,6 +28,11 @@ public class BasicTileReaderOutput{
 	 * the ROI that describes the colony
 	 */
 	public Roi colonyROI = null;
+	
+	/**
+	 * the ROI that describes the center of the colony
+	 */
+	public Roi centerROI = null;
 
 	
 	public BasicTileReaderOutput(){

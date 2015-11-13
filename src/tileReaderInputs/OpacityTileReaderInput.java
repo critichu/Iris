@@ -5,6 +5,9 @@ package tileReaderInputs;
 
 import ij.ImagePlus;
 import ij.gui.Roi;
+
+import java.awt.Point;
+
 import settings.BasicSettings;
 
 /**
@@ -47,5 +50,10 @@ public class OpacityTileReaderInput extends BasicTileReaderInput {
 		// TODO Auto-generated constructor stub
 	}
 	
+	public OpacityTileReaderInput(BasicTileReaderInput that){
+		super(that.tileImage, that.settings);
+		this.colonyCenter = new Point(that.colonyCenter);
+	}
+
 
 }

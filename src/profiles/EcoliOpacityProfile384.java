@@ -10,6 +10,7 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
+import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -20,14 +21,19 @@ import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 import imageSegmenters.SimpleImageSegmenter;
 
+import java.awt.Color;
+import java.awt.Point;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import settings.BasicSettings;
+import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.OpacityTileReaderInput;
+import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
+import tileReaders.BasicTileReader_Bsu;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
@@ -204,6 +210,68 @@ public class EcoliOpacityProfile384 extends Profile {
 		x = segmentationOutput.getBottomRightRoi().getBounds().x;
 		y = segmentationOutput.getBottomRightRoi().getBounds().y;
 		output.append("#bottom right of the grid found at (" +x+ " , " +y+ ")\n");
+		
+		
+		
+
+		//6. analyze each tile
+
+		//create an array of measurement outputs
+		BasicTileReaderOutput [][] basicTileReaderOutputsCenters = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+
+
+
+		//6.0 do a pre-run to get the centers of the colonies
+
+		//for all rows
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			//for all columns
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				basicTileReaderOutputsCenters[i][j] = BasicTileReader_Bsu.getColonyCenter(
+						new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+			}
+		}
+
+		//get the medians of all the rows and columns, ignore zeroes
+		//for all rows
+		ArrayList<Integer> rowYsMedians = new ArrayList<Integer>();
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			ArrayList<Double> rowYs = new ArrayList<Double>();
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					rowYs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.y);
+			}
+			Double[] simpleArray = new Double[ rowYs.size() ];
+			int rowMedian = (int) Toolbox.median(rowYs.toArray(simpleArray), 0.0, true);
+			rowYsMedians.add(rowMedian);
+		}
+		
+		ArrayList<Integer> columnXsMedians = new ArrayList<Integer>();
+		for(int j=0; j<settings.numberOfColumnsOfColonies; j++){
+			ArrayList<Double> columnXs = new ArrayList<Double>();
+			for (int i = 0; i < settings.numberOfRowsOfColonies; i++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					columnXs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.x);
+			}
+			Double[] simpleArray = new Double[ columnXs.size() ];
+			int columnMedian = (int) Toolbox.median(columnXs.toArray(simpleArray), 0.0, true);
+			columnXsMedians.add(columnMedian);
+		}
+		
+		
+		//save the pre-calculated colony centers in a matrix of input to basic tile reader
+		//all the tile readers will get it from there
+		BasicTileReaderInput [][] centeredTileReaderInput = new BasicTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				centeredTileReaderInput[i][j] = new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], 
+						settings, new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
+			}
+		}
+		
+		
+		
 
 
 
@@ -213,7 +281,7 @@ public class EcoliOpacityProfile384 extends Profile {
 		//
 		//
 
-		//6. analyze each tile
+		//6.1 analyze each tile
 
 		//create an array of measurement outputs
 		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -222,8 +290,8 @@ public class EcoliOpacityProfile384 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = OpacityTileReader.processTile(
-						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				readerOutputs[i][j] = OpacityTileReader.processTile(new OpacityTileReaderInput(centeredTileReaderInput[i][j]));
+						//new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//each generated tile image is cleaned up inside the tile reader
 			}
@@ -297,6 +365,7 @@ public class EcoliOpacityProfile384 extends Profile {
 			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
 			
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			drawCenterRoiBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
 
@@ -646,6 +715,109 @@ public class EcoliOpacityProfile384 extends Profile {
 
 		return(true); //operation succeeded
 	}
+	
+	
+	
+	
+
+
+	/**
+	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
+	 * offsets found in the segmenterOutput.  
+	 * @param segmentedImage
+	 * @param segmenterOutput
+	 */
+	private static void drawCenterRoiBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, 
+			BasicTileReaderOutput [][] tileReaderOutputs){
+
+
+		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
+		ByteProcessor[][] colonyBounds = getCenterRoiBounds(croppedImage, segmenterOutput, tileReaderOutputs);
+
+
+		//paint those bounds on the original cropped image
+		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
+		//bigPictureProcessor.setColor(Color.black);
+		bigPictureProcessor.setColor(Color.red);
+		bigPictureProcessor.setLineWidth(1);
+
+
+		//for all rows
+		for(int i=0; i<tileReaderOutputs.length; i++){
+			//for all columns
+			for(int j=0; j<tileReaderOutputs[0].length; j++) {
+
+				//get tile offsets
+				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
+				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
+				int tileWidth = segmenterOutput.ROImatrix[i][j].getBounds().width;
+				int tileHeight = segmenterOutput.ROImatrix[i][j].getBounds().height;
+
+
+				//for each pixel, if it is colony bounds, paint it on the big picture
+				for(int x=0; x<tileWidth; x++){
+					for(int y=0; y<tileHeight; y++){
+						if(colonyBounds[i][j].getPixel(x, y)==255){ //it is a colony bounds pixel
+							bigPictureProcessor.drawDot(x+tile_x_offset, y+tile_y_offset); //paint it on the big picture
+						}
+					}
+				}
+
+			}
+
+		}
+	}
+
+
+	/**
+	 * 
+	 * @param croppedImage
+	 * @param segmentationOutput
+	 * @param tileReaderOutputs
+	 * @return
+	 */
+	private static ByteProcessor[][] getCenterRoiBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
+
+		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
+
+		//for all rows
+		for(int i=0;i<tileReaderOutputs.length; i++){
+			//for all columns
+			for (int j = 0; j<tileReaderOutputs[0].length; j++) {
+
+				//get the tile
+				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
+				croppedImage.copy(false);
+				ImagePlus tile = ImagePlus.getClipboard();
+
+
+				//apply the ROI, get the mask
+				ImageProcessor tileProcessor = tile.getProcessor();
+				tileProcessor.setRoi(tileReaderOutputs[i][j].centerROI);
+
+				tileProcessor.setColor(Color.white);
+				tileProcessor.setBackgroundValue(0);
+				tileProcessor.fill(tileProcessor.getMask());
+
+
+				//get the bounds of the mask, that's it, save it
+				tileProcessor.findEdges();
+				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
+
+
+			}
+		}
+
+		croppedImage.deleteRoi();
+
+		return(colonyBounds);
+	}
+
+
+
+
+
+
 
 
 

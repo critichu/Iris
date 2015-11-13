@@ -3,7 +3,6 @@
  */
 package tileReaderOutputs;
 
-import java.awt.Point;
 
 /**
  * @author George Kritikos
@@ -39,12 +38,5 @@ public class OpacityTileReaderOutput extends BasicTileReaderOutput {
 	 */
 	public int centerAreaOpacity = 0;
 
-
-	/**
-	 * This holds the coordinates of the colony center. 
-	 * It's useful so as not to re-discover it if we need to access it again on calling a
-	 * "process defined tile" function 
-	 */
-	public Point colonyCenter = null;
 	
 }

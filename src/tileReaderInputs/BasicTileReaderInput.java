@@ -9,7 +9,6 @@ import ij.gui.Roi;
 import java.awt.Point;
 
 import settings.BasicSettings;
-import settings.ColorSettings;
 
 /**
  * This class holds information required by the TileReader
@@ -49,6 +48,17 @@ public class BasicTileReaderInput extends TileReaderInput {
 		tileImage = tileImage_;
 		settings = settings_;
 	}
+	
+	/**	
+	 * Creates a BasicTileReaderInput obect, given the image tile to be processed
+	 * @param tileImage_
+	 * @param settings_
+	 */
+	public BasicTileReaderInput(ImagePlus tileImage_, BasicSettings settings_, Point colonyCenter_){
+		tileImage = tileImage_;
+		settings = settings_;
+		colonyCenter = new Point(colonyCenter_);
+	}
 
 
 	/**
@@ -58,7 +68,7 @@ public class BasicTileReaderInput extends TileReaderInput {
 	 * @param point
 	 */
 	public BasicTileReaderInput(ImagePlus croppedImage, Roi roi,
-			ColorSettings settings_, Point colonyCenter_) {
+			BasicSettings settings_, Point colonyCenter_) {
 		synchronized(settings_){
 			croppedImage.setRoi(roi);
 			croppedImage.copy(false);
@@ -76,6 +86,13 @@ public class BasicTileReaderInput extends TileReaderInput {
 	 */
 	public void cleanup(){
 		tileImage.flush();
+	}
+	
+	/**
+	 * Create a proper copy of this object
+	 */
+	public BasicTileReaderInput clone(){
+		return(new BasicTileReaderInput(this.tileImage.duplicate(), this.settings, new Point(this.colonyCenter)));
 	}
 }
 

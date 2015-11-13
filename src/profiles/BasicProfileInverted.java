@@ -10,6 +10,7 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
+import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -19,6 +20,8 @@ import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
 import imageSegmenters.SimpleImageSegmenter;
 
+import java.awt.Color;
+import java.awt.Point;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,6 +33,7 @@ import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.BasicTileReaderInverted;
+import tileReaders.BasicTileReader_Bsu;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
@@ -65,7 +69,7 @@ public class BasicProfileInverted extends Profile {
 	 * @param filename
 	 */
 	public void analyzePicture(String filename){
-		
+
 		settings.numberOfColumnsOfColonies = 24;
 		settings.numberOfRowsOfColonies = 16;
 
@@ -96,7 +100,7 @@ public class BasicProfileInverted extends Profile {
 		//--------------------------------------------------
 		//
 		// 
-		
+
 		//invert the picture
 		originalImage = Toolbox.invertImage(originalImage);
 
@@ -120,7 +124,7 @@ public class BasicProfileInverted extends Profile {
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
-		
+
 		calculateGridSpacing(settings, croppedImage);
 
 
@@ -133,12 +137,12 @@ public class BasicProfileInverted extends Profile {
 
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImagePlus croppedImageColor = croppedImage.duplicate();
-		
-		
-		
+
+
+
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
-		
+
 		//invert the picture
 		//croppedImage = Toolbox.invertImage(croppedImage);
 
@@ -151,19 +155,19 @@ public class BasicProfileInverted extends Profile {
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput;
-//		if(settings.numberOfColumnsOfColonies==24){
-//			SimpleImageSegmenter.offset=65;
-//			segmentationOutput = SimpleImageSegmenter.segmentPicture_colonyDistance(segmentationInput, 170);
-//		}
-//		else{
-			SimpleImageSegmenter.offset=35;
-			//ColonyBreathing.breathingSpace = 20;
-			segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
-//		}
-			
+		//		if(settings.numberOfColumnsOfColonies==24){
+		//			SimpleImageSegmenter.offset=65;
+		//			segmentationOutput = SimpleImageSegmenter.segmentPicture_colonyDistance(segmentationInput, 170);
+		//		}
+		//		else{
+		SimpleImageSegmenter.offset=35;
+		//ColonyBreathing.breathingSpace = 20;
+		segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+		//		}
+
 
 		//let colonies breathe
-		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		//segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -189,7 +193,7 @@ public class BasicProfileInverted extends Profile {
 			//save the grid before exiting
 			//invert back to the original
 			//croppedImageColor = Toolbox.invertImage(croppedImageColor);
-			
+
 			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 
@@ -210,6 +214,70 @@ public class BasicProfileInverted extends Profile {
 
 
 
+
+		//6. analyze each tile
+
+		//create an array of measurement outputs
+		BasicTileReaderOutput [][] basicTileReaderOutputsCenters = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+
+
+
+		//6.0 do a pre-run to get the centers of the colonies
+
+		//for all rows
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			//for all columns
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				basicTileReaderOutputsCenters[i][j] = BasicTileReader_Bsu.getColonyCenter(
+						new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+			}
+		}
+
+		//get the medians of all the rows and columns, ignore zeroes
+		//for all rows
+		ArrayList<Integer> rowYsMedians = new ArrayList<Integer>();
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			ArrayList<Double> rowYs = new ArrayList<Double>();
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					rowYs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.y);
+			}
+			Double[] simpleArray = new Double[ rowYs.size() ];
+			int rowMedian = (int) Toolbox.median(rowYs.toArray(simpleArray), 0.0, true);
+			rowYsMedians.add(rowMedian);
+		}
+
+		ArrayList<Integer> columnXsMedians = new ArrayList<Integer>();
+		for(int j=0; j<settings.numberOfColumnsOfColonies; j++){
+			ArrayList<Double> columnXs = new ArrayList<Double>();
+			for (int i = 0; i < settings.numberOfRowsOfColonies; i++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					columnXs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.x);
+			}
+			Double[] simpleArray = new Double[ columnXs.size() ];
+			int columnMedian = (int) Toolbox.median(columnXs.toArray(simpleArray), 0.0, true);
+			columnXsMedians.add(columnMedian);
+		}
+
+
+		//save the pre-calculated colony centers in a matrix of input to basic tile reader
+		//all the tile readers will get it from there
+		BasicTileReaderInput [][] centeredTileReaderInput = new BasicTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				centeredTileReaderInput[i][j] = new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], 
+						settings, new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
+			}
+		}
+
+
+
+
+
+
+
+
 		//
 		//--------------------------------------------------
 		//
@@ -226,13 +294,13 @@ public class BasicProfileInverted extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				readerOutputs[i][j] = BasicTileReaderInverted.processTile(
-						new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				readerOutputs[i][j] = BasicTileReaderInverted.processTile(centeredTileReaderInput[i][j].clone());
+				//new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				if(readerOutputs[i][j].colonySize>0){
 
-					opacityReaderOutputs[i][j] = OpacityTileReader.processTile(
-							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j],settings));
+					opacityReaderOutputs[i][j] = OpacityTileReader.processTile(new OpacityTileReaderInput(centeredTileReaderInput[i][j]));
+					//new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j],settings));
 				}
 				else
 				{
@@ -252,22 +320,22 @@ public class BasicProfileInverted extends Profile {
 			System.err.print("Image segmentation algorithm failed:\n");
 			System.err.println("\ttoo many empty rows/columns");
 
-			
+
 			/*
 			//calculate and save grid image
-			
+
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
 			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
-			
-			
+
+
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
-			
+
 			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 
 			return;
-			*/
+			 */
 			System.err.println("\twarning: writing iris file anyway");
 		}
 
@@ -312,15 +380,16 @@ public class BasicProfileInverted extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			
-			
+
+
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
 			croppedImageColor = ColonyBreathing.paintSegmentedImage(croppedImageColor, segmentationOutput);
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
-			
+
 			Toolbox.drawColonyBounds(croppedImageColor, segmentationOutput, readerOutputs);
+			drawCenterRoiBounds(croppedImageColor, segmentationOutput, opacityReaderOutputs);
 			croppedImageColor = Toolbox.invertImage(croppedImageColor);
-			
+
 			Toolbox.savePicture(croppedImageColor, filename + ".grid.jpg");
 		}
 
@@ -641,8 +710,8 @@ public class BasicProfileInverted extends Profile {
 		//		
 		//		return(rotatedOriginalImage);
 	}
-	
-	
+
+
 	/**
 	 * This function calculates the minimum and maximum grid distances according to the
 	 * cropped image size and
@@ -671,6 +740,106 @@ public class BasicProfileInverted extends Profile {
 		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*4/3);
 
 	}
+
+
+
+
+
+	/**
+	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
+	 * offsets found in the segmenterOutput.  
+	 * @param segmentedImage
+	 * @param segmenterOutput
+	 */
+	private static void drawCenterRoiBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, 
+			BasicTileReaderOutput [][] tileReaderOutputs){
+
+
+		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
+		ByteProcessor[][] colonyBounds = getCenterRoiBounds(croppedImage, segmenterOutput, tileReaderOutputs);
+
+
+		//paint those bounds on the original cropped image
+		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
+		//bigPictureProcessor.setColor(Color.black);
+		bigPictureProcessor.setColor(Color.red);
+		bigPictureProcessor.setLineWidth(1);
+
+
+		//for all rows
+		for(int i=0; i<tileReaderOutputs.length; i++){
+			//for all columns
+			for(int j=0; j<tileReaderOutputs[0].length; j++) {
+
+				//get tile offsets
+				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
+				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
+				int tileWidth = segmenterOutput.ROImatrix[i][j].getBounds().width;
+				int tileHeight = segmenterOutput.ROImatrix[i][j].getBounds().height;
+
+
+				//for each pixel, if it is colony bounds, paint it on the big picture
+				for(int x=0; x<tileWidth; x++){
+					for(int y=0; y<tileHeight; y++){
+						if(colonyBounds[i][j].getPixel(x, y)==255){ //it is a colony bounds pixel
+							bigPictureProcessor.drawDot(x+tile_x_offset, y+tile_y_offset); //paint it on the big picture
+						}
+					}
+				}
+
+			}
+
+		}
+	}
+
+
+	/**
+	 * 
+	 * @param croppedImage
+	 * @param segmentationOutput
+	 * @param tileReaderOutputs
+	 * @return
+	 */
+	private static ByteProcessor[][] getCenterRoiBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
+
+		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
+
+		//for all rows
+		for(int i=0;i<tileReaderOutputs.length; i++){
+			//for all columns
+			for (int j = 0; j<tileReaderOutputs[0].length; j++) {
+
+				//get the tile
+				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
+				croppedImage.copy(false);
+				ImagePlus tile = ImagePlus.getClipboard();
+
+
+				//apply the ROI, get the mask
+				ImageProcessor tileProcessor = tile.getProcessor();
+				tileProcessor.setRoi(tileReaderOutputs[i][j].centerROI);
+
+				tileProcessor.setColor(Color.white);
+				tileProcessor.setBackgroundValue(0);
+				tileProcessor.fill(tileProcessor.getMask());
+
+
+				//get the bounds of the mask, that's it, save it
+				tileProcessor.findEdges();
+				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
+
+
+			}
+		}
+
+		croppedImage.deleteRoi();
+
+		return(colonyBounds);
+	}
+
+
+
+
 
 
 }
