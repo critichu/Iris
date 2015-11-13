@@ -286,6 +286,10 @@ public class EcoliOpacityProfile384 extends Profile {
 		//create an array of measurement outputs
 		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 
+		//in Mori's paper they used 17px diameter (fishy at best, since diameter is 2*radius and radius is an integer)
+		//they mention this corresponds to 1mm, but 1mm in our camera corresponds to 37.5 pixels 
+		OpacityTileReader.diameter = 38;
+		
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns

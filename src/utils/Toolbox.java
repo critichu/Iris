@@ -325,7 +325,7 @@ public class Toolbox {
 			for(int j=0; j<tileReaderOutputs[0].length; j++) {
 
 				if(tileReaderOutputs[i][j].colonySize==0)
-					continue; //don't go through the trouble for emtpy tiles
+					continue; //don't go through the trouble for empty tiles
 
 				//get tile offsets
 				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
