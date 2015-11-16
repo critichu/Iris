@@ -30,6 +30,19 @@ public class BasicTileReaderOutput{
 	public Roi colonyROI = null;
 	
 	/**
+	 * the ROI that describes the biggest circle that can be contained in the above colony ROI
+	 * this we need for colonies with tons of protrusions
+	 */
+	public Roi colonyROIround = null;
+	
+	
+	/**
+	 * This is the size of the above ROI
+	 */
+	public int colonyRoundSize = 0;
+	
+	
+	/**
 	 * the ROI that describes the center of the colony
 	 */
 	public Roi centerROI = null;
@@ -73,6 +86,8 @@ public class BasicTileReaderOutput{
 	 * "process defined tile" function 
 	 */
 	public Point colonyCenter = null;
+
+	
 	
 	
 	

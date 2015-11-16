@@ -5,6 +5,7 @@ package tileReaders;
 
 import fiji.threshold.Auto_Local_Threshold;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
@@ -50,23 +51,23 @@ public class BasicTileReader_Bsu {
 
 		//-1. make a copy of the input tile, in case we need to pass it to HoughCircleFinder
 		ImagePlus tileCopy = input.tileImage.duplicate();
-		
+
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
-		
+
 		ImagePlus thresholded_tile = tileCopy.duplicate();
 		//turnImageBW_Local_auto(thresholded_tile);
 		Toolbox.turnImageBW_Otsu_auto(thresholded_tile);
 		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
-		
+
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
 
 		//1. apply a threshold at the tile, using a local thresholding algorithm
 		//turnImageBW_Huang_auto(input.tileImage);
-		
+
 		//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
 
 
@@ -125,7 +126,7 @@ public class BasicTileReader_Bsu {
 		output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
 		output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = rois[indexOfBiggestParticle];
-		
+
 		//only calculate a new center if one wasn't given already at the input
 		if(input.colonyCenter==null){
 			output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy);//Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
@@ -133,7 +134,21 @@ public class BasicTileReader_Bsu {
 		else{
 			output.colonyCenter = new Point(input.colonyCenter);
 		}
+
+		//get minimum radius
+		Point[] colonyRoiPerimeter = Toolbox.getRoiEdgePoints(input.tileImage.duplicate().duplicate(), output.colonyROI);
+		double minimumDistance = Toolbox.getMinimumPointDistance(output.colonyCenter, colonyRoiPerimeter);
+		//double medianDistance = Toolbox.getMedianPointDistance(output.colonyCenter, colonyRoiPerimeter);
 		
+		
+		output.colonyROIround = new OvalRoi(
+				output.colonyCenter.x-minimumDistance, 
+				output.colonyCenter.y -minimumDistance, 
+				minimumDistance*2, minimumDistance*2);
+		
+		
+		output.colonyRoundSize = (int)Math.round(Math.PI*Math.pow(minimumDistance, 2));
+
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 
@@ -145,7 +160,7 @@ public class BasicTileReader_Bsu {
 		//should be very far from the center of the tile
 
 	}
-	
+
 
 	/**
 	 * Called as a pre-run to retrieve the colony centers
@@ -157,23 +172,23 @@ public class BasicTileReader_Bsu {
 
 		//-1. make a copy of the input tile, in case we need to pass it to HoughCircleFinder
 		ImagePlus tileCopy = input.tileImage.duplicate();
-		
+
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
-		
+
 		ImagePlus thresholded_tile = tileCopy.duplicate();
 		//turnImageBW_Local_auto(thresholded_tile);
 		Toolbox.turnImageBW_Otsu_auto(thresholded_tile);
 		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
-		
+
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
 
 		//1. apply a threshold at the tile, using a local thresholding algorithm
 		//turnImageBW_Huang_auto(input.tileImage);
-		
+
 		//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
 
 
@@ -233,7 +248,7 @@ public class BasicTileReader_Bsu {
 		output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = rois[indexOfBiggestParticle];
 		output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy);//Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
-		
+
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 

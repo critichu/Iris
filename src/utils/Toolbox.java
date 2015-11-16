@@ -28,6 +28,7 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -251,6 +252,56 @@ public class Toolbox {
 
 		return(aDuplicate);
 	}
+	
+	
+	/**
+	 * This function will return the list of the points in the periphery of the given ROI
+	 * @param tileImage
+	 * @param roiOfInterest
+	 * @return
+	 */
+	public static Point[] getRoiEdgePoints(ImagePlus tileImage, Roi roiOfInterest){
+		//apply the ROI, get the mask
+		ImageProcessor tileProcessor = tileImage.getProcessor();
+		tileProcessor.setRoi(roiOfInterest);
+
+		tileProcessor.setColor(Color.white);
+		tileProcessor.setBackgroundValue(0);
+		tileProcessor.fill(tileProcessor.getMask());
+
+
+		//get the bounds of the mask, that's it, save it
+		tileProcessor.findEdges();
+		
+//		int minX = roiOfInterest.getBounds().x;
+//		int minY = roiOfInterest.getBounds().y;
+//		int maxX = roiOfInterest.getBounds().width  + minX;
+//		int maxY = roiOfInterest.getBounds().height + minY;
+		
+		int minX = 0;
+		int minY = 0;
+		int maxX = tileImage.getWidth();
+		int maxY = tileImage.getHeight();
+				
+				
+		//in this object, white pixels are the perimeter of the ROI, everything else is black
+		ByteProcessor bwRoiPerimeter = (ByteProcessor) tileProcessor.convertToByte(true);
+		
+		
+		ArrayList<Point> perimeterPoints = new ArrayList<Point>();
+		
+		for(int i=minX; i<=maxX; i++){
+			for (int j=minY; j<=maxY; j++) {
+				if(bwRoiPerimeter.getPixel(i, j)==255){
+					perimeterPoints.add(new Point(i, j));
+				}
+			}
+		}
+		
+		
+		Point[] dummy = new Point[perimeterPoints.size()];
+		return(perimeterPoints.toArray(dummy));
+	}
 
 
 	/**
@@ -367,6 +418,57 @@ public class Toolbox {
 	}
 
 
+
+	/**
+	 * @param colonyCenter
+	 * @param colonyRoiPerimeter
+	 * @return
+	 */
+	public static double getMinimumPointDistance(Point colonyCenter,
+			Point[] colonyRoiPerimeter) {
+		
+		if(colonyRoiPerimeter==null || colonyRoiPerimeter.length==0)
+			return(0);
+
+		ArrayList<Double> distances = new ArrayList<Double>();
+
+		for(int i=0; i<colonyRoiPerimeter.length; i++){
+			distances.add(Point2D.distance(
+					colonyCenter.getX(), colonyCenter.getY(), 
+					colonyRoiPerimeter[i].getX(), colonyRoiPerimeter[i].getY()));
+		}
+
+		Collections.sort(distances);
+
+
+		return(distances.get(0));		
+	}
+
+	/**
+	 * @param colonyCenter
+	 * @param colonyRoiPerimeter
+	 * @return
+	 */
+	public static double getMedianPointDistance(Point colonyCenter,
+			Point[] colonyRoiPerimeter) {
+
+		ArrayList<Double> distances = new ArrayList<Double>();
+
+		for(int i=0; i<colonyRoiPerimeter.length; i++){
+			distances.add(Point2D.distance(
+					colonyCenter.getX(), colonyCenter.getY(), 
+					colonyRoiPerimeter[i].getX(), colonyRoiPerimeter[i].getY()));
+		}
+
+		Collections.sort(distances);
+
+		int medianLocation = (int) Math.floor((double)colonyRoiPerimeter.length/2.0);		
+		return(distances.get(medianLocation));
+
+	}
+
+	
+	
 
 	/**
 	 * This method gets a subset of that picture (for faster execution), and calculates the rotation of that part

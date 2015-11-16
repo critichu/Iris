@@ -250,7 +250,21 @@ public class ColorTileReaderHSB {
 				output.colonyCenter.y -diameter/2, 
 				diameter, diameter);
 
+		//get minimum radius
+		Point[] colonyRoiPerimeter = Toolbox.getRoiEdgePoints(input.tileImage.duplicate(), output.colonyROI);
+		double minimumDistance = Toolbox.getMinimumPointDistance(output.colonyCenter, colonyRoiPerimeter);
+		//double medianDistance = Toolbox.getMedianPointDistance(output.colonyCenter, colonyRoiPerimeter);
 
+		output.colonyROIround = new OvalRoi(
+				output.colonyCenter.x-minimumDistance, 
+				output.colonyCenter.y -minimumDistance, 
+				minimumDistance*2, minimumDistance*2);
+
+		output.colonyRoundSize = (int)Math.round(Math.PI*Math.pow(minimumDistance, 2));
+
+		if(output.colonyRoundSize!=0)
+			output.relativeColorIntensityForRoundSize = (double) colonyColorSum / (double) output.colonyRoundSize;
+		
 
 		colorTile.flush();
 		input.cleanup();

@@ -29,10 +29,18 @@ public class ColorTileReaderOutput extends BasicTileReaderOutput {
 	
 	
 	/**
-	 * This is the logarithm of the color intensity sum for the whole colony divided by
+	 * This is the color intensity sum for the whole colony divided by
 	 * the size of the colony itself
 	 */
 	public double relativeColorIntensity = 0;
+	
+	
+	/**
+	 * This is the color intensity sum for the whole colony divided by
+	 * the area of the biggest disk that can fit into the colony 
+	 */
+	public double relativeColorIntensityForRoundSize = 0;
+
 
 	
 	/**
