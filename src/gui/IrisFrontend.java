@@ -58,6 +58,7 @@ public class IrisFrontend {
 		"Biofilm formation Ecoli",
 		"Biofilm formation Ecoli Natural Isolates",
 		"Morphology Profile [Candida 96-plates]",
+		"Morphology Profile [Salmonella 96-plates]",
 		"Xgal assay 96",
 		"Xgal assay 384",
 		"Xgal assay 1536",
@@ -80,12 +81,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.4.91";
+	public static String IrisVersion = "0.9.4.92";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "febd5bb";
+	public static String IrisBuild = "c088eac";
 
 
 	/**

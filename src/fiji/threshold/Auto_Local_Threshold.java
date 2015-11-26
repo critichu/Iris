@@ -220,7 +220,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		return new Object[] {imp};
 	}
 
-	void Bernsen(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite ) {
+	 public static void Bernsen(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite ) {
 		// Bernsen recommends WIN_SIZE = 31 and CONTRAST_THRESHOLD = 15.
 		//  1) Bernsen J. (1986) "Dynamic Thresholding of Grey-Level Images" 
 		//    Proc. of the 8th Int. Conf. on Pattern Recognition, pp. 1251-1255
@@ -279,7 +279,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		return;
 	}
 
-	void Contrast(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
+	 public static void Contrast(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
 		// G. Landini, 2013
 		// Based on a simple contrast toggle. This procedure does not have user-provided paramters other than the kernel radius
 		// Sets the pixel value to either white or black depending on whether its current value is closest to the local Max or Min respectively
@@ -361,7 +361,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		return;
 	}
 
-	void Median(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite ) {
+	public static void Median(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite ) {
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
 		ImagePlus Medianimp;
@@ -398,7 +398,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		return;
 	}
 
-	void MidGrey(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite ) {
+	public static void MidGrey(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite ) {
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
 		ImagePlus Maximp, Minimp;
@@ -442,7 +442,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		return;
 	}
 
-	void Niblack(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite  ) {
+	public static void Niblack(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite  ) {
 		// Niblack recommends K_VALUE = -0.2 for images with black foreground 
 		// objects, and K_VALUE = +0.2 for images with white foreground objects.
 		//  Niblack W. (1986) "An introduction to Digital Image Processing" Prentice-Hall.
@@ -502,7 +502,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		return;
 	}
 
-	void Otsu(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
+	public static void Otsu(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
 		// Otsu's threshold algorithm
 		// C++ code by Jordan Bevik <Jordan.Bevic@qtiworld.com>
 		// ported to ImageJ plugin by G.Landini. Same algorithm as in Auto_Threshold, this time on local circular regions
@@ -591,7 +591,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		for (position=0; position<w*h; position++) pixels[position]=pixelsOut[position]; //update with thresholded pixels
 	}
 
-	void Phansalkar(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
+	public static void Phansalkar(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
 		// This is a modification of Sauvola's thresholding method to deal with low contrast images.
 		// Phansalskar N. et al. Adaptive local thresholding for detection of nuclei in diversity stained
 		// cytology images.International Conference on Communications and Signal Processing (ICCSP), 2011, 

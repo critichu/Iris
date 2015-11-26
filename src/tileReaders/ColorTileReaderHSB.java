@@ -265,6 +265,15 @@ public class ColorTileReaderHSB {
 		if(output.colonyRoundSize!=0)
 			output.relativeColorIntensityForRoundSize = (double) colonyColorSum / (double) output.colonyRoundSize;
 		
+		
+		
+		//if the minimum radius is less than the colony center radius, don't output a colonyCenter ROI
+		if((2*minimumDistance) < diameter){
+			output.centerAreaColor = 0;
+			output.centerAreaOpacity = 0;
+			output.centerROI = null;
+		}
+		
 
 		colorTile.flush();
 		input.cleanup();
@@ -377,7 +386,7 @@ public class ColorTileReaderHSB {
 		//
 
 		//4. separate the color channels, calculate relative color intensity of red
-		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(input.tileImage, 2, 1, (float)1, (float)2); ///
+		//byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(input.tileImage, 2, 1, (float)1, (float)2); ///
 		//byte[] relativeColorIntensity_includingBrightness = calculateRelativeColorIntensity(input.tileImage, 2, 1);
 
 		//but because colonies get darker with accumulation of congo red..		
@@ -402,13 +411,17 @@ public class ColorTileReaderHSB {
 		int colonyColorSum = 0;
 		int biofilmPixelCount = 0;
 		int biofilmColorSum = 0;
+		
 
-		for(int i=0;i<pixelBiofilmScores.length;i++){
+		//get pixel color values again, this time by means of integer values
+		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(input.tileImage, input.colonyRoi, 2, 1, (float)1, (float)2);
 
-			int pixelBiofilmScoreByteValue = pixelBiofilmScores[i]&0xFF;
+		for(int i=0;i<pixelBiofilmScores_float.length;i++){
+
+			float pixelBiofilmScoreByteValue = pixelBiofilmScores_float[i];
 
 			if(pixelBiofilmScoreByteValue>0){
-				colonyColorSum += pixelBiofilmScoreByteValue;
+				colonyColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
 			}
 			else{
 				continue;
@@ -416,13 +429,10 @@ public class ColorTileReaderHSB {
 
 			if(pixelBiofilmScoreByteValue>input.settings.colorThreshold){
 				biofilmPixelCount++;
-				biofilmColorSum += pixelBiofilmScoreByteValue;
+				biofilmColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
 			}
 		}
-
-		//get pixel color values again, this time by means of integer values
-		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(input.tileImage, input.colonyRoi, 2, 1, (float)1, (float)2);
-
+		
 
 
 		//7. also get an estimate of the colony color, through random pixel sampling, this should be 1000 pixels 
@@ -453,6 +463,9 @@ public class ColorTileReaderHSB {
 		//divide by the number of samples
 		double meanSampleColor = sampleColorSum/(double)numerOfSamplesInBounds;
 
+		
+		
+		
 
 
 
@@ -469,14 +482,21 @@ public class ColorTileReaderHSB {
 		//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
 
 
-
 		//also get the center area color
 		output.centerAreaColor = getAverageCenterAreaColor(input.tileImage, input.colonyCenter, diameter);
 
 		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
-		imageConverter.convertToGray8();		
+		imageConverter.convertToGray8();
+		
+		if(input.colonyCenter==null){
+			output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy.duplicate());//getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+		}
+		else{
+			output.colonyCenter = new Point(input.colonyCenter);
+		}
+		
 		output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 
 

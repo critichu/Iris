@@ -148,6 +148,8 @@ public class BasicTileReader_Bsu {
 		
 		
 		output.colonyRoundSize = (int)Math.round(Math.PI*Math.pow(minimumDistance, 2));
+		
+			
 
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore

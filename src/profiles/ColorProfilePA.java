@@ -128,7 +128,7 @@ public class ColorProfilePA extends Profile{
 		ImagePlus grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 
 		//get a copy of the picture thresholded using a local algorithm
-		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
+		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto_mean(grayscaleCroppedImage, 65);
 
 
 		//
@@ -147,7 +147,7 @@ public class ColorProfilePA extends Profile{
 
 			colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
-			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
+			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto_mean(grayscaleCroppedImage, 65);
 			segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
 			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
@@ -158,7 +158,7 @@ public class ColorProfilePA extends Profile{
 
 			colourCroppedImage = NaiveImageCropper.cropPlate(rotatedImage);
 			grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
-			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
+			BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto_mean(grayscaleCroppedImage, 65);
 			segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
 			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 

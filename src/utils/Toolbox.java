@@ -35,7 +35,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import settings.ColorSettings;
+import tileReaderInputs.BasicTileReaderInput;
+import tileReaderInputs.ColorTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
+import tileReaders.BasicTileReader_Bsu;
 
 import com.opencsv.CSVReader;
 
@@ -158,7 +162,7 @@ public class Toolbox {
 	 * @see http://www.dentistry.bham.ac.uk/landinig/software/autothreshold/autothreshold.html
 	 * @param 
 	 */
-	public static ImagePlus turnImageBW_Local_auto(ImagePlus originalImage, int radius){
+	public static ImagePlus turnImageBW_Local_auto_mean(ImagePlus originalImage, int radius){
 		ImagePlus imageToThreshold = originalImage.duplicate();
 
 		//convert the image to grayscale
@@ -167,6 +171,45 @@ public class Toolbox {
 
 
 		Auto_Local_Threshold.Mean(imageToThreshold, radius, 0, 0, true);
+		imageToThreshold.setTitle(originalImage.getTitle());
+
+		return(imageToThreshold);
+	}
+	
+	
+	/**
+	 * This function will convert the given picture into black and white
+	 * using a fancy local thresholding algorithm, as described here:
+	 * @see http://www.dentistry.bham.ac.uk/landinig/software/autothreshold/autothreshold.html
+	 * @param 
+	 */
+	public static ImagePlus turnImageBW_Local_auto(ImagePlus originalImage, int radius, String method){
+		ImagePlus imageToThreshold = originalImage.duplicate();
+
+		//convert the image to grayscale
+		ImageConverter converter = new ImageConverter(imageToThreshold);
+		converter.convertToGray8();
+
+
+		if(method=="Mean"){
+			Auto_Local_Threshold.Mean(imageToThreshold, radius, 0, 0, false);
+		}
+		if(method=="Bernsen"){
+			Auto_Local_Threshold.Bernsen(imageToThreshold, radius, 0, 0, false);
+		}
+		if(method=="Median"){
+			Auto_Local_Threshold.Median(imageToThreshold, radius, 0, 0, false);
+		}
+		if(method=="Niblack"){
+			Auto_Local_Threshold.Niblack(imageToThreshold, radius, 0, 0, false);
+		}
+		if(method=="MidGrey"){
+			Auto_Local_Threshold.MidGrey(imageToThreshold, radius, 0, 0, false);
+		}
+		if(method=="Otsu"){
+			Auto_Local_Threshold.Otsu(imageToThreshold, radius, 0, 0, false);
+		}
+		imageToThreshold.updateImage();
 		imageToThreshold.setTitle(originalImage.getTitle());
 
 		return(imageToThreshold);
@@ -252,8 +295,8 @@ public class Toolbox {
 
 		return(aDuplicate);
 	}
-	
-	
+
+
 	/**
 	 * This function will return the list of the points in the periphery of the given ROI
 	 * @param tileImage
@@ -272,24 +315,24 @@ public class Toolbox {
 
 		//get the bounds of the mask, that's it, save it
 		tileProcessor.findEdges();
-		
-//		int minX = roiOfInterest.getBounds().x;
-//		int minY = roiOfInterest.getBounds().y;
-//		int maxX = roiOfInterest.getBounds().width  + minX;
-//		int maxY = roiOfInterest.getBounds().height + minY;
-		
+
+		//		int minX = roiOfInterest.getBounds().x;
+		//		int minY = roiOfInterest.getBounds().y;
+		//		int maxX = roiOfInterest.getBounds().width  + minX;
+		//		int maxY = roiOfInterest.getBounds().height + minY;
+
 		int minX = 0;
 		int minY = 0;
 		int maxX = tileImage.getWidth();
 		int maxY = tileImage.getHeight();
-				
-				
+
+
 		//in this object, white pixels are the perimeter of the ROI, everything else is black
 		ByteProcessor bwRoiPerimeter = (ByteProcessor) tileProcessor.convertToByte(true);
-		
-		
+
+
 		ArrayList<Point> perimeterPoints = new ArrayList<Point>();
-		
+
 		for(int i=minX; i<=maxX; i++){
 			for (int j=minY; j<=maxY; j++) {
 				if(bwRoiPerimeter.getPixel(i, j)==255){
@@ -297,8 +340,8 @@ public class Toolbox {
 				}
 			}
 		}
-		
-		
+
+
 		Point[] dummy = new Point[perimeterPoints.size()];
 		return(perimeterPoints.toArray(dummy));
 	}
@@ -426,7 +469,7 @@ public class Toolbox {
 	 */
 	public static double getMinimumPointDistance(Point colonyCenter,
 			Point[] colonyRoiPerimeter) {
-		
+
 		if(colonyRoiPerimeter==null || colonyRoiPerimeter.length==0)
 			return(0);
 
@@ -467,8 +510,8 @@ public class Toolbox {
 
 	}
 
-	
-	
+
+
 
 	/**
 	 * This method gets a subset of that picture (for faster execution), and calculates the rotation of that part
@@ -614,6 +657,80 @@ public class Toolbox {
 
 		return(threshold);
 	}
+	
+	/**
+	 * This function will convert the given picture into black and white
+	 * using the Otsu method. This version will also return the threshold found.
+	 * @param 
+	 */
+	public static ImagePlus turnImageBW(ImagePlus grayscaleImage, String method) {
+		
+		ImagePlus grayscaleImage_copy = grayscaleImage.duplicate();
+		
+		Calibration calibration = new Calibration(grayscaleImage_copy);
+
+		//2 things can go wrong here, the image processor and the 2nd argument (mOptions)
+		ImageProcessor imageProcessor = grayscaleImage_copy.getProcessor();
+
+		ImageStatistics statistics = ImageStatistics.getStatistics(imageProcessor, ij.measure.Measurements.MEAN, calibration);
+		int[] histogram = statistics.histogram;
+
+		AutoThresholder at = new AutoThresholder();
+		int threshold = 0; 
+		
+		if(method=="Huang"){
+			threshold = at.getThreshold(Method.Huang, histogram);
+		}
+		if(method=="IJ_IsoData"){
+			threshold = at.getThreshold(Method.IJ_IsoData, histogram);
+		}
+		if(method=="Intermodes"){
+			threshold = at.getThreshold(Method.Intermodes, histogram);
+		}
+		if(method=="Li"){
+			threshold = at.getThreshold(Method.Li, histogram);
+		}
+		if(method=="MaxEntropy"){
+			threshold = at.getThreshold(Method.MaxEntropy, histogram);
+		}
+		if(method=="Mean"){
+			threshold = at.getThreshold(Method.Mean, histogram);
+		}
+		if(method=="MinError"){
+			threshold = at.getThreshold(Method.MinError, histogram);
+		}
+		if(method=="Minimum"){
+			threshold = at.getThreshold(Method.Minimum, histogram);
+		}
+		if(method=="Moments"){
+			threshold = at.getThreshold(Method.Moments, histogram);
+		}
+		if(method=="Otsu"){
+			threshold = at.getThreshold(Method.Otsu, histogram);
+		}
+		if(method=="Percentile"){
+			threshold = at.getThreshold(Method.Percentile, histogram);
+		}
+		if(method=="RenyiEntropy"){
+			threshold = at.getThreshold(Method.RenyiEntropy, histogram);
+		}
+		if(method=="Shanbhag"){
+			threshold = at.getThreshold(Method.Shanbhag, histogram);
+		}
+		if(method=="Yen"){
+			threshold = at.getThreshold(Method.Yen, histogram);
+		}
+		
+		
+		
+		imageProcessor.threshold(threshold);
+		grayscaleImage_copy.updateImage();
+		//BW_croppedImage.updateAndDraw();
+
+		return(grayscaleImage_copy);
+	}
+	
+	
 
 
 
@@ -1251,78 +1368,275 @@ public class Toolbox {
 			BW_tile.getProcessor().erode();
 			BW_tile.getProcessor().erode();
 			BW_tile.getProcessor().erode();
-			
+
 			ResultsTable my_ResultsTable = new ResultsTable();
 			RoiManager my_RoiManager = Toolbox.particleAnalysis_fillHoles(BW_tile, my_ResultsTable);
-			
+
 			int indexOfBiggestParticle = getIndexOfBiggestParticle(my_ResultsTable);
 			pointToReturn = getBiggestParticleCenterOfMass(my_ResultsTable, indexOfBiggestParticle);
 		}
 		return(pointToReturn);
 	}
-	
-	
-	
-	/**
-     * Calculates the median of the given values. For a sample with an odd
-     * number of elements the median is the mid-point value of the 
-     * sorted sample. For an even number of elements it is the mean of
-     * the two values on either side of the mid-point. 
-     * 
-     * Modified from org.jaitools.SampleStats.
-     * 
-     * 
-     * @param values sample values (need not be pre-sorted)
-     * @param valueToIgnore this value will be removed from the set before calculating the median
-     * @param ignoreValue whether or not to ignore the given value
-     * @return median value or Double.NaN if the sample is empty
-     * 
-     * 
-     */
-    @SuppressWarnings("empty-statement")
-    public static double median(Double[] values, Double valueToIgnore, boolean ignoreValue) {
-        if (values == null) {
-            return Double.NaN;
-        }
-        
-        List<Double> nonNaNValues = org.jaitools.CollectionFactory.list();
-        nonNaNValues.addAll(Arrays.asList(values));
-        if (ignoreValue) {
-            while (nonNaNValues.remove(valueToIgnore)) /* deliberately empty */ ;
-        }
-        
-        if (nonNaNValues.isEmpty()) {
-            return Double.NaN;
-        } else if (nonNaNValues.size() == 1) {
-            return nonNaNValues.get(0);
-        } else if (nonNaNValues.size() == 2) {
-            return (nonNaNValues.get(0) + nonNaNValues.get(1)) / 2;
-        }
-        
-        Collections.sort(nonNaNValues);
-        
-        int midHi = nonNaNValues.size() / 2;
-        int midLo = midHi - 1;
-        boolean even = nonNaNValues.size() % 2 == 0;
 
-        Double result = 0.0d;
-        int k = 0;
-        for (Double val : nonNaNValues) {
-            if (k == midHi) {
-                if (!even) {
-                    return val;
-                } else {
-                    result += val;
-                    return result / 2;
-                }
-            } else if (even && k == midLo) {
-                result += val;
-            }
-            k++ ;
-        }
-        
-        return 0;  // to suppress compiler warning
-    }
+
+
+	/**
+	 * Calculates the median of the given values. For a sample with an odd
+	 * number of elements the median is the mid-point value of the 
+	 * sorted sample. For an even number of elements it is the mean of
+	 * the two values on either side of the mid-point. 
+	 * 
+	 * Modified from org.jaitools.SampleStats.
+	 * 
+	 * 
+	 * @param values sample values (need not be pre-sorted)
+	 * @param valueToIgnore this value will be removed from the set before calculating the median
+	 * @param ignoreValue whether or not to ignore the given value
+	 * @return median value or Double.NaN if the sample is empty
+	 * 
+	 * 
+	 */
+	@SuppressWarnings("empty-statement")
+	public static double median(Double[] values, Double valueToIgnore, boolean ignoreValue) {
+		if (values == null) {
+			return Double.NaN;
+		}
+
+		List<Double> nonNaNValues = org.jaitools.CollectionFactory.list();
+		nonNaNValues.addAll(Arrays.asList(values));
+		if (ignoreValue) {
+			while (nonNaNValues.remove(valueToIgnore)) /* deliberately empty */ ;
+		}
+
+		if (nonNaNValues.isEmpty()) {
+			return Double.NaN;
+		} else if (nonNaNValues.size() == 1) {
+			return nonNaNValues.get(0);
+		} else if (nonNaNValues.size() == 2) {
+			return (nonNaNValues.get(0) + nonNaNValues.get(1)) / 2;
+		}
+
+		Collections.sort(nonNaNValues);
+
+		int midHi = nonNaNValues.size() / 2;
+		int midLo = midHi - 1;
+		boolean even = nonNaNValues.size() % 2 == 0;
+
+		Double result = 0.0d;
+		int k = 0;
+		for (Double val : nonNaNValues) {
+			if (k == midHi) {
+				if (!even) {
+					return val;
+				} else {
+					result += val;
+					return result / 2;
+				}
+			} else if (even && k == midLo) {
+				result += val;
+			}
+			k++ ;
+		}
+
+		return 0;  // to suppress compiler warning
+	}
+
+
+
+	/**
+	 * Does what it says in the box.
+	 * Will make a copy of your input image, so no worries there
+	 * @param inputImage
+	 * @return
+	 */
+	public static ImagePlus makeImageGrayscaleHSB(ImagePlus inputImage){
+		ImagePlus grayscaleImage = inputImage.duplicate();
+
+		ImageProcessor ip =  grayscaleImage.getProcessor();
+		ColorProcessor cp = (ColorProcessor)ip;
+
+		//get the number of pixels in the tile
+		int width = grayscaleImage.getWidth();
+		int height = grayscaleImage.getHeight();
+		int numPixels = width*height;
+
+		//we need those to save into
+		byte[] hSource = new byte[numPixels];
+		byte[] sSource = new byte[numPixels];
+		byte[] bSource = new byte[numPixels];
+
+		//saves the channels of the cp into the h, s, bSource
+		cp.getHSB(hSource,sSource,bSource);
+
+		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
+		grayscaleImage = new ImagePlus("", bpBri);
+		
+		return(grayscaleImage);
+	}
+
+	/**
+	 * This function will calculate the colony centers using a very basic technique,
+	 * then will get the median of 
+	 * @return
+	 */
+	public static ColorTileReaderInput [][] precalculateColonyCenters(ImagePlus inputCroppedImage, BasicImageSegmenterOutput segmentationOutput, ColorSettings settings){
+
+		//initialize output
+		BasicTileReaderOutput [][] basicTileReaderOutputsCenters = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+
+		
+		//make input image grayscale (in case it wasn't)
+		ImagePlus grayscaleCroppedImage = makeImageGrayscaleHSB(inputCroppedImage);
+		
+
+		//for all rows
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			//for all columns
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				basicTileReaderOutputsCenters[i][j] = BasicTileReader_Bsu.getColonyCenter(
+						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+			}
+		}
+
+		//get the medians of all the rows and columns, ignore zeroes
+		//for all rows
+		ArrayList<Integer> rowYsMedians = new ArrayList<Integer>();
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			ArrayList<Double> rowYs = new ArrayList<Double>();
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					rowYs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.y);
+			}
+			Double[] simpleArray = new Double[ rowYs.size() ];
+			int rowMedian = (int) Toolbox.median(rowYs.toArray(simpleArray), 0.0, true);
+			rowYsMedians.add(rowMedian);
+		}
+
+		ArrayList<Integer> columnXsMedians = new ArrayList<Integer>();
+		for(int j=0; j<settings.numberOfColumnsOfColonies; j++){
+			ArrayList<Double> columnXs = new ArrayList<Double>();
+			for (int i = 0; i < settings.numberOfRowsOfColonies; i++) {
+				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+					columnXs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.x);
+			}
+			Double[] simpleArray = new Double[ columnXs.size() ];
+			int columnMedian = (int) Toolbox.median(columnXs.toArray(simpleArray), 0.0, true);
+			columnXsMedians.add(columnMedian);
+		}
+
+
+		//save the pre-calculated colony centers in a matrix of input to basic tile reader
+		//all the tile readers will get it from there
+		//BasicTileReaderInput [][] centeredTileReaderInput = new BasicTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		ColorTileReaderInput [][] centeredColorTileReaderInput = new ColorTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+				centeredColorTileReaderInput[i][j] = new ColorTileReaderInput(inputCroppedImage, segmentationOutput.ROImatrix[i][j], settings,
+						new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
+			}
+		}
+
+		return(centeredColorTileReaderInput);
+
+	}
+
+	/**
+	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
+	 * offsets found in the segmenterOutput.  
+	 * @param segmentedImage
+	 * @param segmenterOutput
+	 */
+	public static void drawColonyRoundBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, 
+			BasicTileReaderOutput [][] tileReaderOutputs){
+
+
+		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
+		ByteProcessor[][] colonyBounds = getColonyRoundBounds(croppedImage, segmenterOutput, tileReaderOutputs);
+
+
+		//paint those bounds on the original cropped image
+		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
+		//bigPictureProcessor.setColor(Color.black);
+		bigPictureProcessor.setColor(Color.green);
+		bigPictureProcessor.setLineWidth(1);
+
+
+		//for all rows
+		for(int i=0; i<tileReaderOutputs.length; i++){
+			//for all columns
+			for(int j=0; j<tileReaderOutputs[0].length; j++) {
+
+				//get tile offsets
+				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
+				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
+				int tileWidth = segmenterOutput.ROImatrix[i][j].getBounds().width;
+				int tileHeight = segmenterOutput.ROImatrix[i][j].getBounds().height;
+
+
+				//for each pixel, if it is colony bounds, paint it on the big picture
+				for(int x=0; x<tileWidth; x++){
+					for(int y=0; y<tileHeight; y++){
+						if(colonyBounds[i][j].getPixel(x, y)==255){ //it is a colony bounds pixel
+							bigPictureProcessor.drawDot(x+tile_x_offset, y+tile_y_offset); //paint it on the big picture
+						}
+					}
+				}
+
+			}
+
+		}
+	}
+	
+	
+
+	/**
+	 * 
+	 * @param croppedImage
+	 * @param segmentationOutput
+	 * @param tileReaderOutputs
+	 * @return
+	 */
+	public static ByteProcessor[][] getColonyRoundBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
+
+		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
+
+		//for all rows
+		for(int i=0;i<tileReaderOutputs.length; i++){
+			//for all columns
+			for (int j = 0; j<tileReaderOutputs[0].length; j++) {
+
+				//get the tile
+				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
+				croppedImage.copy(false);
+				ImagePlus tile = ImagePlus.getClipboard();
+
+
+				//apply the ROI, get the mask
+				ImageProcessor tileProcessor = tile.getProcessor();
+				tileProcessor.setRoi(tileReaderOutputs[i][j].colonyROIround);
+
+				tileProcessor.setColor(Color.white);
+				tileProcessor.setBackgroundValue(0);
+				tileProcessor.fill(tileProcessor.getMask());
+
+
+				//get the bounds of the mask, that's it, save it
+				tileProcessor.findEdges();
+				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
+
+
+			}
+		}
+
+		croppedImage.deleteRoi();
+
+		return(colonyBounds);
+	}
+
+
+
+
 
 
 

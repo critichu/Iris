@@ -136,7 +136,7 @@ public class ColorProfileEcoli extends Profile{
 		ImagePlus grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 
 		//get a copy of the picture thresholded using a local algorithm
-		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto(grayscaleCroppedImage, 65);
+		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto_mean(grayscaleCroppedImage, 65);
 
 
 		//

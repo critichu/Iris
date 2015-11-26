@@ -31,6 +31,7 @@ import profiles.EcoliOpacityProfile384;
 import profiles.EcoliOpacityProfile384_HazyColonies;
 import profiles.EcoliOpacityProfile96;
 import profiles.MorphologyProfileCandida96;
+import profiles.MorphologyProfileStm96;
 import profiles.OpacityProfile;
 import profiles.OpacityProfile2;
 import profiles.XgalProfile;
@@ -230,6 +231,11 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 		else if(profileName.equals("Morphology Profile [Candida 96-plates]")){
 			MorphologyProfileCandida96 morphologyProfile = new MorphologyProfileCandida96();
+			morphologyProfile.analyzePicture(filename);
+		}
+		
+		else if(profileName.equals("Morphology Profile [Salmonella 96-plates]")){
+			MorphologyProfileStm96 morphologyProfile = new MorphologyProfileStm96();
 			morphologyProfile.analyzePicture(filename);
 		}
 		
