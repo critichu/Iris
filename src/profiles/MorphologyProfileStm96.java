@@ -293,7 +293,11 @@ public class MorphologyProfileStm96 extends Profile {
 				"in agar size\t" +
 				"in agar circularity\t" +
 				"in agar opacity\t" + 
-				"whole tile opacity\n");
+				"whole tile opacity\t" +
+				"colony color intensity\t" +
+				"biofilm area size\t" +
+				"biofilm color intensity\t" +
+				"size normalized color intensity\n");
 		
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -309,7 +313,11 @@ public class MorphologyProfileStm96 extends Profile {
 						+ Integer.toString(readerOutputs[i][j].inAgarSize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].inAgarCircularity) + "\t"
 						+ Integer.toString(readerOutputs[i][j].inAgarOpacity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].wholeTileOpacity) + "\n");
+						+ Integer.toString(readerOutputs[i][j].wholeTileOpacity) + "\t"
+						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySum) + "\t"
+						+ Integer.toString(colorReaderOutputs[i][j].biofilmArea) + "\t"
+						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
+						+ String.format("%.3f", colorReaderOutputs[i][j].relativeColorIntensity) + "\n");
 			}
 		}
 
