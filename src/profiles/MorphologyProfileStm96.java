@@ -233,18 +233,21 @@ public class MorphologyProfileStm96 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				try{
+//				try{
 					readerOutputs[i][j] = MorphologyTileReaderStm.processTile(colonyCenteredInput[i][j]);
 							//new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
-				}catch(Exception e){
-					System.err.print("\tError getting morphology at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
-					readerOutputs[i][j] = new MorphologyTileReaderOutput();
-				}
+//				}catch(Exception e){
+//					System.err.print("\tError getting morphology at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
+//					readerOutputs[i][j] = new MorphologyTileReaderOutput();
+//					colorReaderOutputs[i][j] = new ColorTileReaderOutput();
+//				}
 				
 				if(readerOutputs[i][j].colonySize>0){
 					colorReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
 							new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], readerOutputs[i][j].colonyROI, 
 									readerOutputs[i][j].colonySize, readerOutputs[i][j].colonyCenter, settings));
+				} else {
+					colorReaderOutputs[i][j] = new ColorTileReaderOutput();
 				}
 				
 				//each generated tile image is cleaned up inside the tile reader

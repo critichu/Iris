@@ -218,9 +218,16 @@ public class MorphologyTileReaderStm {
 		//output.wholeTileOpacity = output.colonyOpacity; --> this is only for colonies with agar invasion 
 
 		//get minimum radius
-		Point[] colonyRoiPerimeter = Toolbox.getRoiEdgePoints(grayscaleTileCopy.duplicate(), output.colonyROI);
-		double minimumDistance = Toolbox.getMinimumPointDistance(output.colonyCenter, colonyRoiPerimeter);
-
+		
+		double minimumDistance = 0;
+		
+		//sometimes this fails
+		try{
+			Point[] colonyRoiPerimeter = Toolbox.getRoiEdgePoints(grayscaleTileCopy.duplicate(), output.colonyROI);
+			minimumDistance = Toolbox.getMinimumPointDistance(output.colonyCenter, colonyRoiPerimeter);
+		} catch(Exception e){
+			minimumDistance = 0;
+		}
 
 		output.colonyROIround = new OvalRoi(
 				output.colonyCenter.x-minimumDistance, 

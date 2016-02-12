@@ -11,7 +11,19 @@ import ij.gui.Roi;
  */
 public class MorphologyTileReaderOutput extends BasicTileReaderOutput {
 
+//			+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
+//			+ Integer.toString(readerOutputs[i][j].colonyOpacity) + "\t"
+//			+ Integer.toString(readerOutputs[i][j].morphologyScoreFixedNumberOfCircles) + "\t"
+//			+ Integer.toString(readerOutputs[i][j].morphologyScoreWholeColony) + "\t"
+//			+ String.format("%.3f", readerOutputs[i][j].normalizedMorphologyScore) + "\t"
+//			+ Integer.toString(readerOutputs[i][j].inAgarSize) + "\t"
+//			+ String.format("%.3f", readerOutputs[i][j].inAgarCircularity) + "\t"
+//			+ Integer.toString(readerOutputs[i][j].inAgarOpacity) + "\t"
+//			+ Integer.toString(readerOutputs[i][j].wholeTileOpacity) + "\n");
+			
 	
+	
+		
 	public int colonyOpacity = 0;
 	
 	/**
