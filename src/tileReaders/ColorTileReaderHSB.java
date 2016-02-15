@@ -480,25 +480,32 @@ public class ColorTileReaderHSB {
 		if(input.colonySize!=0)
 			output.relativeColorIntensity = (double) colonyColorSum / (double) input.colonySize;
 		//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
-
-
-		//also get the center area color
-		output.centerAreaColor = getAverageCenterAreaColor(input.tileImage, input.colonyCenter, diameter);
-
+		
 		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
 		
 		if(input.colonyCenter==null){
-			output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy.duplicate());//getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+			try{ output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy.duplicate()); }//getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+			catch(Exception e){ output.colonyCenter = null; }
 		}
 		else{
 			output.colonyCenter = new Point(input.colonyCenter);
 		}
-		
-		output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 
+		if(output.colonyCenter!=null){
+			output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
+			//also get the center area color
+			output.centerAreaColor = getAverageCenterAreaColor(input.tileImage, output.colonyCenter, diameter);
+		} else {
+			output.centerAreaOpacity = 0;
+			output.centerAreaColor = 0;
+		}
+
+
+		
+		
 
 
 

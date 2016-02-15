@@ -56,9 +56,9 @@ public class MorphologyProfileStm96 extends Profile {
 	 */
 	public ColorSettings settings = new ColorSettings(IrisFrontend.settings);
 
-	
-	
-	
+
+
+
 
 	/**
 	 * This function will analyze the picture using the basic profile
@@ -97,18 +97,18 @@ public class MorphologyProfileStm96 extends Profile {
 
 
 		//2. rotate the whole image
-//		double imageAngle = Toolbox.calculateImageRotation(originalImage);
-//
-//		//create a copy of the original image and rotate it, then clear the original picture
-//		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
-//		originalImage.flush();
-//
-//		//output how much the image needed to be rotated
-//		if(imageAngle!=0){
-//			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
-//		}
-		
-		
+		//		double imageAngle = Toolbox.calculateImageRotation(originalImage);
+		//
+		//		//create a copy of the original image and rotate it, then clear the original picture
+		//		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
+		//		originalImage.flush();
+		//
+		//		//output how much the image needed to be rotated
+		//		if(imageAngle!=0){
+		//			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
+		//		}
+
+
 		ImagePlus rotatedImage = originalImage.duplicate();
 		originalImage.flush();
 
@@ -122,15 +122,15 @@ public class MorphologyProfileStm96 extends Profile {
 		//3. crop the plate to keep only the colonies
 		//NaiveImageCropper.keepOnlyColoniesROI = new Roi(480, 520/*580*/, 3330, 2220);
 		//ImagePlus croppedImage = NaiveImageCropper.cropPlate(rotatedImage);
-//		GenericImageCropper.plateBorderSearchAreaRows = 50;
-//		GenericImageCropper.plateBorderSearchAreaColumns = 100;
-//		GenericImageCropper.searchStart = 0.035;
-//		GenericImageCropper.searchEnd = 0.065;
-//		GenericImageCropper.skip = 20;
+		//		GenericImageCropper.plateBorderSearchAreaRows = 50;
+		//		GenericImageCropper.plateBorderSearchAreaColumns = 100;
+		//		GenericImageCropper.searchStart = 0.035;
+		//		GenericImageCropper.searchEnd = 0.065;
+		//		GenericImageCropper.skip = 20;
 		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(550, 330, 4300, 2850);
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
-		
+
 		ImagePlus colorCroppedImage = croppedImage.duplicate(); //it's already rotated
 		//flush the rotated picture, we won't be needing it anymore
 		rotatedImage.flush();
@@ -145,7 +145,7 @@ public class MorphologyProfileStm96 extends Profile {
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
-		
+
 		//4b. also make BW the input to the image segmenter
 		ImagePlus BWimageToSegment = croppedImage.duplicate();
 		Toolbox.turnImageBW_Otsu_auto(BWimageToSegment);
@@ -162,22 +162,22 @@ public class MorphologyProfileStm96 extends Profile {
 		settings.numberOfColumnsOfColonies = 12;
 		SimpleImageSegmenter.offset = 10;
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
-		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
-		
+		//
+
 		segmentationInput.settings.maximumDistanceBetweenRows = 500;
 		segmentationInput.settings.minimumDistanceBetweenRows = 200;
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
-//		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter_variance.segmentPicture(segmentationInput);
+		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
 
 		//let the tile boundaries "breathe"
 		//Edit: no, don't do 100, doesn't play well with Stm readout
-//		ColonyBreathing.breathingSpace = 100;//20;
-//		segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
-//		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
-		
-//		ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-//		croppedImage.show();
-//		croppedImage.hide();copyOfTileImage		//check if something went wrong
+		//		ColonyBreathing.breathingSpace = 100;//20;
+		//		segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
+		//		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
+		//		ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+		//		croppedImage.show();
+		//		croppedImage.hide();copyOfTileImage		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
 
 			System.err.println("\nOpacity profile: unable to process picture " + justFilename);
@@ -219,7 +219,7 @@ public class MorphologyProfileStm96 extends Profile {
 		//--------------------------------------------------
 		//
 		//
-		
+
 		//precalculate the colony centers
 		ColorTileReaderInput [][] colonyCenteredInput = Toolbox.precalculateColonyCenters(colorCroppedImage, segmentationOutput, settings);
 
@@ -233,15 +233,15 @@ public class MorphologyProfileStm96 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-//				try{
-					readerOutputs[i][j] = MorphologyTileReaderStm.processTile(colonyCenteredInput[i][j]);
-							//new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
-//				}catch(Exception e){
-//					System.err.print("\tError getting morphology at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
-//					readerOutputs[i][j] = new MorphologyTileReaderOutput();
-//					colorReaderOutputs[i][j] = new ColorTileReaderOutput();
-//				}
-				
+				try{
+					readerOutputs[i][j] = MorphologyTileReaderStm.processTileOverAgarOnly(colonyCenteredInput[i][j]);
+					//new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				}catch(Exception e){
+					System.err.print("\tError getting morphology at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
+					readerOutputs[i][j] = new MorphologyTileReaderOutput();
+					colorReaderOutputs[i][j] = new ColorTileReaderOutput();
+				}
+
 				if(readerOutputs[i][j].colonySize>0){
 					colorReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
 							new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], readerOutputs[i][j].colonyROI, 
@@ -249,7 +249,7 @@ public class MorphologyProfileStm96 extends Profile {
 				} else {
 					colorReaderOutputs[i][j] = new ColorTileReaderOutput();
 				}
-				
+
 				//each generated tile image is cleaned up inside the tile reader
 			}
 		}
@@ -274,15 +274,15 @@ public class MorphologyProfileStm96 extends Profile {
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
-			*/
-			
+			 */
+
 			System.err.println("\tWarning: writing iris file anyway");
 		}
 
 
 		//7. output the results
 
-		
+
 		//7.1 output the colony measurements as a text file
 		//output.append("row\tcolumn\tcolony size\tcolony circularity\tcolony morphology score\tcolony normalized morphology score\t\n");
 		output.append("row\t" +
@@ -301,7 +301,7 @@ public class MorphologyProfileStm96 extends Profile {
 				"biofilm area size\t" +
 				"biofilm color intensity\t" +
 				"size normalized color intensity\n");
-		
+
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -333,25 +333,39 @@ public class MorphologyProfileStm96 extends Profile {
 			//System.out.println("Done processing file " + filename + "\n\n");
 			System.out.println("...done processing!");
 		}
-		
 
+
+		//7.2 save any intermediate picture files, if requested
+		//settings.saveGridImage = true;
+		//		if(settings.saveGridImage){
+		//			
+		//			//draw the colony bounds, and the in-agar growth bounds
+		//			//Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, readerOutputs);
+		//			drawInAgarGrowthBounds(colorCroppedImage, segmentationOutput, readerOutputs);
+		//			Toolbox.drawColonyRoundBounds(colorCroppedImage, segmentationOutput, readerOutputs);
+		//			//calculate grid image
+		//			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(colorCroppedImage, segmentationOutput);
+		//			
+		//			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
+		//		}
+		//		
 		//7.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
-			
+
 			//draw the colony bounds, and the in-agar growth bounds
-			//Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, readerOutputs);
 			drawInAgarGrowthBounds(colorCroppedImage, segmentationOutput, readerOutputs);
-			Toolbox.drawColonyRoundBounds(colorCroppedImage, segmentationOutput, readerOutputs);
+
 			//calculate grid image
 			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(colorCroppedImage, segmentationOutput);
-			
+
 			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
 		}
 
 	}
 
-	
+
 
 	/**
 	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
@@ -401,7 +415,7 @@ public class MorphologyProfileStm96 extends Profile {
 
 		}
 	}
-	
+
 
 	/**
 	 * This function will get original picture, segment it into tiles.
@@ -453,7 +467,7 @@ public class MorphologyProfileStm96 extends Profile {
 
 
 
-	
+
 
 	/**
 	 * This function will check if there is any row or any column with more than half of it's tiles being empty.

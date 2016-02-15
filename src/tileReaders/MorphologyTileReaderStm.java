@@ -218,9 +218,9 @@ public class MorphologyTileReaderStm {
 		//output.wholeTileOpacity = output.colonyOpacity; --> this is only for colonies with agar invasion 
 
 		//get minimum radius
-		
+
 		double minimumDistance = 0;
-		
+
 		//sometimes this fails
 		try{
 			Point[] colonyRoiPerimeter = Toolbox.getRoiEdgePoints(grayscaleTileCopy.duplicate(), output.colonyROI);
@@ -293,24 +293,180 @@ public class MorphologyTileReaderStm {
 		}
 
 		//if we're still here it means that we need to re-process this colony
+		try{
+			//2. create the output object
+			MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
+			output.colonyHasInAgarGrowth = true;
 
-		//2. create the output object
+			//
+			//--------------------------------------------------
+			//
+			//
+
+			//get a copy of this tile, before it gets thresholded	
+
+
+			//A: get the entire colony first (including in-agar and over agar growth)
+
+			//3A. apply a threshold at the tile, using the Percentile algorithm (that will get us the colony+hair) -- get a copy first
+			ImagePlus grayscaleTileCopy = inputTileImage.duplicate();
+			ImageConverter ic = new ImageConverter(grayscaleTileCopy);
+			ic.convertToGray8();
+			grayscaleTileCopy.updateImage();
+
+			Toolbox.turnImageBW_Percentile_auto(grayscaleTileCopy);
+			int inAgarBrightnessThreshold = Toolbox.getThreshold(grayscaleTileCopy, Method.Percentile);
+
+			//4A. perform particle analysis on the thresholded tile
+			ResultsTable resultsTable = new ResultsTable();
+			ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
+					Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+					resultsTable, 5, Integer.MAX_VALUE);
+			RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+			ParticleAnalyzer.setRoiManager(manager);
+			particleAnalyzer.analyze(grayscaleTileCopy);
+
+
+			//5A. return the area of the biggest particle
+			//this should also clear away contaminations, because normally the contamination
+			//area will be smaller than the colony area, so the contamination will never be reported
+			int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+			output.inAgarSize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
+			output.inAgarCircularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+			output.inAgarROI = manager.getRoisAsArray()[indexOfBiggestParticle];
+			output.inAgarOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.inAgarROI, inAgarBrightnessThreshold);
+
+
+
+			//one last thing for the in-agar growth would be to get the total brightness in the tile
+			//40 is the background of our pictures in the August 2015 experiment setup
+			//but here I want to get the tile opacity without any subtraction, so I set the "background to subtract" to 0
+			output.wholeTileOpacity = getWholeTileOpacity(grayscaleTileCopy, 0);
+
+
+			//
+			//--------------------------------------------------
+			//
+			//
+
+			//B: then get the actual over-agar colony
+
+
+			//3B. set the whole-colony ROI to the tileImage
+			//	then apply a threshold at the ROI-- that should get us just the colony
+			grayscaleTileCopy = inputTileImage.duplicate();
+			ImageConverter ic2 = new ImageConverter(grayscaleTileCopy);
+			ic2.convertToGray8();
+			grayscaleTileCopy.updateImage();
+			grayscaleTileCopy.setRoi(output.inAgarROI);
+			Toolbox.turnImageBW_Minimum_auto(grayscaleTileCopy);
+			int colonyBrightnessThreshold = Toolbox.getThreshold(grayscaleTileCopy, Method.Minimum);
+
+
+			//4B. perform particle analysis on the thresholded tile
+			resultsTable = new ResultsTable();
+			particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
+					Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+					resultsTable, 5, Integer.MAX_VALUE);
+			manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+			ParticleAnalyzer.setRoiManager(manager);
+			particleAnalyzer.analyze(grayscaleTileCopy);
+
+
+			//5B. return the area of the biggest particle
+			//this should also clear away contaminations, because normally the contamination
+			//area will be smaller than the colony area, so the contamination will never be reported
+			indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+			output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
+			output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+			output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
+			output.colonyOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.colonyROI, colonyBrightnessThreshold);
+
+
+			//6B. get the morphology of the over-agar colony
+
+			//this will give us that the circles will not start in an awkward location, even in cases where
+			//we might have oddly shaped colonies (e.g. budding shaped)
+			Point colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+
+			//for this, we need the Roi (region of interest) that corresponds to the colony
+			//so as to exclude the brightness of any contaminations
+
+			grayscaleTileCopy.setRoi(output.colonyROI);
+			ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, output.colonyROI, colonyCenter);
+
+			if(elevationCounts.size()==0){
+				//check if we've hit empty space with the first circle already
+				output.morphologyScoreFixedNumberOfCircles=0;
+			}else {
+				//get the sum of the elevation counts for all circles except the previous circle
+				//that one is likely to get high elevation counts 
+				//just because colony edges tend to be really bright compared to the background
+				output.morphologyScoreFixedNumberOfCircles = sumElevationCounts_limited(elevationCounts, circlesToMeasure);
+				output.morphologyScoreWholeColony = sumElevationCounts(elevationCounts, circlesToIgnore );
+			}
+
+
+			//if(elevationCounts.size()-1<=0)
+			if(output.colonySize==0)
+				output.normalizedMorphologyScore = 0; 
+			else
+				output.normalizedMorphologyScore = 1000* (double)output.morphologyScoreWholeColony / (double)output.colonySize;//(elevationCounts.size()-1);
+
+
+			//before we go, I would like to calculate the difference in the opacity of the whole in-agar growth to the
+			//one due to just the colony. For this, we need to get the colony opacity but using the in-agar growth's background.
+			//see also note: 
+			output.invasionRingOpacity = output.inAgarOpacity - getBiggestParticleOpacity(grayscaleTileCopy, output.colonyROI, inAgarBrightnessThreshold);
+			output.invasionRingSize = output.inAgarSize - output.colonySize;
+
+
+			input.cleanup(); //clear the tile image here, since we don't need it anymore
+			grayscaleTileCopy.flush();
+
+			return(output);
+			
+		}catch(Exception e){
+			//if failed to threshold twice for whatever reason, fall back to the simple readout
+			
+			return(outputSimple);
+		}
+	}
+	
+	
+	
+	
+	/**
+	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how
+	 * "wrinkly" a colony is. Flat colonies would get a low morphology score, whereas colonies featuring a complicated structure
+	 * will be given a high score 
+	 * 
+	 * Since colonies featuring complex morphologies are typically not round, I will reuse here the code used for the
+	 * hazy colony detection (vs empty tile).
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static MorphologyTileReaderOutput processTileOverAgarOnly(ColorTileReaderInput input){
+
 		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
-		output.colonyHasInAgarGrowth = true;
 
-		//
-		//--------------------------------------------------
-		//
-		//
+		//3B. set the whole-colony ROI to the tileImage
+		//	then apply a threshold at the ROI-- that should get us just the colony
+		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
+		ImageConverter ic2 = new ImageConverter(grayscaleTileCopy);
+		ic2.convertToGray8();
+		grayscaleTileCopy.updateImage();
+		grayscaleTileCopy.setRoi(output.inAgarROI);
+		Toolbox.turnImageBW_Minimum_auto(grayscaleTileCopy);
+		int colonyBrightnessThreshold = Toolbox.getThreshold(grayscaleTileCopy, Method.Minimum);
 
-		//A: get the entire colony first (including in-agar and over agar growth)
+		
+//		grayscaleTileCopy.show();
+//		grayscaleTileCopy.hide();
+		
 
-		//3A. apply a threshold at the tile, using the Percentile algorithm (that will get us the colony+hair) -- get a copy first
-		ImagePlus grayscaleTileCopy = inputTileImage.duplicate();
-		Toolbox.turnImageBW_Percentile_auto(grayscaleTileCopy);
-		int inAgarBrightnessThreshold = Toolbox.getThreshold(grayscaleTileCopy, Method.Percentile);
-
-		//4A. perform particle analysis on the thresholded tile
+		//4B. perform particle analysis on the thresholded tile
 		ResultsTable resultsTable = new ResultsTable();
 		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
 				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
@@ -320,57 +476,14 @@ public class MorphologyTileReaderStm {
 		particleAnalyzer.analyze(grayscaleTileCopy);
 
 
-		//5A. return the area of the biggest particle
-		//this should also clear away contaminations, because normally the contamination
-		//area will be smaller than the colony area, so the contamination will never be reported
-		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-		output.inAgarSize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
-		output.inAgarCircularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-		output.inAgarROI = manager.getRoisAsArray()[indexOfBiggestParticle];
-		output.inAgarOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.inAgarROI, inAgarBrightnessThreshold);
-
-
-
-		//one last thing for the in-agar growth would be to get the total brightness in the tile
-		//40 is the background of our pictures in the August 2015 experiment setup
-		//but here I want to get the tile opacity without any subtraction, so I set the "background to subtract" to 0
-		output.wholeTileOpacity = getWholeTileOpacity(grayscaleTileCopy, 0);
-
-
-		//
-		//--------------------------------------------------
-		//
-		//
-
-		//B: then get the actual over-agar colony
-
-
-		//3B. set the whole-colony ROI to the tileImage
-		//	then apply a threshold at the ROI-- that should get us just the colony
-		grayscaleTileCopy = inputTileImage.duplicate();
-		grayscaleTileCopy.setRoi(output.inAgarROI);
-		Toolbox.turnImageBW_Minimum_auto(grayscaleTileCopy);
-		int colonyBrightnessThreshold = Toolbox.getThreshold(input.tileImage, Method.Minimum);
-
-
-		//4B. perform particle analysis on the thresholded tile
-		resultsTable = new ResultsTable();
-		particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
-				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
-				resultsTable, 5, Integer.MAX_VALUE);
-		manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		ParticleAnalyzer.setRoiManager(manager);
-		particleAnalyzer.analyze(grayscaleTileCopy);
-
-
 		//5B. return the area of the biggest particle
 		//this should also clear away contaminations, because normally the contamination
 		//area will be smaller than the colony area, so the contamination will never be reported
-		indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
 		output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
 		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
-		output.colonyOpacity = getBiggestParticleOpacity(input.tileImage, output.colonyROI, colonyBrightnessThreshold);
+		output.colonyOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.colonyROI, colonyBrightnessThreshold);
 
 
 		//6B. get the morphology of the over-agar colony
@@ -403,19 +516,12 @@ public class MorphologyTileReaderStm {
 		else
 			output.normalizedMorphologyScore = 1000* (double)output.morphologyScoreWholeColony / (double)output.colonySize;//(elevationCounts.size()-1);
 
-
-		//before we go, I would like to calculate the difference in the opacity of the whole in-agar growth to the
-		//one due to just the colony. For this, we need to get the colony opacity but using the in-agar growth's background.
-		//see also note: 
-		output.invasionRingOpacity = output.inAgarOpacity - getBiggestParticleOpacity(input.tileImage, output.colonyROI, inAgarBrightnessThreshold);
-		output.invasionRingSize = output.inAgarSize - output.colonySize;
-
-
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
 		grayscaleTileCopy.flush();
 
 		return(output);
-
+		
+		
 	}
 
 
