@@ -70,13 +70,13 @@ public class EcoliOpacityProfile384 extends Profile {
 	 * @param filename
 	 */
 	public void analyzePicture(String filename){
-		
-		
+
+
 		//0. initialize settings and open files for input and output
 		//since this is a 384 plate, make sure the settings are redefined to match our setup
 		settings.numberOfColumnsOfColonies = 24;
 		settings.numberOfRowsOfColonies = 16;
-		
+
 		//
 		//--------------------------------------------------
 		//
@@ -104,10 +104,10 @@ public class EcoliOpacityProfile384 extends Profile {
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
-		
-		
-		
-		
+
+
+
+
 		//
 		//--------------------------------------------------
 		//
@@ -132,7 +132,7 @@ public class EcoliOpacityProfile384 extends Profile {
 		//
 
 		//3. crop the plate to keep only the colonies
-//		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		//		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
 		//flush the original picture, we won't be needing it anymore
@@ -161,10 +161,10 @@ public class EcoliOpacityProfile384 extends Profile {
 		//and the number of rows and columns, save the results in the settings object
 		calculateGridSpacing(settings, croppedImage);
 
-//		//change the settings so that the distance between the colonies can now be smaller
-//		settings.minimumDistanceBetweenRows = 40;
-//		//..or larger
-//		settings.maximumDistanceBetweenRows = 100;
+		//		//change the settings so that the distance between the colonies can now be smaller
+		//		settings.minimumDistanceBetweenRows = 40;
+		//		//..or larger
+		//		settings.maximumDistanceBetweenRows = 100;
 
 
 
@@ -173,7 +173,15 @@ public class EcoliOpacityProfile384 extends Profile {
 
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
-		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
+
+
+		//BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+		segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
+		boolean usedColonyBreathing=true;
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -197,7 +205,7 @@ public class EcoliOpacityProfile384 extends Profile {
 
 
 			//save the grid before exiting
-			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
+			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
 
 			return;
@@ -210,9 +218,9 @@ public class EcoliOpacityProfile384 extends Profile {
 		x = segmentationOutput.getBottomRightRoi().getBounds().x;
 		y = segmentationOutput.getBottomRightRoi().getBounds().y;
 		output.append("#bottom right of the grid found at (" +x+ " , " +y+ ")\n");
-		
-		
-		
+
+
+
 
 		//6. analyze each tile
 
@@ -221,58 +229,71 @@ public class EcoliOpacityProfile384 extends Profile {
 
 
 
-		//6.0 do a pre-run to get the centers of the colonies
 
-		//for all rows
-		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
-			//for all columns
-			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				basicTileReaderOutputsCenters[i][j] = BasicTileReader_Bsu.getColonyCenter(
-						new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
-
-			}
-		}
-
-		//get the medians of all the rows and columns, ignore zeroes
-		//for all rows
-		ArrayList<Integer> rowYsMedians = new ArrayList<Integer>();
-		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
-			ArrayList<Double> rowYs = new ArrayList<Double>();
-			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
-					rowYs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.y);
-			}
-			Double[] simpleArray = new Double[ rowYs.size() ];
-			int rowMedian = (int) Toolbox.median(rowYs.toArray(simpleArray), 0.0, true);
-			rowYsMedians.add(rowMedian);
-		}
-		
-		ArrayList<Integer> columnXsMedians = new ArrayList<Integer>();
-		for(int j=0; j<settings.numberOfColumnsOfColonies; j++){
-			ArrayList<Double> columnXs = new ArrayList<Double>();
-			for (int i = 0; i < settings.numberOfRowsOfColonies; i++) {
-				if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
-					columnXs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.x);
-			}
-			Double[] simpleArray = new Double[ columnXs.size() ];
-			int columnMedian = (int) Toolbox.median(columnXs.toArray(simpleArray), 0.0, true);
-			columnXsMedians.add(columnMedian);
-		}
-		
-		
-		//save the pre-calculated colony centers in a matrix of input to basic tile reader
-		//all the tile readers will get it from there
+		//if we used colony breathing then there's currently no way we can calculate the row and column centers as the median
+		//of the centers of all the colonies. Reason is that the centers of all colonies are calculated with respect to their
+		//tile -- if the tile has variable offset with respect to the x-y axes, then the only way to do this is to integrate the
+		//tile offset information in the tileReaderInput, to be taken into account when returning the "center"
 		BasicTileReaderInput [][] centeredTileReaderInput = new BasicTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
-		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
-			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				centeredTileReaderInput[i][j] = new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], 
-						settings, new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
+		if(!usedColonyBreathing){
+
+			//6.0 do a pre-run to get the centers of the colonies
+
+			//for all rows
+			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+				//for all columns
+				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+					basicTileReaderOutputsCenters[i][j] = BasicTileReader_Bsu.getColonyCenter(
+							new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+				}
+			}
+
+			//get the medians of all the rows and columns, ignore zeroes
+			//for all rows
+			ArrayList<Integer> rowYsMedians = new ArrayList<Integer>();
+			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+				ArrayList<Double> rowYs = new ArrayList<Double>();
+				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+					if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+						rowYs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.y);
+				}
+				Double[] simpleArray = new Double[ rowYs.size() ];
+				int rowMedian = (int) Toolbox.median(rowYs.toArray(simpleArray), 0.0, true);
+				rowYsMedians.add(rowMedian);
+			}
+
+			ArrayList<Integer> columnXsMedians = new ArrayList<Integer>();
+			for(int j=0; j<settings.numberOfColumnsOfColonies; j++){
+				ArrayList<Double> columnXs = new ArrayList<Double>();
+				for (int i = 0; i < settings.numberOfRowsOfColonies; i++) {
+					if(basicTileReaderOutputsCenters[i][j].colonyCenter!=null)
+						columnXs.add((double) basicTileReaderOutputsCenters[i][j].colonyCenter.x);
+				}
+				Double[] simpleArray = new Double[ columnXs.size() ];
+				int columnMedian = (int) Toolbox.median(columnXs.toArray(simpleArray), 0.0, true);
+				columnXsMedians.add(columnMedian);
+			}
+
+
+			//save the pre-calculated colony centers in a matrix of input to basic tile reader
+			//all the tile readers will get it from there
+			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+					centeredTileReaderInput[i][j] = new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], 
+							settings, new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
+				}
+			}
+
+		} else{
+			//save the pre-calculated colony centers in a matrix of input to basic tile reader
+			//all the tile readers will get it from there
+			for(int i=0;i<settings.numberOfRowsOfColonies;i++){
+				for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+					centeredTileReaderInput[i][j] = new BasicTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings);
+				}
 			}
 		}
-		
-		
-		
-
 
 
 
@@ -289,13 +310,13 @@ public class EcoliOpacityProfile384 extends Profile {
 		//in Mori's paper they used 17px diameter (fishy at best, since diameter is 2*radius and radius is an integer)
 		//they mention this corresponds to 1mm, but 1mm in our camera corresponds to 37.5 pixels 
 		OpacityTileReader.diameter = 38;
-		
+
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 				readerOutputs[i][j] = OpacityTileReader.processTile(new OpacityTileReaderInput(centeredTileReaderInput[i][j]));
-						//new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				//new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//each generated tile image is cleaned up inside the tile reader
 			}
@@ -312,15 +333,15 @@ public class EcoliOpacityProfile384 extends Profile {
 			System.err.print("Image segmentation algorithm failed:\n");
 			System.err.println("\ttoo many empty rows/columns");
 
-			
+
 			/* ///HACK commenting-out the following block will make Iris print out the result even though the gridding failed
 			//calculate and save grid image
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
-			  
+
 			return;
-			*/ //HACK end
+			 */ //HACK end
 
 			System.err.println("\twarning: writing iris file anyway");
 		}
@@ -335,7 +356,7 @@ public class EcoliOpacityProfile384 extends Profile {
 				"opacity\t"+
 				"center opacity\t" +
 				"max 10% opacity\n");
-		
+
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -366,8 +387,11 @@ public class EcoliOpacityProfile384 extends Profile {
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
 			//calculate grid image
-			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
-			
+			if(usedColonyBreathing)
+				colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
+			else
+				colourCroppedImage = RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput);
+
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			drawCenterRoiBounds(colourCroppedImage, segmentationOutput, readerOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
@@ -395,14 +419,14 @@ public class EcoliOpacityProfile384 extends Profile {
 	 */
 	private void calculateGridSpacing(BasicSettings settings_,
 			ImagePlus croppedImage) {
-		
+
 		int image_width = croppedImage.getWidth();
 		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
-		
+
 		//save the results directly to the settings object
 		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
 		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*4/3);
-		
+
 	}
 
 
@@ -719,10 +743,10 @@ public class EcoliOpacityProfile384 extends Profile {
 
 		return(true); //operation succeeded
 	}
-	
-	
-	
-	
+
+
+
+
 
 
 	/**
