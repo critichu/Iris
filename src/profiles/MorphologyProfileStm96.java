@@ -82,7 +82,12 @@ public class MorphologyProfileStm96 extends Profile {
 
 
 		//1. open the image file, and check if it was opened correctly
-		ImagePlus originalImage = IJ.openImage(filename);
+		ImagePlus originalImage;
+		try {
+			originalImage  = IJ.openImage(filename);
+		} catch (Exception e) {
+			originalImage = null;
+		}		
 
 		//check that file was opened successfully
 		if(originalImage==null){
@@ -127,7 +132,11 @@ public class MorphologyProfileStm96 extends Profile {
 		//		GenericImageCropper.searchStart = 0.035;
 		//		GenericImageCropper.searchEnd = 0.065;
 		//		GenericImageCropper.skip = 20;
-		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(550, 330, 4300, 2850);
+		
+		
+		//NaiveImageCropper3.keepOnlyColoniesROI = new Roi(550, 330, 4300, 2850);
+		//HACK for PA Ornithine screen
+		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(470, 330, 4140, 2750);
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
 
