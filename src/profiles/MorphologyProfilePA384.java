@@ -14,7 +14,6 @@ import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
-import imageSegmenters.RisingTideSegmenter;
 import imageSegmenters.SimpleImageSegmenter;
 
 import java.awt.Color;
@@ -37,12 +36,12 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class MorphologyProfileStm96 extends Profile {
+public class MorphologyProfilePA384 extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Morphology Profile [Salmonella 96-plates]";
+	public static String profileName = "Morphology Profile [Pseudomonas 384-plates]";
 
 
 	/**
@@ -134,7 +133,9 @@ public class MorphologyProfileStm96 extends Profile {
 		//		GenericImageCropper.skip = 20;
 		
 		
-		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(550, 330, 4300, 2850);		
+		
+		//HACK for PA Ornithine screen
+		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(470, 330, 4140, 2750);
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
 
@@ -165,16 +166,16 @@ public class MorphologyProfileStm96 extends Profile {
 
 		//5. segment the cropped picture
 		//first change the settings, to get a 96 plate segmentation
-		settings.numberOfRowsOfColonies = 8;
-		settings.numberOfColumnsOfColonies = 12;
+		settings.numberOfRowsOfColonies = 16;
+		settings.numberOfColumnsOfColonies = 24;
 		SimpleImageSegmenter.offset = 10;
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
 		//
 
-		segmentationInput.settings.maximumDistanceBetweenRows = 500;
-		segmentationInput.settings.minimumDistanceBetweenRows = 200;
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
-		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+//		segmentationInput.settings.maximumDistanceBetweenRows = 500;
+//		segmentationInput.settings.minimumDistanceBetweenRows = 200;
+//		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
 
 		//let the tile boundaries "breathe"
 		//Edit: no, don't do 100, doesn't play well with Stm readout

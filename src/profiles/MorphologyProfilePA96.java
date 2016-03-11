@@ -14,7 +14,6 @@ import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
-import imageSegmenters.RisingTideSegmenter;
 import imageSegmenters.SimpleImageSegmenter;
 
 import java.awt.Color;
@@ -37,12 +36,12 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class MorphologyProfileStm96 extends Profile {
+public class MorphologyProfilePA96 extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Morphology Profile [Salmonella 96-plates]";
+	public static String profileName = "Morphology Profile [Pseudomonas 96-plates]";
 
 
 	/**
@@ -134,7 +133,9 @@ public class MorphologyProfileStm96 extends Profile {
 		//		GenericImageCropper.skip = 20;
 		
 		
-		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(550, 330, 4300, 2850);		
+		
+		//HACK for PA Ornithine screen
+		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(470, 330, 4140, 2750);
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
 
@@ -173,8 +174,8 @@ public class MorphologyProfileStm96 extends Profile {
 
 		segmentationInput.settings.maximumDistanceBetweenRows = 500;
 		segmentationInput.settings.minimumDistanceBetweenRows = 200;
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
-		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+//		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
 
 		//let the tile boundaries "breathe"
 		//Edit: no, don't do 100, doesn't play well with Stm readout
