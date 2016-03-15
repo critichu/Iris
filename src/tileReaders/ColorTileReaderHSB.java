@@ -412,13 +412,33 @@ public class ColorTileReaderHSB {
 		int biofilmPixelCount = 0;
 		int biofilmColorSum = 0;
 		
-
+		
 		//get pixel color values again, this time by means of integer values
 		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(input.tileImage, input.colonyRoi, 2, 1, (float)1, (float)2);
+		
+//		for(int i=0;i<pixelBiofilmScores_float.length;i++){
+//
+//			float pixelBiofilmScoreByteValue = pixelBiofilmScores_float[i];
+//
+//			if(pixelBiofilmScoreByteValue>0){
+//				colonyColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
+//			}
+//			else{
+//				continue;
+//			}
+//
+//			if(pixelBiofilmScoreByteValue>input.settings.colorThreshold){
+//				biofilmPixelCount++;
+//				biofilmColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
+//			}
+//		}
+		
+		
+		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(input.tileImage, 2, 1, (float)1, (float)2); ///
+		
+		for(int i=0;i<pixelBiofilmScores.length;i++){
 
-		for(int i=0;i<pixelBiofilmScores_float.length;i++){
-
-			float pixelBiofilmScoreByteValue = pixelBiofilmScores_float[i];
+			float pixelBiofilmScoreByteValue = pixelBiofilmScores[i];
 
 			if(pixelBiofilmScoreByteValue>0){
 				colonyColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
