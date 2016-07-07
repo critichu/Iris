@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Iris by critichu</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Iris</h1>
+        <h2>expanding the palette of microbial phenotypic readouts</h2>
+        <a href="https://github.com/critichu/Iris" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h3>
+<a id="whats-this-all-about" class="anchor" href="#whats-this-all-about" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What's this all about</h3>
+
+<p>Iris is an image processing software that automatically quantifies several features of microbial colonies in high throughput. While most available software can quantify colony size, Iris adds several more phenotypes.
+Also Iris can be easily expanded to new phenotypes, by writing a new readout module.</p>
+
+<h3>
+<a id="using-iris" class="anchor" href="#using-iris" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using Iris</h3>
+
+<p>Iris is written in Java, which makes it compatible with most operating systems (Windows, macOS, *nix).
+Java software is typically distributed in JAR files (.jar ending), which you can run by a double-click (see below command-line alternatives).
+Next, click "open folder", and select a folder which holds the pictures to be processed. Iris will process any pictures with a ".jpg" file ending, displaying any messages on the application window. 
+You can abort the process at any time, by closing the program.</p>
+
+<ol>
+<li>Running Iris
+1.1 Iris GUI
+To run Iris as a window (GUI) application, open a command line window, cd into the folder the Iris JAR file is in, and run the following command:</li>
+</ol>
+
+<p>java -Xmx1g -jar Iris_0.9.x.xx.jar</p>
+
+<p>Note: the Iris jar file can also be run on all systems by double clicking. To do this, first make sure you have permanently set the maximum Java heap size to 1g (1 Gigabyte). Google on how to do that in your particular system/setup.</p>
+
+<p>1.2 Iris console (e.g. for scripting)
+To run Iris as a console application (no GUI window), which can be rather useful for scripting, you need to provide Iris with a profile name and a folder that pictures are found in:</p>
+
+<p>java -Xmx1g -jar Iris_0.9.x.xx.jar "profile name" "folder location”</p>
+
+<p>Valid profile names are the following:
+            "Stm growth",
+            "Ecoli growth",
+            "Ecoli opacity",
+            "Ecoli opacity 384",
+            "Ecoli growth 384 - hazy colonies",
+            "B.subtilis Opacity (HSB)",
+            "B.subtilis Sporulation (HSB)",
+            "Biofilm formation",
+            "Biofilm formation (HSB)",
+            "Morphology profile [Candida 96-plates]"
+NOTE: please keep the quotes when inputting the profile name</p>
+
+<ol>
+<li>Iris output
+Iris outputs 2 kind of files and a log file.</li>
+</ol>
+
+<p>2.1 .iris files
+These hold the results of the feature extraction process. 
+They are in fact plain text tab-delimited files, which can easily be opened with any text viewer or Excel.</p>
+
+<p>2.2 .grid files
+these are currently saved mainly for debugging purposes, as they demonstrate the results of gridding algorithm.</p>
+
+<p>2.3 .log files
+Each time Iris is run, it creates a timestamped log file. This is a text file that is currently used for debugging reasons; any error messages will also be written on this file.</p>
+
+<h3>
+<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h3>
+
+<p>Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
+Contact: kritikos at embl dot de</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/critichu/Iris/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/critichu/Iris/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/critichu/Iris"></a> is maintained by <a href="https://github.com/critichu">critichu</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
