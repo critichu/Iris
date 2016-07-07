@@ -55,23 +55,23 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	public static void main(String[] args) {
 
 
-			EventQueue.invokeLater(new Runnable() {
-				public void run() {
-					try {
-						IrisGUI frame = new IrisGUI();
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					IrisGUI frame = new IrisGUI();
 
-						//this call tells the system to redirect the System.out and System.err outputs
-						//from the console to the textPane object
-						frame.redirectSystemStreams();
+					//this call tells the system to redirect the System.out and System.err outputs
+					//from the console to the textPane object
+					frame.redirectSystemStreams();
 
-						System.setProperty("apple.laf.useScreenMenuBar", "false");
-						frame.setResizable(false);
-						frame.setVisible(true);				
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+					System.setProperty("apple.laf.useScreenMenuBar", "false");
+					frame.setResizable(false);
+					frame.setVisible(true);				
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			});
+			}
+		});
 	}
 
 	public static void printUsage(){
@@ -137,6 +137,11 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		comboBox.addActionListener(this);
 		contentPane.add(comboBox);
 
+		//add a custom listener to comboBox clicks
+		//this one will adjust the height of the comboBox
+		BoundsPopupMenuListener listener = new BoundsPopupMenuListener(true, false);
+		comboBox.addPopupMenuListener( listener );
+		//comboBox.setPrototypeDisplayValue("ItemWWW");
 
 
 
@@ -154,7 +159,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	}
 
 
-	
+
 
 
 	//redirect the console output to the application's GUI
@@ -277,8 +282,8 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 			return;
 		}
 		if(e.getSource()==comboBox){
-			
-	        IrisFrontend.selectedProfile = (String) comboBox.getSelectedItem();
+
+			IrisFrontend.selectedProfile = (String) comboBox.getSelectedItem();
 		}
 
 	}

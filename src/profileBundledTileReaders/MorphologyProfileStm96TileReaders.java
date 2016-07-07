@@ -10,9 +10,7 @@ import ij.ImagePlus;
 import java.io.File;
 
 import settings.ColorSettings;
-import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.MorphologyTileReaderOutput;
-import tileReaders.MorphologyTileReader;
 
 /**
  * @author George Kritikos
@@ -103,6 +101,8 @@ public class MorphologyProfileStm96TileReaders {
 
 		//imageSegmentationBounds = ();
 
+
+		/*
 		try{
 			readerOutput = MorphologyTileReader.processTileWrinkly(
 					new OpacityTileReaderInput(originalImage, imageSegmentationBounds, settings));
@@ -133,7 +133,7 @@ public class MorphologyProfileStm96TileReaders {
 				+ String.format("%.3f", colorReaderOutputs[i][j].relativeColorIntensity) + "\n");
 
 
-
+		 */ //this part is not ready yet
 	}
 
 
