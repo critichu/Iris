@@ -1,7 +1,9 @@
 /**
  * 
  */
-package gui;
+package iris.singleColony;
+
+import gui.IrisFrontend;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,7 +23,7 @@ import settings.BasicSettings;
  * @author George Kritikos
  *
  */
-public class IrisFrontend {
+public class IrisSingleColonyFrontend {
 
 
 	/**

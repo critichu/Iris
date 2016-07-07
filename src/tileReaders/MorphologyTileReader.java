@@ -242,7 +242,7 @@ public class MorphologyTileReader {
 		//see this note on how to distinguish the 2 types of colonies: https://www.evernote.com/l/ACigfyvs1zBAo5u0J1_9FA6--2TAwWiZg38
 		//if the tile does indeed have a colony that's grown in agar, 
 		//then we need to process it by running 2 different thresholding algorithms:
-		//Percentile (for the in-agar growth) and Shangbhag for the colony itself
+		//Percentile (for the in-agar growth) and Minimum for the colony itself
 		//see also here: https://www.evernote.com/l/ACg4M6IXe29K2KbzhXiv1DyhyCRdctOIPFo
 		
 		if(outputSimple.emptyTile){

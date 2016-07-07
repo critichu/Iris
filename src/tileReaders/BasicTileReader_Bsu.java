@@ -107,6 +107,9 @@ public class BasicTileReader_Bsu {
 
 		boolean emptyTile_simple = isTileEmpty_simple(input.tileImage);
 
+		//HACK 11.04.2016: don't check for empty tiles, it was messing up detection of 1-2 known colonies
+		emptyTile_simple = false;
+		
 
 		if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
 
