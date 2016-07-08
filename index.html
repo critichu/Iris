@@ -31,71 +31,97 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
-<a id="whats-this-all-about" class="anchor" href="#whats-this-all-about" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What's this all about</h3>
+        <h2>
+<a id="what-does-iris-do" class="anchor" href="#what-does-iris-do" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What does Iris do?</h2>
 
 <p>Iris is an image processing software that automatically quantifies several features of microbial colonies in high throughput. While most available software can quantify colony size, Iris adds several more phenotypes.
 Also Iris can be easily expanded to new phenotypes, by writing a new readout module.</p>
 
-<h3>
-<a id="how-can-i-download-the-software" class="anchor" href="#how-can-i-download-the-software" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How can I download the software?</h3>
+<h2>
+<a id="how-can-i-download-the-software" class="anchor" href="#how-can-i-download-the-software" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How can I download the software?</h2>
 
 <p>That's easy, just follow this link, it includes a binary distribution (a .jar, see below) and some example files to see how the software works:
 <a href="https://goo.gl/aG6D5X">https://goo.gl/aG6D5X</a></p>
 
-<h3>
-<a id="using-iris" class="anchor" href="#using-iris" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using Iris</h3>
+<h2>
+<a id="using-iris" class="anchor" href="#using-iris" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using Iris</h2>
 
 <p>Iris is written in Java, which makes it compatible with most operating systems (Windows, macOS, *nix).
 Java software is typically distributed in JAR files (.jar ending), which you can run by a double-click (see below command-line alternatives).
 Next, click "open folder", and select a folder which holds the pictures to be processed. Iris will process any pictures with a ".jpg" file ending, displaying any messages on the application window. 
 You can abort the process at any time, by closing the program.</p>
 
-<ol>
-<li>Running Iris
-1.1 Iris GUI
-To run Iris as a window (GUI) application, open a command line window, cd into the folder the Iris JAR file is in, and run the following command:</li>
-</ol>
+<h3>
+<a id="running-iris" class="anchor" href="#running-iris" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Running Iris</h3>
 
-<p>java -Xmx1g -jar Iris_0.9.x.xx.jar</p>
+<h4>
+<a id="iris-gui" class="anchor" href="#iris-gui" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris GUI</h4>
+
+<p>To run Iris as a window (GUI) application, open a command line window, cd into the folder the Iris JAR file is in, and run the following command:  </p>
+
+<pre><code>java -Xmx1g -jar Iris_0.9.x.xx.jar  
+</code></pre>
 
 <p>Note: the Iris jar file can also be run on all systems by double clicking. To do this, first make sure you have permanently set the maximum Java heap size to 1g (1 Gigabyte). Google on how to do that in your particular system/setup.</p>
 
-<p>1.2 Iris console (e.g. for scripting)
-To run Iris as a console application (no GUI window), which can be rather useful for scripting, you need to provide Iris with a profile name and a folder that pictures are found in:</p>
+<h4>
+<a id="iris-console-eg-for-scripting" class="anchor" href="#iris-console-eg-for-scripting" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris console (e.g. for scripting)</h4>
 
-<p>java -Xmx1g -jar Iris_0.9.x.xx.jar "profile name" "folder location”</p>
+<p>To run Iris as a console application (no GUI window), which can be rather useful for scripting, you need to provide Iris with a profile name and a folder that pictures are found in:</p>
 
-<p>Valid profile names are the following:
-            "Stm growth",
-            "Ecoli growth",
-            "Ecoli opacity",
-            "Ecoli opacity 384",
-            "Ecoli growth 384 - hazy colonies",
-            "B.subtilis Opacity (HSB)",
-            "B.subtilis Sporulation (HSB)",
-            "Biofilm formation",
-            "Biofilm formation (HSB)",
-            "Morphology profile [Candida 96-plates]"
-NOTE: please keep the quotes when inputting the profile name</p>
+<pre><code>java -Xmx1g -jar Iris_0.9.x.xx.jar "profile name" "folder location”
+</code></pre>
 
-<ol>
-<li>Iris output
-Iris outputs 2 kind of files and a log file.</li>
-</ol>
+<p>Valid profile names are the following:  </p>
 
-<p>2.1 .iris files
-These hold the results of the feature extraction process. 
-They are in fact plain text tab-delimited files, which can easily be opened with any text viewer or Excel.</p>
+<ul>
+<li>"Stm growth",<br>
+</li>
+<li>"Ecoli growth",<br>
+</li>
+<li>"Ecoli opacity",<br>
+</li>
+<li>"Ecoli opacity 384",<br>
+</li>
+<li>"Ecoli growth 384 - hazy colonies",<br>
+</li>
+<li>"B.subtilis Opacity (HSB)",<br>
+</li>
+<li>"B.subtilis Sporulation (HSB)",<br>
+</li>
+<li>"Biofilm formation",<br>
+</li>
+<li>"Biofilm formation (HSB)",<br>
+</li>
+<li>"Morphology profile [Candida 96-plates]"<br>
+</li>
+</ul>
 
-<p>2.2 .grid files
-these are currently saved mainly for debugging purposes, as they demonstrate the results of gridding algorithm.</p>
-
-<p>2.3 .log files
-Each time Iris is run, it creates a timestamped log file. This is a text file that is currently used for debugging reasons; any error messages will also be written on this file.</p>
+<p><strong>NOTE: please keep the quotes when inputting the profile name</strong></p>
 
 <h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h3>
+<a id="iris-output" class="anchor" href="#iris-output" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris output</h3>
+
+<p>Iris outputs 2 kind of files and a log file.</p>
+
+<h4>
+<a id="iris-files" class="anchor" href="#iris-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>.iris files</h4>
+
+<p>These hold the results of the feature extraction process. 
+They are in fact plain text tab-delimited files, which can easily be opened with any text viewer or Excel.</p>
+
+<h4>
+<a id="grid-files" class="anchor" href="#grid-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>.grid files</h4>
+
+<p>these are currently saved mainly for debugging purposes, as they demonstrate the results of gridding algorithm.</p>
+
+<h4>
+<a id="log-files" class="anchor" href="#log-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>.log files</h4>
+
+<p>Each time Iris is run, it creates a timestamped log file. This is a text file that is currently used for debugging reasons; any error messages will also be written on this file.</p>
+
+<h2>
+<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h2>
 
 <p>Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
 Contact: kritikos at embl dot de</p>
