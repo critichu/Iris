@@ -143,7 +143,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			BasicProfile basicProfile = new BasicProfile();
 			basicProfile.analyzePicture(filename);
 		}
-		
+
 		if(profileName.equals("Ecoli growth -- no empty check")){
 			BasicProfileNoEmptyCheck basicProfileNoEmptyCheck = new BasicProfileNoEmptyCheck();
 			basicProfileNoEmptyCheck.analyzePicture(filename);
@@ -178,20 +178,34 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			EcoliOpacityProfile384_HazyColonies ecoliOpacity384_hazy = new EcoliOpacityProfile384_HazyColonies();
 			ecoliOpacity384_hazy.analyzePicture(filename);			
 		}
-		
+
 		else if(profileName.equals("Ecoli opacity 96")){
 			EcoliOpacityProfile96 ecoliOpacity96 = new EcoliOpacityProfile96();
 			ecoliOpacity96.analyzePicture(filename);			
 		}
 
-		else if(profileName.equals("Xgal assay")){
+		else if(profileName.contains("Xgal assay")){
+			if(IrisFrontend.singleColonyRun==false){
+				if(profileName.contains("96")){
+					IrisFrontend.settings.numberOfRowsOfColonies = 12;
+					IrisFrontend.settings.numberOfColumnsOfColonies = 8;
+				}
+				if(profileName.contains("384")){
+					IrisFrontend.settings.numberOfRowsOfColonies = 24;
+					IrisFrontend.settings.numberOfColumnsOfColonies = 16;
+				}
+				if(profileName.contains("1536")){
+					IrisFrontend.settings.numberOfRowsOfColonies = 48;
+					IrisFrontend.settings.numberOfColumnsOfColonies = 32;
+				}
+			}
 			XgalProfile xgalProfile = new XgalProfile();
 			xgalProfile.analyzePicture(filename);			
 		}
 
 		else if(profileName.equals("CPRG 384")){
-//			CPRGProfile384 cprgProfile384 = new CPRGProfile384();
-//			cprgProfile384.analyzePicture(filename);
+			//			CPRGProfile384 cprgProfile384 = new CPRGProfile384();
+			//			cprgProfile384.analyzePicture(filename);
 			CPRGProfile384_ourCamera2 cprgProfile384_ourCamera2 = new CPRGProfile384_ourCamera2();
 			cprgProfile384_ourCamera2.analyzePicture(filename);
 		}
@@ -210,7 +224,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			ColorProfileEcoli colorProfileEcoli = new ColorProfileEcoli();
 			colorProfileEcoli.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Biofilm formation Ecoli Natural Isolates")){
 			ColorProfileEcoliNaturalIsolates colorProfileEcoliNaturalIsolates = new ColorProfileEcoliNaturalIsolates();
 			colorProfileEcoliNaturalIsolates.analyzePicture(filename);
@@ -235,22 +249,22 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			MorphologyProfileCandida96 morphologyProfile = new MorphologyProfileCandida96();
 			morphologyProfile.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Morphology Profile [Pseudomonas 96-plates]")){
 			MorphologyProfilePA96 morphologyProfile = new MorphologyProfilePA96();
 			morphologyProfile.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Morphology Profile [Pseudomonas 384-plates]")){
 			MorphologyProfilePA384 morphologyProfile = new MorphologyProfilePA384();
 			morphologyProfile.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Morphology Profile [Salmonella 96-plates]")){
 			MorphologyProfileStm96 morphologyProfile = new MorphologyProfileStm96();
 			morphologyProfile.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Growth profile inverted")){
 			BasicProfileInverted profile = new BasicProfileInverted();
 			profile.analyzePicture(filename);

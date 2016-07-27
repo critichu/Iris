@@ -29,6 +29,10 @@ public class IrisFrontend {
 	 */
 	public static BasicSettings settings = new BasicSettings();
 
+	/**
+	 * This field declares whether its about a single colony per picture or not
+	 */
+	public static boolean singleColonyRun = false;
 
 	/**
 	 * these are added specially for the multithreading case
@@ -83,25 +87,25 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.5.2";
+	public static String IrisVersion = "0.9.5.4";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "b93c800";
+	public static String IrisBuild = "a797d8a";
 
 
 	/**
 	 * This value calls whether Iris is running in debug mode or not
 	 */
 	public static boolean debug = false;
-	
+
 	/**
 	 * This value calls whether Iris will not overwrite existing iris files (nice) or not
 	 */
 	public static boolean nice = false;
-	
-	
+
+
 
 
 
@@ -120,6 +124,12 @@ public class IrisFrontend {
 			argumentOffset = 1;
 		}
 
+		for(int i=1; i<args.length; i++){
+			if(args[i].equalsIgnoreCase("singleColony")){
+				IrisFrontend.singleColonyRun=true;
+			}
+		}
+		
 		//if there's no more command line arguments, then it's GUI mode
 		if(args.length<2){
 			IrisGUI.main(args);
