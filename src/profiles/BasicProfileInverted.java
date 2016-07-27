@@ -70,9 +70,10 @@ public class BasicProfileInverted extends Profile {
 	 */
 	public void analyzePicture(String filename){
 
-		settings.numberOfColumnsOfColonies = 24;
-		settings.numberOfRowsOfColonies = 16;
-
+		if(IrisFrontend.singleColonyRun==false){
+			settings.numberOfColumnsOfColonies = 24;
+			settings.numberOfRowsOfColonies = 16;
+		}
 		File file = new File(filename);
 		String justFilename = file.getName();
 

@@ -3,6 +3,7 @@
  */
 package imageSegmenters;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
@@ -36,6 +37,10 @@ public class ColonyBreathing {
 	 */
 	public static BasicImageSegmenterOutput segmentPicture(BasicImageSegmenterOutput originalSegmentation, BasicImageSegmenterInput input){
 
+		//don't re-adjust colony borders if user has made the cropping
+		if(IrisFrontend.singleColonyRun==true){
+			return(originalSegmentation);
+		}
 
 		try{
 
@@ -114,7 +119,7 @@ public class ColonyBreathing {
 	public static ImagePlus paintSegmentedImage(ImagePlus input_croppedImage, BasicImageSegmenterOutput segmenterOutput) {
 
 		ImagePlus paintedImage = input_croppedImage.duplicate();
-		
+
 		ImageProcessor croppedImageProcessor = paintedImage.getProcessor();		
 		croppedImageProcessor.setColor(java.awt.Color.WHITE);
 
@@ -148,8 +153,8 @@ public class ColonyBreathing {
 			}
 
 		}
-		
-		
+
+
 		return(paintedImage);
 	}
 

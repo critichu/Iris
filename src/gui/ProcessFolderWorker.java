@@ -106,6 +106,11 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 	public static void processSingleFile(File file){
 
+		//if we set it here, then it will be called both on GUI or console s/w invocation
+		if(IrisFrontend.singleColonyRun==true){
+			IrisFrontend.settings.numberOfRowsOfColonies = 1;
+			IrisFrontend.settings.numberOfColumnsOfColonies = 1;
+		}
 
 		//publish("Now processing file " + "\n");
 		//System.out.println("Now processing file " + "\n");

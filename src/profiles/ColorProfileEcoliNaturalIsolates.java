@@ -137,8 +137,10 @@ public class ColorProfileEcoliNaturalIsolates extends Profile{
 		//
 
 		//5. segment the cropped picture
+//		if(IrisFrontend.singleColonyRun==false){
 //		settings.numberOfColumnsOfColonies = 24;
 //		settings.numberOfRowsOfColonies = 16;
+//		}
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BW_local_thresholded_picture, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 

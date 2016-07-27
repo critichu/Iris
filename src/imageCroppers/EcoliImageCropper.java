@@ -3,12 +3,13 @@
  */
 package imageCroppers;
 
-import java.awt.Rectangle;
-import java.util.ArrayList;
-
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageConverter;
+
+import java.awt.Rectangle;
+import java.util.ArrayList;
 
 /**
  *This class provides methods to crop the original picture so as to keep only the colonies.
@@ -26,6 +27,12 @@ public class EcoliImageCropper {
 	 * @return
 	 */
 	public static ImagePlus cleverCropPlate(ImagePlus originalImage){
+		
+		//if user has cropped the picture, no need to re-crop
+		if(IrisFrontend.singleColonyRun==true){
+			return(originalImage.duplicate());
+		}
+
 		
 		//find plate borders (where the colonies start) and return the Roi that these correspond to
 		Roi rectangle = findPlateBorders(originalImage);

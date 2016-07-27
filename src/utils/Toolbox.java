@@ -175,8 +175,8 @@ public class Toolbox {
 
 		return(imageToThreshold);
 	}
-	
-	
+
+
 	/**
 	 * This function will convert the given picture into black and white
 	 * using a fancy local thresholding algorithm, as described here:
@@ -522,6 +522,12 @@ public class Toolbox {
 	 * @return the angle of this picture's rotation 
 	 */
 	public static double calculateImageRotation(ImagePlus originalImage) {
+
+		//0. if user has cropped the colony, no need to rotate
+		if(IrisFrontend.singleColonyRun==true){
+			return(0.0);
+		}
+
 		//1. get a subset of that picture
 		int width = originalImage.getWidth();
 		int height = originalImage.getHeight();
@@ -657,16 +663,16 @@ public class Toolbox {
 
 		return(threshold);
 	}
-	
+
 	/**
 	 * This function will convert the given picture into black and white
 	 * using the Otsu method. This version will also return the threshold found.
 	 * @param 
 	 */
 	public static ImagePlus turnImageBW(ImagePlus grayscaleImage, String method) {
-		
+
 		ImagePlus grayscaleImage_copy = grayscaleImage.duplicate();
-		
+
 		Calibration calibration = new Calibration(grayscaleImage_copy);
 
 		//2 things can go wrong here, the image processor and the 2nd argument (mOptions)
@@ -677,7 +683,7 @@ public class Toolbox {
 
 		AutoThresholder at = new AutoThresholder();
 		int threshold = 0; 
-		
+
 		if(method=="Huang"){
 			threshold = at.getThreshold(Method.Huang, histogram);
 		}
@@ -720,17 +726,17 @@ public class Toolbox {
 		if(method=="Yen"){
 			threshold = at.getThreshold(Method.Yen, histogram);
 		}
-		
-		
-		
+
+
+
 		imageProcessor.threshold(threshold);
 		grayscaleImage_copy.updateImage();
 		//BW_croppedImage.updateAndDraw();
 
 		return(grayscaleImage_copy);
 	}
-	
-	
+
+
 
 
 
@@ -1138,6 +1144,10 @@ public class Toolbox {
 	public static boolean isTileEmpty_simple2(ResultsTable resultsTable,
 			ImagePlus tileImage) {
 
+		if(IrisFrontend.singleColonyRun==true){
+			return(false);
+		}
+
 		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));//get the areas of all the particles the particle analyzer has found
 		float circularities[] = resultsTable.getColumn(resultsTable.getColumnIndex("Circ."));//get the circularities of all the particles
 
@@ -1169,6 +1179,10 @@ public class Toolbox {
 	 * @return
 	 */
 	public static boolean isTileEmpty_simple(ImagePlus tile, double varianceThreshold){
+		if(IrisFrontend.singleColonyRun==true){
+			return(false);
+		}
+
 		//sum up the pixel values (brightness) on the x axis
 		double[] sumOfBrightnessXaxis = Toolbox.sumOfRows_double(tile);
 		double variance = StdStats.varp(sumOfBrightnessXaxis);
@@ -1470,7 +1484,7 @@ public class Toolbox {
 
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
 		grayscaleImage = new ImagePlus("", bpBri);
-		
+
 		return(grayscaleImage);
 	}
 
@@ -1481,13 +1495,21 @@ public class Toolbox {
 	 */
 	public static ColorTileReaderInput [][] precalculateColonyCenters(ImagePlus inputCroppedImage, BasicImageSegmenterOutput segmentationOutput, ColorSettings settings){
 
+		//if there's only one colony, then there's no way to pre-calculate centers.
+		//basically return nulls in the place of the colony center. This will get it to calculate the center individually per-colony
+		if(IrisFrontend.singleColonyRun==true){
+			ColorTileReaderInput [][]  dummy_centeredColorTileReaderInput = new ColorTileReaderInput[1][1];
+			dummy_centeredColorTileReaderInput[0][0] = new ColorTileReaderInput(inputCroppedImage, segmentationOutput.ROImatrix[0][0], settings); //notice last argument (center point) is missing
+			return(dummy_centeredColorTileReaderInput);
+			
+		}	
 		//initialize output
 		BasicTileReaderOutput [][] basicTileReaderOutputsCenters = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 
-		
+
 		//make input image grayscale (in case it wasn't)
 		ImagePlus grayscaleCroppedImage = makeImageGrayscaleHSB(inputCroppedImage);
-		
+
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -1587,8 +1609,8 @@ public class Toolbox {
 
 		}
 	}
-	
-	
+
+
 
 	/**
 	 * 

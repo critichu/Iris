@@ -74,9 +74,10 @@ public class CPRGProfile384 extends Profile {
 
 		//0. initialize settings and open files for input and output
 		//since this is a 384 plate, make sure the settings are redefined to match our setup
-		settings.numberOfColumnsOfColonies = 24;
-		settings.numberOfRowsOfColonies = 16;
-
+		if(IrisFrontend.singleColonyRun==false){
+			settings.numberOfColumnsOfColonies = 24;
+			settings.numberOfRowsOfColonies = 16;
+		}
 		//
 		//--------------------------------------------------
 		//
@@ -299,7 +300,7 @@ public class CPRGProfile384 extends Profile {
 		//correct for overspilling effects in colonies
 		int[][] correctedCPRGoutputs_ColoniesHSV = slidingWindowDyeOverspillCorrection( CPRGTileReaderOutput.getAllColonyColorSums(cprgTileReaderOutputsHSV));
 
-		
+
 		//my way --> HSV with square root tiles to discover plate effects, corrected for neighborhood (local plate effects)
 		int[][] newWay_tiles = neighborhoodCorrection(CPRGTileReaderOutput.getAllTileColorSums(cprgTileReaderOutputsHSV), 3);
 
@@ -324,7 +325,7 @@ public class CPRGProfile384 extends Profile {
 						+ Integer.toString(cprgTileReaderOutputsHSV[i][j].colorSumInTile)  + "\t"
 						+ Integer.toString(correctedCPRGoutputs_ColoniesHSV[i][j]) + "\t"
 						+ Integer.toString(correctedCPRGoutputs_TilesHSV[i][j]) + "\t"
-						
+
 						+ Integer.toString(newWay_tiles[i][j]) + "\n");
 			}
 		}
@@ -673,7 +674,7 @@ public class CPRGProfile384 extends Profile {
 		int windowSizeY = 3;
 		int inflated_sizeX = inflated.length;
 		int inflated_sizeY = inflated[0].length;
-		
+
 		//for each sliding window positioning (size 9 window)
 		for (int startX = 0; startX < inflated_sizeX - windowSizeX; startX++) {
 			for (int startY = 0; startY < inflated_sizeY - windowSizeY; startY++) {
@@ -692,12 +693,12 @@ public class CPRGProfile384 extends Profile {
 
 						if(i==indexX_ofMiddle && j==indexY_ofMiddle)
 							continue; //skip the middle colony
-						
+
 						if(inflated[i][j]==0) {//this is padding (outer row/column from matrix inflation)
 							numberOfElementsInMean--; //don't count it in the mean
 							continue;
 						}
-						
+
 						//remove the offset here
 						sum += (inflated[i][j]-offset); //the mean will not have any offset
 					}
@@ -707,13 +708,13 @@ public class CPRGProfile384 extends Profile {
 				float mean = (float)sum/(float)numberOfElementsInMean;
 				float measured_minus_offset = inflated[indexX_ofMiddle][indexY_ofMiddle]-offset; //the measurement still has some offset, so we remove it now
 				float diff = ( measured_minus_offset - mean);// / mean;
-				
+
 				//we don't care if a colony/tile is less positive than expected, do we?
 				//if it's less positive, turn this zero
 				if(diff < 0){
 					diff = 0;
 				}
-				
+
 
 				//save it to the output matrix as a percentage increase/decrease
 				//the -1 compensate for origin matrix inflation

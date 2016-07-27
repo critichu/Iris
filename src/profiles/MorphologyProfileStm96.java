@@ -132,8 +132,8 @@ public class MorphologyProfileStm96 extends Profile {
 		//		GenericImageCropper.searchStart = 0.035;
 		//		GenericImageCropper.searchEnd = 0.065;
 		//		GenericImageCropper.skip = 20;
-		
-		
+
+
 		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(550, 330, 4300, 2850);		
 		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 
@@ -165,8 +165,10 @@ public class MorphologyProfileStm96 extends Profile {
 
 		//5. segment the cropped picture
 		//first change the settings, to get a 96 plate segmentation
-		settings.numberOfRowsOfColonies = 8;
-		settings.numberOfColumnsOfColonies = 12;
+		if(IrisFrontend.singleColonyRun==false){
+			settings.numberOfRowsOfColonies = 8;
+			settings.numberOfColumnsOfColonies = 12;
+		}
 		SimpleImageSegmenter.offset = 10;
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
 		//

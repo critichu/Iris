@@ -70,9 +70,10 @@ public class EcoliGrowthProfile384_HazyColonies_old extends Profile {
 
 		//0. initialize settings and open files for input and output
 		//since this is a 384 plate, make sure the settings are redefined to match our setup
-		settings.numberOfColumnsOfColonies = 24;
-		settings.numberOfRowsOfColonies = 16;
-
+		if(IrisFrontend.singleColonyRun==false){
+			settings.numberOfColumnsOfColonies = 24;
+			settings.numberOfRowsOfColonies = 16;
+		}
 		//
 		//--------------------------------------------------
 		//
@@ -197,7 +198,7 @@ public class EcoliGrowthProfile384_HazyColonies_old extends Profile {
 			//save the grid before exiting
 			RisingTideSegmenter.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
-			
+
 			croppedImage.flush();
 			BW_local_thresholded_picture.flush();
 
@@ -268,7 +269,7 @@ public class EcoliGrowthProfile384_HazyColonies_old extends Profile {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\n");
-						
+
 			}
 		}
 
@@ -389,7 +390,7 @@ public class EcoliGrowthProfile384_HazyColonies_old extends Profile {
 		aDuplicate.getProcessor().setBackgroundValue(0);
 
 		//IJ.run(aDuplicate, "Arbitrarily...", "angle=" + angle + " grid=0 interpolate enlarge");
-		
+
 
 		aDuplicate.updateImage();
 
@@ -639,8 +640,8 @@ public class EcoliGrowthProfile384_HazyColonies_old extends Profile {
 
 		return(true); //operation succeeded
 	}
-	
-	
+
+
 	/**
 	 * This function will convert the given picture into black and white
 	 * using a fancy local thresholding algorithm, as described here:

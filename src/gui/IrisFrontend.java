@@ -137,7 +137,7 @@ public class IrisFrontend {
 		}
 
 
-		if(args.length>2+argumentOffset){
+		if(args.length>2+argumentOffset && !IrisFrontend.singleColonyRun){
 			if(args[args.length-1-argumentOffset].equals("384")){
 				IrisFrontend.settings.numberOfColumnsOfColonies = 24;
 				IrisFrontend.settings.numberOfRowsOfColonies = 16;

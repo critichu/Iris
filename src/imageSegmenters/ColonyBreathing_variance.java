@@ -3,6 +3,7 @@
  */
 package imageSegmenters;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
@@ -38,6 +39,10 @@ public class ColonyBreathing_variance {
 	 */
 	public static BasicImageSegmenterOutput segmentPicture(BasicImageSegmenterOutput originalSegmentation, BasicImageSegmenterInput input){
 
+		//don't re-adjust colony borders if user has made the cropping
+		if(IrisFrontend.singleColonyRun==true){
+			return(originalSegmentation);
+		}
 
 		try{
 

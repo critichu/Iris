@@ -74,9 +74,10 @@ public class EcoliOpacityProfile384 extends Profile {
 
 		//0. initialize settings and open files for input and output
 		//since this is a 384 plate, make sure the settings are redefined to match our setup
-		settings.numberOfColumnsOfColonies = 24;
-		settings.numberOfRowsOfColonies = 16;
-
+		if(IrisFrontend.singleColonyRun==false){
+			settings.numberOfColumnsOfColonies = 24;
+			settings.numberOfRowsOfColonies = 16;
+		}
 		//
 		//--------------------------------------------------
 		//

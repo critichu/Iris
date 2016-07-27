@@ -53,7 +53,7 @@ public class EcoliOpacityProfile384_HazyColonies extends Profile {
 	 * This holds access to the settings object
 	 */
 	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
-	
+
 	/**
 	 * This function will analyze the picture using the basic profile
 	 * The end result will be a file with the same name as the input filename,
@@ -61,13 +61,14 @@ public class EcoliOpacityProfile384_HazyColonies extends Profile {
 	 * @param filename
 	 */
 	public void analyzePicture(String filename){
-		
-		
+
+
 		//0. initialize settings and open files for input and output
 		//since this is a 384 plate, make sure the settings are redefined to match our setup
-		settings.numberOfColumnsOfColonies = 24;
-		settings.numberOfRowsOfColonies = 16;
-		
+		if(IrisFrontend.singleColonyRun==false){
+			settings.numberOfColumnsOfColonies = 24;
+			settings.numberOfRowsOfColonies = 16;
+		}
 		//
 		//--------------------------------------------------
 		//
@@ -95,10 +96,10 @@ public class EcoliOpacityProfile384_HazyColonies extends Profile {
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
-		
-		
-		
-		
+
+
+
+
 		//
 		//--------------------------------------------------
 		//
@@ -151,10 +152,10 @@ public class EcoliOpacityProfile384_HazyColonies extends Profile {
 		//and the number of rows and columns, save the results in the settings object
 		calculateGridSpacing(settings, croppedImage);
 
-//		//change the settings so that the distance between the colonies can now be smaller
-//		settings.minimumDistanceBetweenRows = 40;
-//		//..or larger
-//		settings.maximumDistanceBetweenRows = 100;
+		//		//change the settings so that the distance between the colonies can now be smaller
+		//		settings.minimumDistanceBetweenRows = 40;
+		//		//..or larger
+		//		settings.maximumDistanceBetweenRows = 100;
 
 
 
@@ -302,14 +303,14 @@ public class EcoliOpacityProfile384_HazyColonies extends Profile {
 	 */
 	private void calculateGridSpacing(BasicSettings settings_,
 			ImagePlus croppedImage) {
-		
+
 		int image_width = croppedImage.getWidth();
 		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
-		
+
 		//save the results directly to the settings object
 		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
 		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*4/3);
-		
+
 	}
 
 

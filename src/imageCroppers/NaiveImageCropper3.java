@@ -3,6 +3,7 @@
  */
 package imageCroppers;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -32,6 +33,13 @@ public abstract class NaiveImageCropper3 {
 	 * @return
 	 */
 	public static ImagePlus cropPlate(ImagePlus originalImage){
+		
+		//if user has cropped the picture, no need to re-crop
+		if(IrisFrontend.singleColonyRun==true){
+			return(originalImage.duplicate());
+		}
+
+		
 		//crop the plate so that we keep only the colonies
 		//Roi keepOnlyColoniesROI = new Roi(580, 380, 4080, 2730);
 		
