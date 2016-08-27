@@ -1501,7 +1501,7 @@ public class Toolbox {
 			ColorTileReaderInput [][]  dummy_centeredColorTileReaderInput = new ColorTileReaderInput[1][1];
 			dummy_centeredColorTileReaderInput[0][0] = new ColorTileReaderInput(inputCroppedImage, segmentationOutput.ROImatrix[0][0], settings); //notice last argument (center point) is missing
 			return(dummy_centeredColorTileReaderInput);
-			
+
 		}	
 		//initialize output
 		BasicTileReaderOutput [][] basicTileReaderOutputsCenters = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -1654,6 +1654,126 @@ public class Toolbox {
 		croppedImage.deleteRoi();
 
 		return(colonyBounds);
+	}
+
+
+	/**
+	 * This function will get the color of the 4 corner pixels and get their average color
+	 * (after excluding 1 possible outlier)
+	 * @param tileImage
+	 * @return
+	 */
+	public static Color getBackgroundColor(ImagePlus tileImage){
+
+		ColorProcessor colorProcessor = (ColorProcessor) tileImage.getProcessor();
+
+		//get all corner colors
+		Color[] cornerColors = new Color[4];
+		cornerColors[0] = colorProcessor.getColor(0, 0); //topLeftCornerColor
+		cornerColors[1] = colorProcessor.getColor(0, tileImage.getWidth()-1); //topRightCornerColor
+		cornerColors[2] = colorProcessor.getColor(tileImage.getHeight()-1, 0); //bottomLeftCornerColor
+		cornerColors[3] = colorProcessor.getColor(tileImage.getHeight()-1, tileImage.getWidth()); //bottomRightCornerColor 
+
+
+		//check if a color is an outlier by calculating the distance to all other colors
+		boolean[] outlierFlag = new boolean[4];
+		for (int i = 0; i < outlierFlag.length; i++) {
+			outlierFlag[i] = false;
+		}
+
+		double outlierThreshold = 0.5;
+
+		for (int i = 0; i < cornerColors.length; i++) {
+			double distanceSum = 0.0;
+			for (int j = 0; j < cornerColors.length; j++) {
+				if(i==j) continue;
+				distanceSum += ColorUtil.colorDistance(cornerColors[i], cornerColors[j]);
+			}
+
+			if(distanceSum>outlierThreshold)
+				outlierFlag[i] = true;
+		}
+
+
+
+		//HACK: just return the centroid for now (center of mass of 4 points in the RGB space)
+		Color originalCentroidColor = ColorUtil.blend(
+				ColorUtil.blend(cornerColors[0],cornerColors[1]), 
+				ColorUtil.blend(cornerColors[2],cornerColors[3]));
+
+		return(originalCentroidColor);
+
+
+	}
+
+
+
+
+	/***
+	 * This function works great on colonies that have even brightness.
+	 * While it works well in colonies that are just above the background,
+	 * it doesn't work so well in colonies that have morphology etc.
+	 * @param tileImage
+	 * @return
+	 */
+	public static Roi getColonyRoiTranslucent(ImagePlus tileImage){
+		//reset ROI
+		//make a copy of the tileImage
+		//make sure it's 8-bit grayscale
+		//background subtraction (rolling ball)
+		/**
+		 * found here: http://stackoverflow.com/questions/33827715/imagej-subtract-background
+		 * BackgroundSubtracter bs = new BackgroundSubtracter();
+		 * bs.rollingBallBackground(img.getProcessor(), (double)rollballsize, false, false, false, true, false);
+		 * img.getProcessor().resetMinAndMax();
+		 * 
+		 * reference:
+		 * https://github.com/imagej/ImageJA/blob/master/src/main/java/ij/plugin/filter/BackgroundSubtracter.java
+		 * public void rollingBallBackground(ImageProcessor ip, double radius, 
+		 * boolean createBackground, boolean lightBackground, boolean useParaboloid, boolean doPresmooth, boolean correctCorners) 
+		 * 
+		 */
+		//threshold using an entropy algorithm (e.g. Renyi Entropy)
+		//particle analysis
+		//return largest ROI -- caller will have to deal with size etc thresholds
+		return(null);
+	}
+
+
+
+
+	///TODO: make function to replace certain color range if pixel falls within that
+
+	/**
+	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
+	 * offsets found in the segmenterOutput.  
+	 * @param segmentedImage
+	 * @param segmenterOutput
+	 */
+	public static ImagePlus replaceColonyBackground(ImagePlus tileImage){
+
+		ImagePlus returnImage = tileImage.duplicate();
+
+		//get the background color given its corners
+		Color backgroundColor = getBackgroundColor(returnImage);
+
+		//paint those pixels black
+		ImageProcessor tileImageProcessor = tileImage.getProcessor();
+		tileImageProcessor.setColor(Color.black);
+		tileImageProcessor.setLineWidth(1);
+
+		//for each pixel, if it is colony bounds, paint it on the big picture
+		for(int x=0; x<returnImage.getWidth(); x++){
+			for(int y=0; y<returnImage.getHeight(); y++){
+
+				//calculate distance of pixel color to known background color
+				//
+				if(true){//EDIT: THIS IS just to get the compilation right, should not be true here
+					tileImageProcessor.drawDot(x, y); //paint it on the big picture
+				}
+			}
+		}
+		return(null);
 	}
 
 

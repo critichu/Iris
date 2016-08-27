@@ -100,6 +100,9 @@ public class MorphologyProfileStm96 extends Profile {
 		//
 		//
 
+		//TODO: next line is still work in progress
+		//Color backgroundColor = Toolbox.getBackgroundColor(originalImage);
+		
 
 		//2. rotate the whole image
 		//		double imageAngle = Toolbox.calculateImageRotation(originalImage);

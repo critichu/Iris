@@ -47,9 +47,9 @@ public class IrisFrontend {
 	 * This string array holds the names of all the profiles
 	 */
 	public static String[] profileCollection = {
-		"Stm growth",
-		"Ecoli growth -- no empty check",
-		"Ecoli growth",
+		//"Stm growth",
+		//"Ecoli growth -- no empty check",
+		//"Ecoli growth",
 		"Ecoli opacity 96",
 		"Ecoli opacity 384",
 		"Ecoli opacity 1536",
@@ -59,12 +59,12 @@ public class IrisFrontend {
 		//"CPRG 384",
 		//"Biofilm formation",
 		"Biofilm formation PA",
-		"Biofilm formation Ecoli",
-		"Biofilm formation Ecoli Natural Isolates",
+		//"Biofilm formation Ecoli",
+		//"Biofilm formation Ecoli Natural Isolates",
 		"Morphology Profile [Candida 96-plates]",
-		"Morphology Profile [Pseudomonas 96-plates]",
+		//"Morphology Profile [Pseudomonas 96-plates]",
 		"Morphology Profile [Pseudomonas 384-plates]",
-		"Morphology Profile [Salmonella 96-plates]",
+		//"Morphology Profile [Salmonella 96-plates]",
 		"Xgal assay 96",
 		"Xgal assay 384",
 		"Xgal assay 1536",
@@ -87,12 +87,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.5.4";
+	public static String IrisVersion = "0.9.5.6";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "a797d8a";
+	public static String IrisBuild = "e31cc37";
 
 
 	/**
