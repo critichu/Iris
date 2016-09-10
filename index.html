@@ -4,7 +4,7 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Iris : expanding the palette of microbial phenotypic readouts">
+    <meta name="description" content="Iris : enabling versatile high-throughput phenotyping in microbes">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
@@ -19,7 +19,7 @@
           <a id="forkme_banner" href="https://github.com/critichu/Iris">View on GitHub</a>
 
           <h1 id="project_title">Iris</h1>
-          <h2 id="project_tagline">expanding the palette of microbial phenotypic readouts</h2>
+          <h2 id="project_tagline">enabling versatile high-throughput phenotyping in microbes</h2>
 
             <section id="downloads">
               <a class="zip_download_link" href="https://github.com/critichu/Iris/zipball/master">Download this project as a .zip file</a>
@@ -31,7 +31,9 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
+        <p><img src="https://oc.embl.de/index.php/s/WMRT5wiwToW4Tgk/download" alt="alt text" title="Iris Logo"></p>
+
+<h3>
 <a id="what-does-iris-do" class="anchor" href="#what-does-iris-do" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What does Iris do?</h3>
 
 <p>Iris is an image processing software that automatically quantifies several features of microbial colonies in high throughput. While most available software can quantify colony size, Iris adds several more phenotypes.
@@ -41,7 +43,7 @@ Also Iris can be easily expanded to new phenotypes, by writing a new readout mod
 <a id="how-can-i-download-the-software" class="anchor" href="#how-can-i-download-the-software" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How can I download the software?</h3>
 
 <p>That's easy, just follow this link, it includes a binary distribution (a .jar, see below) and some example files to see how the software works:
-<a href="http://goo.gl/tRg1MT">http://goo.gl/tRg1MT</a></p>
+<a href="https://goo.gl/j0ZpIi">https://goo.gl/j0ZpIi</a></p>
 
 <h3>
 <a id="using-iris" class="anchor" href="#using-iris" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using Iris</h3>
@@ -125,6 +127,35 @@ They are in fact plain text tab-delimited files, which can easily be opened with
 
 <p>Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
 Contact: kritikos at embl dot de</p>
+
+<hr>
+
+<h2>
+<a id="iris-kinetics-tool" class="anchor" href="#iris-kinetics-tool" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris kinetics tool</h2>
+
+<h3>
+<a id="using-the-iris-kinetics-tool" class="anchor" href="#using-the-iris-kinetics-tool" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using the Iris kinetics tool</h3>
+
+<p>The kinetics companion tool is written in R and uses the <a href="https://www.jstatsoft.org/article/view/v033i07">grofit R package</a> to calculate and plot growth curves of various readouts provided by Iris.</p>
+
+<h3>
+<a id="what-can-this-tool-do-for-me" class="anchor" href="#what-can-this-tool-do-for-me" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>what can this tool do for me?</h3>
+
+<p>The script file <code>kinetics.with.iris.R</code> showcases a number of provided functions, including:</p>
+
+<ul>
+<li>
+<strong>reading iris files</strong> in a given folder, and parsing information in their filenames (see file <code>load.all.iris.files.R</code>)</li>
+<li>
+<strong>plotting the spatial bias</strong> of their values (see file <code>plot.in.plate.format.3.R</code>)</li>
+<li>
+<strong>calculating a colony's sigmoidal function fit</strong> for a given readout, and plotting the values and Gompertz fit to be saved as pdf (see file <code>get.colony.growth.rates.2.R</code>)</li>
+</ul>
+
+<h3>
+<a id="where-can-i-get-it" class="anchor" href="#where-can-i-get-it" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>where can I get it?</h3>
+
+<p>you can download all scripts and example input and output files <a href="https://oc.embl.de/index.php/s/NHKrarvREW7o5uw/download">here</a></p>
       </section>
     </div>
 
