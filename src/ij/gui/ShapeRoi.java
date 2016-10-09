@@ -1,15 +1,35 @@
 package ij.gui;
-import java.awt.*;
-import java.awt.image.*;
-import java.awt.geom.*;
-import java.awt.event.KeyEvent;
-import java.util.*;
-import ij.*;
-import ij.process.*;
-import ij.measure.*;
-import ij.plugin.frame.Recorder;
-import ij.plugin.filter.Analyzer;
-import ij.util.Tools;
+import ij.ImagePlus;
+import ij.measure.Calibration;
+import ij.process.ByteProcessor;
+import ij.process.FloatPolygon;
+import ij.process.ImageProcessor;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.FlatteningPathIterator;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.QuadCurve2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
+import java.util.Vector;
 
 /**A subclass of <code>ij.gui.Roi</code> (2D Regions Of Interest) implemented in terms of java.awt.Shape.
  * A ShapeRoi is constructed from a <code>ij.gui.Roi</code> object, or as a result of logical operators
@@ -225,6 +245,45 @@ public class ShapeRoi extends Roi {
 		y = r.y;
 		return this;
 	}
+	
+	
+	
+	/**Unary exclusive or operator.
+	 * The caller is set to the non-overlapping regions between the operands.
+	 * @return the union of the non-overlapping regions of <strong><code>this</code></strong> and <code>sr</code>
+	 */
+	public ShapeRoi xor_generic(Roi sr) {return unaryOpGeneric(sr, XOR);}
+	
+	/**
+	 * works just like unaryOp but for any roi as argument
+	 * @param sr
+	 * @param op
+	 * @return
+	 */
+	ShapeRoi unaryOpGeneric(Roi sr, int op) {
+		AffineTransform at = new AffineTransform();
+		at.translate(x, y);
+		Area a1 = new Area(at.createTransformedShape(getShape()));
+		at = new AffineTransform();
+		at.translate(sr.x, sr.y);
+		Area a2 = new Area(at.createTransformedShape(roiToShapeStatic(sr)));
+		try {
+			switch (op) {
+				case OR: a1.add(a2); break;
+				case AND: a1.intersect(a2); break;
+				case XOR: a1.exclusiveOr(a2); break;
+				case NOT: a1.subtract(a2); break;
+			}
+		} catch(Exception e) {}
+		Rectangle r = a1.getBounds();
+		at = new AffineTransform();
+		at.translate(-r.x, -r.y);
+		setShape(new GeneralPath(at.createTransformedShape(a1)));
+		x = r.x;
+		y = r.y;
+		return this;
+	}
+	
 
 	/**********************************************************************************/
 	/***         Interconversions between "regular" rois and shaped rois           ****/
@@ -338,6 +397,111 @@ public class ShapeRoi extends Roi {
 		}
 		return shape;
 	}
+	
+	
+	
+	/**Converts the Roi argument to an instance of java.awt.Shape.
+	 * Currently, the following conversions are supported:<br>
+		<table><col><col><col><col><col><col><col>
+			<thead>
+				<tr><th scope=col> Roi class </th><th scope=col> Roi type </th><th scope=col> Shape </th><th scope=col> Winding<br> rule </th><th scope=col> Flag<br> forceAngle </th><th scope=col> Flag<br> forceTrace </th><th scope=col> Flag<br> complexShape </th></tr>
+			</thead>
+			<tbody>
+				<tr><td> ij.gui.Roi </td><td> Roi.RECTANGLE </td><td> java.awt.geom.Rectangle2D.Double </td><td></td><td> false </td><td> false </td><td> false </td>	</tr>
+				<tr><td> ij.gui.OvalRoi </td><td> Roi.OVAL </td><td> java.awt.geom.Ellipse2D.Double </td><td></td>	<td> false </td><td> false </td><td> false </td></tr>
+				<tr><td> ij.gui.Line </td><td> Roi.LINE </td><td> java.awt.geom.Line2D.Double </td><td></td><td> false </td><td> false </td><td> false </td></tr>
+				<tr>	<td> ij.gui.PolygonRoi </td>	<td> Roi.POLYGON </td>	<td> java.awt.Polygon </td>	<td></td><td> false </td>	<td> false </td><td> false </td></tr>
+				<tr><td> ij.gui.PolygonRoi </td>	<td> Roi.FREEROI </td>	<td> closed java.awt.geom.GeneralPath </td>	<td> GeneralPath.WIND_EVEN_ODD </td><td> false </td><td> false </td>	<td> false </td>	</tr>
+				<tr><td> ij.gui.PolygonRoi </td><td> Roi.TRACED_ROI </td><td> closed java.awt.geom.GeneralPath  </td>	<td> GeneralPath.WIND_EVEN_ODD </td>	<td> false </td>	<td> true </td>	<td> false </td></tr>
+				<tr><td> ij.gui.PolygonRoi </td>	<td> Roi.POLYLINE </td>	<td> open java.awt.geom.GeneralPath  </td>	<td> GeneralPath.WIND_NON_ZERO </td>	<td> false </td>	<td> false </td><td> false </td></tr>
+				<tr><td> ij.gui.PolygonRoi </td>	<td> Roi.FREELINE </td>	<td> open java.awt.geom.GeneralPath  </td>	<td> GeneralPath.WIND_NON_ZERO </td>	<td> false </td>	<td> false </td>	<td> false </td>	</tr>
+				<tr>	<td> ij.gui.PolygonRoi </td>	<td> Roi.ANGLE </td>	<td> open java.awt.geom.GeneralPath  </td>	<td> GeneralPath.WIND_NON_ZERO </td>	<td> true </td>	<td> false </td>	<td> false </td>	</tr>
+				<tr>	<td> ij.gui.ShapeRoi </td>	<td> Roi.COMPOSITE </td>	<td> shape of argument  </td>	<td> winding rule of<br> argument </td><td> flag of<br> argument </td>	<td> flag of<br> argument </td>	<td> flag of<br> argument </td>	</tr>
+				<tr><td> ij.gui.ShapeRoi </td>	<td> ShapeRoi.NO_TYPE </td>	<td> null </td>	<td>  </td>	<td> false </td>	<td> false </td>	<td> false </td>	</tr>
+			</tbody>
+		</table>
+	 *
+	 * @return A java.awt.geom.* object that inherits from java.awt.Shape interface.
+	 *
+	 */
+	public static Shape roiToShapeStatic(Roi roi) {
+		Shape shape = null;
+		Rectangle r = roi.getBounds();
+		int[] xCoords = null;
+		int[] yCoords = null;
+		int nCoords = 0;
+		switch(roi.getType()) {
+			case Roi.LINE:
+				Line line = (Line)roi;				
+				shape = new Line2D.Double ((double)(line.x1-r.x), (double)(line.y1-r.y), (double)(line.x2-r.x), (double)(line.y2-r.y) );
+				break;
+			case Roi.RECTANGLE:
+				int arcSize = roi.getCornerDiameter();
+				if (arcSize>0)
+					shape = new RoundRectangle2D.Float(0, 0, r.width, r.height, arcSize, arcSize);
+				else
+					shape = new Rectangle2D.Double(0.0, 0.0, (double)r.width, (double)r.height);
+				break;
+			case Roi.OVAL:
+				Polygon p = roi.getPolygon();
+				for (int i=0; i<p.npoints; i++) {
+					p.xpoints[i] -= r.x;
+					p.ypoints[i] -= r.y;
+				}
+				shape = new Polygon(p.xpoints, p.ypoints, p.npoints);
+				break;
+			case Roi.POLYGON:
+				nCoords =((PolygonRoi)roi).getNCoordinates();
+				xCoords = ((PolygonRoi)roi).getXCoordinates();
+				yCoords = ((PolygonRoi)roi).getYCoordinates();
+				shape = new Polygon(xCoords,yCoords,nCoords);
+				break;
+			case Roi.FREEROI: case Roi.TRACED_ROI:
+				nCoords =((PolygonRoi)roi).getNCoordinates();
+				xCoords = ((PolygonRoi)roi).getXCoordinates();
+				yCoords = ((PolygonRoi)roi).getYCoordinates();
+				shape = new GeneralPath(GeneralPath.WIND_EVEN_ODD,nCoords);
+				((GeneralPath)shape).moveTo((float)xCoords[0], (float)yCoords[0]);
+				for (int i=1; i<nCoords; i++)
+					((GeneralPath)shape).lineTo((float)xCoords[i],(float)yCoords[i]);
+				((GeneralPath)shape).closePath();
+				break;
+			case Roi.POLYLINE: case Roi.FREELINE: case Roi.ANGLE:
+				nCoords =((PolygonRoi)roi).getNCoordinates();
+				xCoords = ((PolygonRoi)roi).getXCoordinates();
+				yCoords = ((PolygonRoi)roi).getYCoordinates();
+				shape = new GeneralPath(GeneralPath.WIND_NON_ZERO,nCoords);
+				((GeneralPath)shape).moveTo((float)xCoords[0], (float)yCoords[0]);
+				for (int i=1; i<nCoords; i++)
+					((GeneralPath)shape).lineTo((float)xCoords[i],(float)yCoords[i]);
+				break;
+			case Roi.POINT:
+				ImageProcessor mask = roi.getMask();
+				byte[] maskPixels = (byte[])mask.getPixels();
+				Rectangle maskBounds = roi.getBounds();
+				int maskWidth = mask.getWidth();
+				Area area = new Area();
+				for (int y=0; y<mask.getHeight(); y++) {
+					int yOffset = y*maskWidth;
+					for (int x=0; x<maskWidth; x++) {
+						if (maskPixels[x+yOffset]!=0)
+							area.add(new Area(new Rectangle(x+maskBounds.x, y+maskBounds.y, 1, 1)));
+					}
+				}
+				shape = area;
+				break;
+			case Roi.COMPOSITE: shape = ShapeRoi.cloneShape(((ShapeRoi)roi).getShape());
+				break;
+			default:
+				throw new IllegalArgumentException("Roi type not supported");
+		}
+		return shape;
+	}
+
+	
+	
+	
+	
 
 	/**Constructs a Shape from a float array. */
 	Shape makeShapeFromArray(float[] array) {

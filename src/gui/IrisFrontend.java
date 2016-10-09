@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
 import settings.BasicSettings;
+import settings.UserSettings;
 
 /**
  * This class acts as the decision point between console and GUI versions
@@ -28,6 +29,11 @@ public class IrisFrontend {
 	 * This holds access to the settings object
 	 */
 	public static BasicSettings settings = new BasicSettings();
+	
+	/**
+	 * UserSettings object will be read by the JSON reader
+	 */
+	public static UserSettings userSettings = new UserSettings();
 
 	/**
 	 * This field declares whether its about a single colony per picture or not
@@ -59,7 +65,7 @@ public class IrisFrontend {
 		//"CPRG 384",
 		//"Biofilm formation",
 		"Biofilm formation PA",
-		//"Biofilm formation Ecoli",
+		"Biofilm formation Ecoli",
 		//"Biofilm formation Ecoli Natural Isolates",
 		"Morphology Profile [Candida 96-plates]",
 		//"Morphology Profile [Pseudomonas 96-plates]",
@@ -116,6 +122,8 @@ public class IrisFrontend {
 	 */
 	public static void main(String[] args) {
 
+		//String userSettingsJsonString =  UserSettings.writeUserSettings(userSettings);
+		userSettings = UserSettings.loadUserSettings();
 
 		int argumentOffset = 0;
 		//first check if we need to turn on debug mode

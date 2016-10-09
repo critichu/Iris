@@ -546,6 +546,13 @@ public class BasicTileReaderHSB {
 		if(circularities[indexOfMax]<0.30){
 			return(true); //it's empty
 		}
+		
+		//this is a bug of the particle detection algorithm. 
+		//It returns a particle of 0.791 circularity and area equal to the tile area
+		//when there's nothing on the tile 
+		if(circularities[indexOfMax]<0.792 & circularities[indexOfMax]>0.790){
+			return(true); //it's empty
+		}
 
 
 		//If there is only one particle, then it is sure that this is not an empty spot

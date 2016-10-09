@@ -485,6 +485,18 @@ public class MorphologyTileReaderStm {
 		output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
 		output.colonyOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.colonyROI, colonyBrightnessThreshold);
 
+		//this is a bug of the particle detection algorithm. 
+		//It returns a particle of 0.791 circularity and area equal to the tile area
+		//when there's nothing on the tile
+		if(output.circularity>0.790 & output.circularity<0.792){
+			
+			input.cleanup(); //clear the tile image here, since we don't need it anymore
+			grayscaleTileCopy.flush();
+			
+			output.colonySize = 0;
+			output.circularity = 0;
+			return(output);
+		}
 
 		//6B. get the morphology of the over-agar colony
 
