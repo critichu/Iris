@@ -3,6 +3,7 @@
  */
 package tileReaderInputs;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -30,11 +31,18 @@ public class BasicTileReaderInput extends TileReaderInput {
 	 * @param settings_
 	 */
 	public BasicTileReaderInput(ImagePlus croppedImage, Roi roi, BasicSettings settings_){
-		synchronized(settings_){
-			croppedImage.setRoi(roi);
-			croppedImage.copy(false);
-			
-			this.tileImage = ImagePlus.getClipboard();
+
+		if(IrisFrontend.singleColonyRun==true){
+			this.tileImage = croppedImage.duplicate(); // otherwise I'd have to delete the user-defined ROI
+			this.tileImage.setRoi(croppedImage.getRoi());
+		}
+		else{		
+			synchronized(settings_){
+				croppedImage.setRoi(roi);
+				croppedImage.copy(false);
+
+				this.tileImage = ImagePlus.getClipboard();
+			}
 		}
 		this.settings = settings_;
 	}
@@ -48,7 +56,7 @@ public class BasicTileReaderInput extends TileReaderInput {
 		tileImage = tileImage_;
 		settings = settings_;
 	}
-	
+
 	/**	
 	 * Creates a BasicTileReaderInput obect, given the image tile to be processed
 	 * @param tileImage_
@@ -72,11 +80,11 @@ public class BasicTileReaderInput extends TileReaderInput {
 		synchronized(settings_){
 			croppedImage.setRoi(roi);
 			croppedImage.copy(false);
-			
+
 			this.tileImage = ImagePlus.getClipboard();
 		}
 		this.settings = settings_;
-		
+
 		colonyCenter = new Point(colonyCenter_);
 	}
 
@@ -87,7 +95,7 @@ public class BasicTileReaderInput extends TileReaderInput {
 	public void cleanup(){
 		tileImage.flush();
 	}
-	
+
 	/**
 	 * Create a proper copy of this object
 	 */

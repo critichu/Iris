@@ -3,6 +3,7 @@
  */
 package tileReaders;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Roi;
@@ -52,87 +53,102 @@ public class OpacityTileReader {
 		//
 		//
 
-
-		//1. apply a threshold at the tile, using the Otsu algorithm
-		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
-
-
-
-		//
-		//--------------------------------------------------
-		//
-		//
-
-		//2. perform particle analysis on the thresholded tile
-
-		//create the results table, where the results of the particle analysis will be shown
-		ResultsTable resultsTable = new ResultsTable();
-
-		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER, 
-				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
-				resultsTable, 5, Integer.MAX_VALUE);
-
-
-		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		ParticleAnalyzer.setRoiManager(manager);
-
-		particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
-		//
-		//--------------------------------------------------
-		//
-		//
-
-		//3.1 check if the returned results table is empty
-		if(resultsTable.getCounter()==0){
-			output.emptyResulsTable = true; // this is highly abnormal
-			output.colonySize = 0;//return a colony size of zero
-
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-			grayscaleTileCopy.flush();
-
-			return(output);
-		}
-
-		//3.2 check to see if the tile was empty. If so, return a colony size of zero
-		//if(isTileEmpty(resultsTable, input.tileImage)){
-		if(Toolbox.isTileEmpty_simple2(resultsTable, input.tileImage)){
-			//if(OpacityTileReaderForHazyColonies_old.isTileEmpty_simple(input.tileImage)){
-			output.emptyTile = true;
-			output.colonySize = 0;//return a colony size of zero
-			output.circularity = 0;
-			output.opacity = 0;
-
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-			grayscaleTileCopy.flush();
-
-			return(output);
-		}
-
-
-		//3.3 if there was a colony there, return the area of the biggest particle
-		//this should also clear away contaminations, because normally the contamination
-		//area will be smaller than the colony area, so the contamination will never be reported
-		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-		//3.4 get the opacity of the colony
-		//for this, we need the Roi (region of interest) that corresponds to the colony
-		//so as to exclude the brightness of any contaminations
-		Roi colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
-
-		output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
-		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
 		
-		if(input.colonyCenter==null){ //if the center's preset for us, don't recalculate it
-			output.colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);	
-		} else {
-			output.colonyCenter = new Point(input.colonyCenter);
+		Roi colonyRoi;
+		if(!IrisFrontend.settings.userDefinedRoi){
+			
+			
+			//1. apply a threshold at the tile, using the Otsu algorithm
+			Toolbox.turnImageBW_Otsu_auto(input.tileImage);
+
+
+
+			//
+			//--------------------------------------------------
+			//
+			//
+
+			//2. perform particle analysis on the thresholded tile
+
+			//create the results table, where the results of the particle analysis will be shown
+			ResultsTable resultsTable = new ResultsTable();
+
+			//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
+			ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER, 
+					Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+					resultsTable, 5, Integer.MAX_VALUE);
+
+
+			RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+			ParticleAnalyzer.setRoiManager(manager);
+
+			particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
+			//
+			//--------------------------------------------------
+			//
+			//
+
+			//3.1 check if the returned results table is empty
+			if(resultsTable.getCounter()==0){
+				output.emptyResulsTable = true; // this is highly abnormal
+				output.colonySize = 0;//return a colony size of zero
+
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+				grayscaleTileCopy.flush();
+
+				return(output);
+			}
+
+			//3.2 check to see if the tile was empty. If so, return a colony size of zero
+			//if(isTileEmpty(resultsTable, input.tileImage)){
+			if(Toolbox.isTileEmpty_simple2(resultsTable, input.tileImage)){
+				//if(OpacityTileReaderForHazyColonies_old.isTileEmpty_simple(input.tileImage)){
+				output.emptyTile = true;
+				output.colonySize = 0;//return a colony size of zero
+				output.circularity = 0;
+				output.opacity = 0;
+
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+				grayscaleTileCopy.flush();
+
+				return(output);
+			}
+
+
+			//3.3 if there was a colony there, return the area of the biggest particle
+			//this should also clear away contaminations, because normally the contamination
+			//area will be smaller than the colony area, so the contamination will never be reported
+			int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+			//3.4 get the opacity of the colony
+			//for this, we need the Roi (region of interest) that corresponds to the colony
+			//so as to exclude the brightness of any contaminations
+			colonyRoi = manager.getRoisAsArray()[indexOfBiggestParticle];
+
+			output.colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
+			output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+
+			if(input.colonyCenter==null){ //if the center's preset for us, don't recalculate it
+				output.colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);	
+			} else {
+				output.colonyCenter = new Point(input.colonyCenter);
+			}
+
+			output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
+			output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
+			output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
+			output.colonyROI = colonyRoi;
+		} 
+		
+		else { //user defined colony
+			colonyRoi = (OvalRoi) input.tileImage.getRoi();
+			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);
+			output.circularity = 1; ///HACK: 1 means user-set ROI for now, need to change it to a proper circularity measurement
+			output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
+			output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
+			output.colonyCenter = new Point(colonyRoi.getBounds().width/2, colonyRoi.getBounds().height/2);
+			output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
+			output.colonyROI = colonyRoi;
 		}
-		
-		output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
-		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
-		output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
-		output.colonyROI = colonyRoi;
-		
 
 		if(output.opacity==0){
 			//this cannot be zero, unless we have an empty tile, 
@@ -267,7 +283,7 @@ public class OpacityTileReader {
 	private static int getCenterAreaOpacity(ImagePlus grayscaleTile, Point colonyCenter, int diameter) {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
-		
+
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
 
@@ -309,7 +325,7 @@ public class OpacityTileReader {
 		}
 
 		grayscaleTileCopy.flush();
-		
+
 		return (sumOfBrightness);
 	}
 
@@ -322,9 +338,9 @@ public class OpacityTileReader {
 	 * @return
 	 */
 	private static double getLargestTenPercentOpacityMedian(ImagePlus grayscaleTile, Roi colonyRoi) {
-		
+
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
-		
+
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
 
@@ -382,7 +398,7 @@ public class OpacityTileReader {
 	private static int getBiggestParticleOpacity(ImagePlus grayscaleTile, Roi colonyRoi) {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
-		
+
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
 
@@ -436,7 +452,7 @@ public class OpacityTileReader {
 	private static int getBiggestParticleOpacity_darkColonies(ImagePlus grayscaleTile, Roi colonyRoi) {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
-		
+
 		//1. find the background level, which is the threshold set by Otsu
 		int background_level = getThresholdOtsu(grayscaleTileCopy);
 
@@ -476,7 +492,7 @@ public class OpacityTileReader {
 
 			sumOfBrightness += pixelValue-background_level;
 		}
-		
+
 		grayscaleTileCopy.flush();
 
 

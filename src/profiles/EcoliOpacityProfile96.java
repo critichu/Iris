@@ -6,6 +6,7 @@ package profiles;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
@@ -98,6 +99,18 @@ public class EcoliOpacityProfile96 extends Profile {
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
+		
+		//set flag to honour a possible user-set ROI
+		if(IrisFrontend.singleColonyRun==true){
+			if(filename.contains("colony_")){
+				IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+				originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+			}
+			else if(filename.contains("tile_")){
+				IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+				originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+			}
+		}
 
 
 
@@ -108,7 +121,7 @@ public class EcoliOpacityProfile96 extends Profile {
 		//
 
 		//2. rotate the whole image
-		double imageAngle = calculateImageRotation(originalImage);
+		double imageAngle = Toolbox.calculateImageRotation(originalImage);
 
 		//create a copy of the original image and rotate it, then clear the original picture
 		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
@@ -141,6 +154,8 @@ public class EcoliOpacityProfile96 extends Profile {
 
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImagePlus colourCroppedImage = croppedImage.duplicate();
+		colourCroppedImage.setRoi(croppedImage.getRoi());
+		
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -404,6 +419,7 @@ public class EcoliOpacityProfile96 extends Profile {
 	 * @return the angle of this picture's rotation 
 	 */
 	private double calculateImageRotation(ImagePlus originalImage) {
+		
 		//1. get a subset of that picture
 		int width = originalImage.getWidth();
 		int height = originalImage.getHeight();

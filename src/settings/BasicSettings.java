@@ -68,6 +68,13 @@ public class BasicSettings /*extends Settings*/ implements Serializable{
 	 * next to the original input image file. 
 	 */
 	public boolean saveGridImage = true;
+
+
+	/**
+	 * If the user used the ColonyPicker to define a ROI (region of interest defining a colony). 
+	 * In this case, the user-defined ROI will be honoured instead of the iris-detected colony ROI.
+	 */
+	public boolean userDefinedRoi = false;
 	
 	
 	

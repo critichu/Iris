@@ -281,6 +281,12 @@ public class Toolbox {
 	 * @return
 	 */
 	public static ImagePlus rotateImage(ImagePlus originalImage, double angle) {
+	
+		if(IrisFrontend.singleColonyRun==true){
+			ImagePlus rotatedImage = originalImage.duplicate();
+			rotatedImage.setRoi(originalImage.getRoi());
+			return(rotatedImage); // otherwise I'd have to delete the ROI
+		}
 
 		originalImage.deleteRoi();
 		ImagePlus aDuplicate = originalImage.duplicate();//because we don't want to tamper with the original image
@@ -1777,8 +1783,26 @@ public class Toolbox {
 	}
 
 
-
-
+	/**
+	 * This just returns the ROI area
+	 * @param selectedRoi
+	 * @return
+	 */
+	public static double getRoiArea(ImagePlus imp){
+		
+		if(imp.getRoi()==null){
+			return(0);
+		}
+		
+		ImageProcessor ip = imp.getProcessor(); 
+		ip.setRoi(imp.getRoi()); 
+		ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MEAN, imp.getCalibration()); 
+		double area2 = stats.area;
+		return(area2);
+	}
+	
+	
+	
 
 
 

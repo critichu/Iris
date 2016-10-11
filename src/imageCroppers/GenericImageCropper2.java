@@ -56,10 +56,12 @@ public class GenericImageCropper2 {
 	 * @return
 	 */
 	public static ImagePlus cropPlate(ImagePlus originalImage){
-		
+
 		//if user has cropped the picture, no need to re-crop
 		if(IrisFrontend.singleColonyRun==true){
-			return(originalImage.duplicate());
+			ImagePlus croppedImage = originalImage.duplicate();
+			croppedImage.setRoi(originalImage.getRoi());
+			return(croppedImage);
 		}
 
 		//find plate borders (where the colonies start) and return the Roi that these correspond to
@@ -189,20 +191,20 @@ public class GenericImageCropper2 {
 		int indexOfTopPlasticBorder = getIndexOfMaximumElement(sumOfRows.subList(0, originalImageHeight/2));
 		int indexOfBottomPlasticBorder = getIndexOfMaximumElement(sumOfRows.subList(originalImageHeight/2, originalImageHeight)) + originalImageHeight/2;
 
-		
+
 		//set the search space 
 		int smallMarginWidth = (int)Math.round(searchStart * originalImageWidth);
 		int largeMarginWidth = (int)Math.round(searchEnd * originalImageWidth);
 		int smallMarginHeight = (int)Math.round(searchStart * originalImageHeight);
 		int largeMarginHeight = (int)Math.round(searchEnd * originalImageHeight);
-		
-		
+
+
 		int indexOfLeftColonyBorder = getIndexOfMinimumElement(sumOfColumns.subList(indexOfLeftPlasticBorder+smallMarginWidth, indexOfLeftPlasticBorder+largeMarginWidth)) + indexOfLeftPlasticBorder+smallMarginWidth;
 		int indexOfRightColonyBorder = getIndexOfMinimumElement(sumOfColumns.subList(indexOfRightPlasticBorder-largeMarginWidth, indexOfRightPlasticBorder-smallMarginWidth)) + indexOfRightPlasticBorder-largeMarginWidth;
-		
+
 		int indexOfTopColonyBorder = getIndexOfMinimumElement(sumOfRows.subList(indexOfTopPlasticBorder+smallMarginHeight, indexOfTopPlasticBorder+largeMarginHeight)) + indexOfTopPlasticBorder+smallMarginHeight;
 		int indexOfBottomColonyBorder = getIndexOfMinimumElement(sumOfRows.subList(indexOfBottomPlasticBorder-largeMarginHeight, indexOfBottomPlasticBorder-smallMarginHeight)) + indexOfBottomPlasticBorder-largeMarginHeight;
-		
+
 
 		int roiX = indexOfLeftColonyBorder;
 		int roiY = indexOfTopColonyBorder;

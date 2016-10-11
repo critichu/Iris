@@ -35,7 +35,9 @@ public abstract class NaiveImageCropper {
 		
 		//if user has cropped the picture, no need to re-crop
 		if(IrisFrontend.singleColonyRun==true){
-			return(originalImage.duplicate());
+			ImagePlus croppedImage = originalImage.duplicate();
+			croppedImage.setRoi(originalImage.getRoi());
+			return(croppedImage);
 		}
 
 		

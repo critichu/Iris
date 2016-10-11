@@ -106,16 +106,23 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 	public static void processSingleFile(File file){
 
+
+		String filename = file.getAbsolutePath();
+		
 		//if we set it here, then it will be called both on GUI or console s/w invocation
 		if(IrisFrontend.singleColonyRun==true){
 			IrisFrontend.settings.numberOfRowsOfColonies = 1;
 			IrisFrontend.settings.numberOfColumnsOfColonies = 1;
+			
+			if(filename.contains("colony_")){
+				IrisFrontend.settings.userDefinedRoi=true;
+			}
+			
 		}
 
 		//publish("Now processing file " + "\n");
 		//System.out.println("Now processing file " + "\n");
 
-		String filename = file.getAbsolutePath();
 
 		File irisFile = new File(filename+".iris");
 		File irisFileDummy = new File(filename+".iris.dummy");
@@ -186,7 +193,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 		else if(profileName.equals("Ecoli opacity 96")){
 			EcoliOpacityProfile96 ecoliOpacity96 = new EcoliOpacityProfile96();
-			ecoliOpacity96.analyzePicture(filename);			
+			ecoliOpacity96.analyzePicture(filename);
 		}
 
 		else if(profileName.contains("Xgal assay")){

@@ -31,7 +31,11 @@ class ColonyPickerFrontendBigMem {
 			new ImageJ();
 			
 	        ColonyPicker colonyPicker = new ColonyPicker();
-	        colonyPicker.run("");
+	        
+	        if(args!=null && args.length!=0)
+	        	colonyPicker.run(args[0]); //args[0] is the filename to open
+	        else
+	        	colonyPicker.run("");
 	        
 			
 			//System.out.println("Invoking Iris with more than 1.5GM of memory");
