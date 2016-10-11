@@ -29,17 +29,28 @@ class ColonyPickerFrontendBigMem {
 		if(maxHeapSize>(long)1.5e9){
 			
 			new ImageJ();
-			
-	        ColonyPicker colonyPicker = new ColonyPicker();
+			ColonyPicker colonyPicker = new ColonyPicker();
 	        
-	        if(args!=null && args.length!=0)
-	        	colonyPicker.run(args[0]); //args[0] is the filename to open
-	        else
+	        
+	        if(args==null){
 	        	colonyPicker.run("");
+	        	return;
+	        }
 	        
-			
-			//System.out.println("Invoking Iris with more than 1.5GM of memory");
-			//System.out.println("Invoking Iris with " + Math.round(maxHeapSize/1e9) + "GB memory");
+	        if(args.length==1){
+	        	colonyPicker.run(args[0]); //args[0] is the folder/filename to open
+	        	return;
+	        }
+	        
+	        if(args.length>=2){
+	        	//args[0] is the profile name (like in Iris)
+				IrisFrontend.selectedProfile = args[0];
+				IrisFrontend.singleColonyRun=true;
+				colonyPicker.invokeIris = true;
+				
+	        	colonyPicker.run(args[1]); //args[1] is the folder/filename to open
+	        	return;
+	        }
 			return;
 		}
 		

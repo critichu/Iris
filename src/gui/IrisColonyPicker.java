@@ -18,6 +18,7 @@ import java.security.CodeSource;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -34,7 +35,7 @@ import javax.swing.text.StyleConstants;
  * @author George Kritikos
  *
  */
-public class IrisColonyPickerGUI extends JFrame implements ActionListener, PropertyChangeListener {
+public class IrisColonyPicker extends JFrame implements ActionListener, PropertyChangeListener {
 
 
 	static { 
@@ -61,49 +62,57 @@ public class IrisColonyPickerGUI extends JFrame implements ActionListener, Prope
 	 */
 	public static void main(String[] args) {
 
-		if(args.length==0){ //run folder selector
 
-			//check if we have enough memory -- if so just run the IrisFrontend
-			//memory threshold here is 1.5GB
-			long maxHeapSize = Runtime.getRuntime().maxMemory();
-			if(maxHeapSize>(long)1.5e9){
+		//check if we have enough memory -- if so just run the IrisFrontend
+		//memory threshold here is 1.5GB
+		long maxHeapSize = Runtime.getRuntime().maxMemory();
+		if(maxHeapSize>(long)1.5e9){
 
-				EventQueue.invokeLater(new Runnable() {
-					public void run() {
-						try {
-							IrisColonyPickerGUI frame = new IrisColonyPickerGUI();
+			EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					try {
+						IrisColonyPicker frame = new IrisColonyPicker();
 
-							//this call tells the system to redirect the System.out and System.err outputs
-							//from the console to the textPane object
-							frame.redirectSystemStreams();
+						//this call tells the system to redirect the System.out and System.err outputs
+						//from the console to the textPane object
+						frame.redirectSystemStreams();
 
-							System.setProperty("apple.laf.useScreenMenuBar", "false");
-							frame.setResizable(false);
-							frame.setVisible(true);				
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+						System.setProperty("apple.laf.useScreenMenuBar", "false");
+						frame.setResizable(false);
+						frame.setVisible(true);				
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				});
-
-			}
-			else {
-				try {
-					ColonyPickerFrontendBigMem.main(args);
-				} catch (Exception e) {
-					System.out.println("cannot process image");
 				}
-			}
+			});
+
 		}
-		if(args.length>0){ //run colony picker on this argument
+		else {
+
 			try {
-				ColonyPickerFrontendBigMem.main(args);
-			} catch (Exception e) {
-				System.err.println("could not process file");
-			}
+				//if there's not enough space, invoke another JVM, this time with enough heap space
+				String pathToThisJar = getPathToJar();
+
+				StringBuilder strBuilder = new StringBuilder();
+				for (int i = 0; i < args.length; i++) {
+					strBuilder.append(" "+args[i]);
+				}
+				String allArguments = strBuilder.toString();
+
+				ProcessBuilder pb = new ProcessBuilder(
+						"java",
+						"-jar",
+						"-Xmx2G",
+						pathToThisJar,
+						allArguments
+						);
+				pb.directory(new File("."));
+				Process process = pb.start();
+				process.waitFor();
+			} 
+			catch (Exception e) {}
+
 		}
-
-
 	}
 
 
@@ -144,7 +153,7 @@ public class IrisColonyPickerGUI extends JFrame implements ActionListener, Prope
 	/**
 	 * Create the frame.
 	 */
-	public IrisColonyPickerGUI() {
+	public IrisColonyPicker() {
 		this.setTitle("Iris ColonyPicker v"+IrisFrontend.IrisVersion);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
@@ -175,7 +184,7 @@ public class IrisColonyPickerGUI extends JFrame implements ActionListener, Prope
 
 		contentPane.add(scrollPane);
 
-		btnOpenFolder = new JButton("open folder");
+		btnOpenFolder = new JButton("open file");
 		btnOpenFolder.addActionListener(this);
 
 		btnOpenFolder.setBounds(258, 6, 117, 29);
@@ -313,76 +322,31 @@ public class IrisColonyPickerGUI extends JFrame implements ActionListener, Prope
 
 		if(e.getSource()==btnOpenFolder){
 
-			//make user select folder here
-			File directory = selectFolder();
+			//make user select a file here
+			File imageFile = selectFile();
 
-			//open ImageJ window
-			//new ImageJ();
-
-			if(directory==null) //user didn't select a folder
-				return;
-
-			//disable the open folder button, it will be enabled by ProcessFolderWorker, once it's done
-			btnOpenFolder.setEnabled(false);
-			progressBar.setValue(0);
-
-
-			//get a list of the files in the directory, keeping only image files
-			File[] filesInDirectory = directory.listFiles(new PicturesFilenameFilter());
-
-			//For every file in the directory, call the colonyPicker
-			for (File file : filesInDirectory) {
-
-				try{
-					/*
-					 * normally I would invoke directly the plugin but it doesn't like it
-					 * the reason is that the plugin (annotate one picture) terminates after completion
-					 * so instead I'm going to give the plugin a folder to work on
-					 * ... which also didn't work, presumably because the plugin's run method runs on a separate Thread 
-					 * which I found no way to wait for (b/c ImageJ plugins are not of Thread class)
-
-					String args[] = new String[1];
-					//args[0] =  file.getPath();
-					args[0] =  directory.getPath();
-					ColonyPickerFrontendBigMem.main(args);
-					 */
-
-
-					//invoke call to the jar 
-					String pathToThisJar = getPathToJar();
-					String folderThisJarIsIn = (new File(getPathToJar())).getParent();
-					String pathToColonyPickerJar = setdoubleQuote(pathToThisJar + "/" + "iris_colonyPicker.jar");
-
-					String allArguments = 
-							setdoubleQuote(IrisFrontend.selectedProfile) + " " 
-									+ setdoubleQuote(file.getPath());
+			try{
+				/*
+				 * normally I would invoke directly the plugin but it doesn't like it
+				 * the reason is that the plugin (annotate one picture) terminates after completion
+				 * so instead I'm going to give the plugin a folder to work on
+				 * ... which also didn't work, presumably because the plugin's run method runs on a separate Thread 
+				 * which I found no way to wait for (b/c ImageJ plugins are not of Thread class)
 
 					
-					System.out.println("\ncalling ColonyPicker for image:\n\t" + file.getName() + "\nusing profile:\n\t" + IrisFrontend.selectedProfile);
-					System.out.println("\npath to jar:\n\t" + pathToThisJar);
-					
-					ProcessBuilder pb = new ProcessBuilder(
-							"java",
-							"-jar",
-							"-Xmx2G",
-							pathToThisJar,
-							//pathToColonyPickerJar,
-							allArguments
-							);
-					pb.directory(new File(folderThisJarIsIn));
-					Process process = pb.start();
-					
-					System.out.println("\n\ncommand:\n\t" + pb.command().toString());
-					
-					process.waitFor();
+				 */
+				
+				String args[] = new String[2];
+				args[0] =  IrisFrontend.selectedProfile;
+				args[1] =  imageFile.getPath();
+				ColonyPickerFrontendBigMem.main(args);
 
-
-				}
-				catch(Exception e1){
-					System.out.println("Error processing file!\n");
-					e1.printStackTrace(System.err);
-				}
 			}
+			catch(Exception e1){
+				System.out.println("Error processing file!\n");
+				e1.printStackTrace(System.err);
+			}
+
 
 			return;
 		}
@@ -398,14 +362,40 @@ public class IrisColonyPickerGUI extends JFrame implements ActionListener, Prope
 	 */
 	private File selectFolder() {
 
-		return(new File("/Users/george/Desktop/small image test/"));
-		//
+		//return(new File("/Users/george/Desktop/small image test/"));
+
+		//create the filechooser object
+		final JFileChooser fc = new JFileChooser();
+
+
+		//make it show only folders
+		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+		int returnVal = fc.showOpenDialog(this);
+
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+			File directory = fc.getSelectedFile();
+			return(directory);
+		}
+		else{
+			return null;
+		}
+	}
+
+
+	/**
+	 * @return
+	 */
+	private File selectFile() {
+
+		return(new File("/Users/george/Desktop/small image test/icon_512x512.png"));
+
 		//		//create the filechooser object
 		//		final JFileChooser fc = new JFileChooser();
 		//
 		//
 		//		//make it show only folders
-		//		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		//		fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		//
 		//		int returnVal = fc.showOpenDialog(this);
 		//
@@ -417,6 +407,10 @@ public class IrisColonyPickerGUI extends JFrame implements ActionListener, Prope
 		//			return null;
 		//		}
 	}
+
+
+
+
 
 
 	public static String setdoubleQuote(String myText) {

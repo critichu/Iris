@@ -3,7 +3,6 @@
  */
 package test;
 
-import gui.IrisFrontend;
 import gui.ProcessFolderWorker;
 import ij.IJ;
 import ij.ImagePlus;
@@ -14,6 +13,7 @@ import ij.io.FileInfo;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -31,7 +31,14 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	String imageFilename;
 	String colonyImageFilename;
 	double roiMinSizeThreshold = 50;
+	boolean userIsDone = true;
+	public boolean invokeIris = false;
 
+	static { 
+		System.setProperty("plugins.dir", "./plugins/");
+		System.setProperty("sun.java2d.opengl", "true");
+	}
+	
 	/*
 	@Override
 	public void mouseClicked(MouseEvent e) {}
@@ -50,39 +57,42 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	public void mouseExited(MouseEvent e) {}
 
 	 */
-	
+
 	@Override
 	public void keyPressed(KeyEvent e) {
-		int keyCode = e.getKeyCode();
-		char keyChar = e.getKeyChar();
-
-		if(keyCode==32 || keyChar==' '){
-			try {
-				ImagePlus colonyImage = saveColonyRoi_plugin();
-				
-				IrisFrontend.selectedProfile = "Ecoli opacity 96";
-				IrisFrontend.singleColonyRun=true;
-				ProcessFolderWorker.processSingleFile(new File(colonyImageFilename));
-				
-			} catch (Exception e1) {
-				//fail silently
-				//e1.printStackTrace();
-			}
-		}
+		
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {}
 
 	@Override
-	public void keyReleased(KeyEvent e) {}
+	public void keyReleased(KeyEvent e) {
+		
+		int keyCode = e.getKeyCode();
+		char keyChar = e.getKeyChar();
 
+		//user hit space
+		if(keyCode==32 || keyChar==' '){
+			try {
+				ImagePlus colonyImage = saveColonyRoi_plugin();
+				
+				if(invokeIris)
+					ProcessFolderWorker.processSingleFile(new File(colonyImageFilename));
 
-	static { 
-		System.setProperty("plugins.dir", "./plugins/");
-		System.setProperty("sun.java2d.opengl", "true");
+			} catch (Exception e1) {
+				//fail silently
+				e1.printStackTrace();
+			}
+		}
+		
+		//user hit escape
+		if(keyCode==KeyEvent.VK_ESCAPE){
+			imp.close();
+			System.exit(0);
+		}
+		
 	}
-
 
 	/* obsolete, run through ColonyPickerFrontendBigMem
 	public static void main(String args[]) { 
@@ -102,20 +112,67 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	@Override
 	public void run(String arg0) 
 	{
-		imp = IJ.openImage(arg0);
+
+		File fileOrFolder = new File(arg0);
+
+		//single file -- interactive mode
+		if(arg0.equals("") || !fileOrFolder.exists()){
+			imp = IJ.openImage(); 
+			WaitForUserDialog instructionsDialog = new WaitForUserDialog("Instructions", "Define colony areas, hit space to verify selection. \nHit escape when done");
+			instructionsDialog.show();
+		}
+
+		//single file -- batch mode
+		else if(fileOrFolder.isFile()){
+			imp = IJ.openImage(fileOrFolder.getPath()); 
+		} 
+
+		/*
+		//folder mode -- call again this function until we've got all files in directory
+		else if(fileOrFolder.isDirectory()){
+
+			File[] filesInDirectory = fileOrFolder.listFiles(new PicturesFilenameFilter());
+
+			for (File file : filesInDirectory) {
+				
+				try{
+					if(!file.exists()) continue; //if its not a file or it doesn't exist, skip to the next one
+					if(!file.isFile()) continue;
+				
+					
+					userIsDone = false;
+					
+					this.run(file.getPath());
+					
+					while(!userIsDone )
+						this.wait();
+					
+					
+				} catch(Exception e){
+					System.out.println("Error processing file!\n");
+				}
+			}
+		}
+		*/
+
+
+
+		if(imp==null){
+			System.err.println("cannot open image");
+			return;
+		}
+
 		imp.show();
-
-		new WaitForUserDialog("Instructions", "Define colony areas, hit space to verify selection. \nClose image window when done").show();
-
 
 		//get filename and directory information
 		FileInfo originalFileInfo = imp.getOriginalFileInfo();
 		imageFilename = new String( originalFileInfo.directory + "/" + originalFileInfo.fileName);
 
-//		imp.getCanvas().addMouseListener(this);
+		//		imp.getCanvas().addMouseListener(this);
 		imp.getCanvas().removeKeyListener(IJ.getInstance()); // to stop imageJ from getting any keyboard input
 		imp.getCanvas().addKeyListener(this);
 		IJ.setTool("oval");
+		userIsDone = false;
 	}
 
 	//    public void run(String arg0) 
@@ -206,13 +263,16 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 
 		//set overlay of the new ROI
-		//colonyImage.setOverlay(colonyImage.getRoi(), Color.cyan, 1, new Color(0, 0, 0, 0));
+		//
 
 		IJ.saveAs(colonyImage, "Jpeg", colonyImageFilename);
-		//colonyImage.close();
+		
+		
+		//change overlay to show to the user that something actually happened
+		imp.setOverlay(imp.getRoi(), Color.cyan, 1, new Color(0, 0, 0, 0));
 
+		
 		return(colonyImage);
-
 	}
 
 
