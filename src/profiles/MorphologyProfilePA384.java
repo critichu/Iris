@@ -11,6 +11,7 @@ import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
+import imageCroppers.GenericImageCropper2;
 import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
@@ -24,6 +25,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import settings.ColorSettings;
+import settings.UserSettings.ProfileSettings;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput3;
@@ -105,6 +107,15 @@ public class MorphologyProfilePA384 extends Profile {
 		}
 
 
+
+		//find any user settings pertaining to this profile
+		ProfileSettings userProfileSettings = null;
+		if(IrisFrontend.userSettings!=null){
+			userProfileSettings = IrisFrontend.userSettings.getProfileSettings(profileName);
+		}
+
+
+
 		//set flag to honour a possible user-set ROI
 		if(IrisFrontend.singleColonyRun==true){
 			if(filename.contains("colony_")){
@@ -125,21 +136,33 @@ public class MorphologyProfilePA384 extends Profile {
 
 
 		//2. rotate the whole image
-		//		double imageAngle = Toolbox.calculateImageRotation(originalImage);
-		//
-		//		//create a copy of the original image and rotate it, then clear the original picture
-		//		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
-		//		originalImage.flush();
-		//
-		//		//output how much the image needed to be rotated
-		//		if(imageAngle!=0){
-		//			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
-		//		}
+		double imageAngle = 0;
+		if(userProfileSettings==null || IrisFrontend.singleColonyRun){ 
+			//if no settings loaded
+			//or if this is a single colony image
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(!userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = userProfileSettings.rotationSettings.manualImageRotationDegrees;
+		}
 
-
-		ImagePlus rotatedImage = originalImage.duplicate();
-		rotatedImage.setRoi(originalImage.getRoi());
+		//create a copy of the original image and rotate it, then clear the original picture
+		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
 		originalImage.flush();
+
+		//output how much the image needed to be rotated
+		if(imageAngle!=0){
+			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
+		}
+
+
+		//uncomment the next lines to avoid auto rotation -- EDIT: this behaviour can be adjusted in settings 
+		//		ImagePlus rotatedImage = originalImage.duplicate();
+		//		rotatedImage.setRoi(originalImage.getRoi());
+		//		originalImage.flush();
 
 
 		//
@@ -159,11 +182,34 @@ public class MorphologyProfilePA384 extends Profile {
 
 
 
-		//HACK for PA Ornithine screen
-		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(470, 330, 4140, 2750);
-		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		ImagePlus croppedImage = null;
+		
+		if(userProfileSettings==null){ //default behavior
+			croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		}
+		else if(userProfileSettings.croppingSettings.UserCroppedImage || IrisFrontend.singleColonyRun){
+			//perform no cropping if the user already cropped the picture
+			//or if this is a single-colony picture
+			croppedImage = rotatedImage.duplicate();
+			croppedImage.setRoi(rotatedImage.getRoi());
+		}
+		else if(userProfileSettings.croppingSettings.UseFixedCropping){
+			int x_start = userProfileSettings.croppingSettings.FixedCropping_X_Start;
+			int x_end = userProfileSettings.croppingSettings.FixedCropping_X_End;
+			int y_start = userProfileSettings.croppingSettings.FixedCropping_Y_Start;
+			int y_end = userProfileSettings.croppingSettings.FixedCropping_Y_End;
+			
+			//HACK for PA Ornithine screen
+			//NaiveImageCropper3.keepOnlyColoniesROI = new Roi(470, 330, 4140, 2750);
+			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
+			croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		}
+		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
+			croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		}
+		
 
-
+		
 		ImagePlus colorCroppedImage = croppedImage.duplicate(); //it's already rotated
 		colorCroppedImage.setRoi(croppedImage.getRoi());
 		//flush the rotated picture, we won't be needing it anymore
@@ -199,31 +245,21 @@ public class MorphologyProfilePA384 extends Profile {
 
 
 		//5. segment the cropped picture
-		//first change the settings, to get a 96 plate segmentation
-		if(IrisFrontend.singleColonyRun==false){
-			settings.numberOfRowsOfColonies = 16;
-			settings.numberOfColumnsOfColonies = 24;
-		}
-
 		SimpleImageSegmenter.offset = 10;
 
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
-		//
-
-		//		segmentationInput.settings.maximumDistanceBetweenRows = 500;
-		//		segmentationInput.settings.minimumDistanceBetweenRows = 200;
-		//		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
 
 		//let the tile boundaries "breathe"
-		//Edit: no, don't do 100, doesn't play well with Stm readout
-		//		ColonyBreathing.breathingSpace = 100;//20;
-		//		segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
-		//		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		if(userProfileSettings==null){//default behavior
+			//do 
+		}
+		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
+			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
+			segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
+			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		}
 
-		//		ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
-		//		croppedImage.show();
-		//		croppedImage.hide();copyOfTileImage		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
 
 			System.err.println("\nOpacity profile: unable to process picture " + justFilename);
@@ -282,7 +318,7 @@ public class MorphologyProfilePA384 extends Profile {
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 				try{
-					
+
 					basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
 							new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings)); 
 
@@ -391,11 +427,11 @@ public class MorphologyProfilePA384 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				
+
 				double brightnessCorrectedSizeNormalizedColorIntensity = 0;
 				if(basicTileReaderOutputs[i][j].colonySize>0)
 					brightnessCorrectedSizeNormalizedColorIntensity = colorReaderOutputs[i][j].relativeColorIntensity * 0.5 + opacityTileReaderOutputs[i][j].opacity /basicTileReaderOutputs[i][j].colonySize; 
-				
+
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(basicTileReaderOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", basicTileReaderOutputs[i][j].circularity) + "\t"

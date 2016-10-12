@@ -122,8 +122,10 @@ public class IrisFrontend {
 	 */
 	public static void main(String[] args) {
 
-		//String userSettingsJsonString =  UserSettings.writeUserSettings(userSettings);
 		userSettings = UserSettings.loadUserSettings();
+		
+		//apply user settings
+		UserSettings.applyUserSettings(userSettings);
 
 		int argumentOffset = 0;
 		//first check if we need to turn on debug mode

@@ -3,6 +3,8 @@
  */
 package settings;
 
+import gui.IrisFrontend;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,45 +21,50 @@ import com.google.gson.JsonSyntaxException;
  * This class will be read by the JSON reader
  */
 public class UserSettings {
-		
+
 	boolean SingleColony = false;
 	boolean DebugMode = false;
 	ProfileSettings profileSettings[]; //= new ProfileSettings[3];
-	
+	public int ArrayFormat = 1536;
+
 	public class ProfileSettings {
 		public String ProfileName = "";
-		int NumberOfRows = 0;
-		int NumberOfColumns = 0;
-		CroppingSettings croppingSettings = new CroppingSettings();
-		SegmentationSettings segmentationSettings = new SegmentationSettings();
+		public RoatationSettings rotationSettings = new RoatationSettings();
+		public CroppingSettings croppingSettings = new CroppingSettings();
+		public SegmentationSettings segmentationSettings = new SegmentationSettings();
+	}
+	public class RoatationSettings {
+		public boolean autoRotateImage = true;
+		public float manualImageRotationDegrees = 0;
 	}
 	public class CroppingSettings {
-		boolean UserCroppedImage = false;
-		boolean UseFixedCropping = false;
-		int FixedCropping_X_Start = 0;
-		int FixedCropping_Y_Start = 0;
-		int FixedCropping_X_End = 1000;
-		int FixedCropping_Y_End = 1000;
+		public boolean UserCroppedImage = false;
+		public boolean UseFixedCropping = false;
+		public int FixedCropping_X_Start = 0;
+		public int FixedCropping_Y_Start = 0;
+		public int FixedCropping_X_End = 1000;
+		public int FixedCropping_Y_End = 1000;
 	}
 	public class SegmentationSettings {
-		boolean ColonyBreathing = false;
+		public boolean ColonyBreathing = false;
+		public int ColonyBreathingSpace = 30;
 	}
-	
-	//dummy settings	
-//	public UserSettings(){
-//		profileSettings[0] = new ProfileSettings();
-//		profileSettings[1] = new ProfileSettings();
-//		profileSettings[2] = new ProfileSettings();
-//	}
 
-//	public UserSettings(){
-//		UserSettings loadedSettings = loadUserSettings();
-//		
-//		SingleColony = loadedSettings.SingleColony;
-//		DebugMode = loadedSettings.DebugMode;
-//		this.profileSettings = loadedSettings.profileSettings;
-//	}
-	
+	//dummy settings	
+	//	public UserSettings(){
+	//		profileSettings[0] = new ProfileSettings();
+	//		profileSettings[1] = new ProfileSettings();
+	//		profileSettings[2] = new ProfileSettings();
+	//	}
+
+	//	public UserSettings(){
+	//		UserSettings loadedSettings = loadUserSettings();
+	//		
+	//		SingleColony = loadedSettings.SingleColony;
+	//		DebugMode = loadedSettings.DebugMode;
+	//		this.profileSettings = loadedSettings.profileSettings;
+	//	}
+
 	/**
 	 * this will parse the JSON file inside the jar into a stream, and load that stream into a userSettings object
 	 * @return
@@ -72,12 +79,17 @@ public class UserSettings {
 		}
 		return(loadUserSettings(inputStream));
 	}
-	
-	
+
+
+	/**
+	 * loads the user setings from the given input stream corresponding to a JSON file
+	 * @param inputStream
+	 * @return
+	 */
 	public static UserSettings loadUserSettings(InputStream inputStream){ 
-		 
+
 		String jsonString = readStream(inputStream);
-		
+
 		Gson gson = new Gson();
 		UserSettings loadedSettings;
 		try {
@@ -88,33 +100,107 @@ public class UserSettings {
 		}
 		return(loadedSettings);
 	}
-	
 
+
+	/**
+	 * Copies over user-defined settings to the Iris Settings class
+	 * @param loadedSettings
+	 */
+	public static void applyUserSettings(UserSettings loadedSettings){
+
+		if(loadedSettings==null) //no user settings loaded
+			return;
+
+		if(loadedSettings.DebugMode)
+			IrisFrontend.debug = true;
+
+
+		//set number of rows and columns
+		if(loadedSettings.SingleColony){
+			IrisFrontend.singleColonyRun = true;
+			IrisFrontend.settings.numberOfRowsOfColonies = 1;
+			IrisFrontend.settings.numberOfColumnsOfColonies = 1;
+		}
+		else{
+			switch (loadedSettings.ArrayFormat) {
+			case 6144:
+				IrisFrontend.settings.numberOfRowsOfColonies = 64;
+				IrisFrontend.settings.numberOfColumnsOfColonies = 96;
+				break;
+			case 1536:
+				IrisFrontend.settings.numberOfRowsOfColonies = 32;
+				IrisFrontend.settings.numberOfColumnsOfColonies = 48;
+				break;
+			case 384:
+				IrisFrontend.settings.numberOfRowsOfColonies = 16;
+				IrisFrontend.settings.numberOfColumnsOfColonies = 24;
+				break;
+			case 96:
+				IrisFrontend.settings.numberOfRowsOfColonies = 8;
+				IrisFrontend.settings.numberOfColumnsOfColonies = 12;
+				break;
+			case 24:
+				IrisFrontend.settings.numberOfRowsOfColonies = 4;
+				IrisFrontend.settings.numberOfColumnsOfColonies = 6;
+				break;
+			default:
+				System.err.println("User settings: ignoring unkown format: " + loadedSettings.ArrayFormat);
+				break;
+			}
+		}
+	}
+	
+	
+	
+	/**
+	 * Returns the user settings associated with this profile
+	 * @param profileName
+	 * @return
+	 */
+	public ProfileSettings getProfileSettings(String profileName){
+		
+		for (ProfileSettings profileSettings : this.profileSettings) {
+			if(profileSettings.ProfileName.equals(profileName)){
+				return(profileSettings);
+			}
+		}
+		return(null);//no settings supplied for this profile
+	}
+
+
+
+
+
+	/**
+	 * writes user settings to disk
+	 * @param thisSettings
+	 * @return
+	 */
 	public static String writeUserSettings(UserSettings thisSettings){ 
-		 
+
 		Gson gson = new Gson();  
 		String settingsJsonString = gson.toJson(thisSettings);
 		return(settingsJsonString);
 	}
-	
-	
+
+
 	/**
 	 * this function will read the entire given stream into a String
 	 * @param is
 	 * @return
 	 */
 	public static String readStream(InputStream is) {
-	    StringBuilder sb = new StringBuilder(512);
-	    try {
-	        Reader r = new InputStreamReader(is, "UTF-8");
-	        int c = 0;
-	        while ((c = r.read()) != -1) {
-	            sb.append((char) c);
-	        }
-	    } catch (IOException e) {
-	        throw new RuntimeException(e);
-	    }
-	    return sb.toString();
+		StringBuilder sb = new StringBuilder(512);
+		try {
+			Reader r = new InputStreamReader(is, "UTF-8");
+			int c = 0;
+			while ((c = r.read()) != -1) {
+				sb.append((char) c);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return sb.toString();
 	}
-	
+
 }

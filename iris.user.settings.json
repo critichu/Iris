@@ -1,27 +1,33 @@
 {
 	"SingleColony": false,
 	"DebugMode": false,
+	"ArrayFormat": 384,
 	"profileSettings": [
 		{
 			"ProfileName": "Morphology Profile [Pseudomonas 384-plates]",
-			"NumberOfRows": 16,
-			"NumberOfColumns": 24,
+			"rotationSettings":{
+				"autoRotateImage": true,
+				"manualImageRotationDegrees": 0
+			},
 			"croppingSettings": {
 				"UserCroppedImage": false,
 				"UseFixedCropping": false,
-				"FixedCropping_X_Start": 0,
-				"FixedCropping_Y_Start": 0,
-				"FixedCropping_X_End": 1000,
-				"FixedCropping_Y_End": 1000
+				"FixedCropping_X_Start": 470,
+				"FixedCropping_Y_Start": 330,
+				"FixedCropping_X_End": 4140,
+				"FixedCropping_Y_End": 2750
 			},
 			"segmentationSettings":{
-				"ColonyBreathing": true
+				"ColonyBreathing": false,
+				"ColonyBreathingSpace": 100
 			}
 		},
 		{
 			"ProfileName": "Biofilm formation PA",
-			"NumberOfRows": 0,
-			"NumberOfColumns": 0,
+			"rotationSettings":{
+				"autoRotateImage": true,
+				"manualImageRotationDegrees": 0
+			},
 			"croppingSettings": {
 				"UserCroppedImage": false,
 				"UseFixedCropping": false,
@@ -31,7 +37,8 @@
 				"FixedCropping_Y_End": 1000
 			},
 			"segmentationSettings":{
-				"ColonyBreathing": true
+				"ColonyBreathing": true,
+				"ColonyBreathingSpace": 30
 			}
 		}
 	]
