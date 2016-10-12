@@ -204,6 +204,7 @@ public class OpacityTileReader {
 
 		//get a copy of this tile, before it gets thresholded
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
+		grayscaleTileCopy.setRoi(input.colonyRoi);
 		//
 		//--------------------------------------------------
 		//

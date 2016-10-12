@@ -6,6 +6,7 @@ package profiles;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
@@ -87,6 +88,19 @@ public class MorphologyProfileCandida96 extends Profile {
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
+
+		//set flag to honour a possible user-set ROI
+		if(IrisFrontend.singleColonyRun==true){
+			if(filename.contains("colony_")){
+				IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+				originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+			}
+			else if(filename.contains("tile_")){
+				IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+				originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+			}
+		}
+
 		//
 		//--------------------------------------------------
 		//
@@ -107,6 +121,7 @@ public class MorphologyProfileCandida96 extends Profile {
 
 
 		ImagePlus rotatedImage = originalImage.duplicate();
+		rotatedImage.setRoi(originalImage.getRoi());
 		originalImage.flush();
 
 
@@ -129,6 +144,7 @@ public class MorphologyProfileCandida96 extends Profile {
 
 
 		ImagePlus colorCroppedImage = croppedImage.duplicate(); //it's already rotated
+		colorCroppedImage.setRoi(croppedImage.getRoi());
 		//flush the rotated picture, we won't be needing it anymore
 		rotatedImage.flush();
 
@@ -145,6 +161,7 @@ public class MorphologyProfileCandida96 extends Profile {
 
 		//4b. also make BW the input to the image segmenter
 		ImagePlus BWimageToSegment = croppedImage.duplicate();
+		BWimageToSegment.setRoi(croppedImage.getRoi());
 		Toolbox.turnImageBW_Otsu_auto(BWimageToSegment);
 
 		//

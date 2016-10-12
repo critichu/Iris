@@ -114,6 +114,26 @@ public class SimpleImageSegmenter {
 	 */
 	public static BasicImageSegmenterOutput segmentPicture_width(BasicImageSegmenterInput input){
 
+
+
+		//if user has made the cropping, return one tile equal to the entire (single-colony) picture
+		if(IrisFrontend.singleColonyRun==true){
+
+			//set up an output object
+			BasicImageSegmenterOutput output = new BasicImageSegmenterOutput();
+			output.ROImatrix = new Roi[1][1];
+
+			//return only one ROI: the entire picture
+			output.ROImatrix[0][0] = new Roi( 
+					/*x*/ 0,
+					/*y*/ 0,
+					/*width*/ input.imageToSegment.getWidth(),
+					/*height*/ input.imageToSegment.getHeight());
+
+			return(output);
+		}
+
+
 		//get input values
 		ImagePlus croppedImage = input.imageToSegment;
 		BasicSettings settings = input.settings;

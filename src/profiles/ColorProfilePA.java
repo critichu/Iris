@@ -7,6 +7,7 @@ import fiji.threshold.Auto_Local_Threshold;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
@@ -96,13 +97,28 @@ public class ColorProfilePA extends Profile{
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
+		
+		
+		
+		if(IrisFrontend.singleColonyRun==true){
+			if(filename.contains("colony_")){
+				IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+				originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+			}
+			else if(filename.contains("tile_")){
+				IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+				originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+			}
+		}
+		
+		
 		//
 		//--------------------------------------------------
 		//
 		//
 
 		//2. rotate the whole image
-		double imageAngle = calculateImageRotation(originalImage);
+		double imageAngle = Toolbox.calculateImageRotation(originalImage);
 
 		//create a copy of the original image and rotate it, then clear the original picture
 		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
@@ -186,6 +202,7 @@ public class ColorProfilePA extends Profile{
 
 			//save the grid before exiting
 			ImagePlus croppedImageSegmented = grayscaleCroppedImage.duplicate();
+			croppedImageSegmented.setRoi(grayscaleCroppedImage.getRoi());
 
 			RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImageSegmented, filename + ".grid.jpg");
@@ -389,6 +406,7 @@ public class ColorProfilePA extends Profile{
 
 			//calculate and save grid image
 			ImagePlus croppedImageSegmented = colourCroppedImage.duplicate();
+			croppedImageSegmented.setRoi(colourCroppedImage.getRoi());
 
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");

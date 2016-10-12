@@ -66,6 +66,14 @@ public class MorphologyTileReaderStm {
 	 * tile measurement will ignore these number of circles from the outmost circle in the colony ROI
 	 */
 	private static int circlesToIgnore = 1;
+	
+	
+	
+	
+	
+	
+	
+	
 
 	/**
 	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how

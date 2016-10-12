@@ -173,6 +173,10 @@ public class Toolbox {
 		Auto_Local_Threshold.Mean(imageToThreshold, radius, 0, 0, true);
 		imageToThreshold.setTitle(originalImage.getTitle());
 
+		if(IrisFrontend.settings.userDefinedRoi){
+			imageToThreshold.setRoi(originalImage.getRoi());
+		}
+		
 		return(imageToThreshold);
 	}
 
@@ -246,6 +250,9 @@ public class Toolbox {
 		//create a new image with the original title and the brightness HSB channel of the input image
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
 		ImagePlus grayscaleImage = new ImagePlus(originalImage.getTitle(), bpBri);
+		if(IrisFrontend.settings.userDefinedRoi){
+			grayscaleImage.setRoi(originalImage.getRoi());
+		}
 		originalImageCopy.flush();
 
 		return(grayscaleImage);
@@ -281,7 +288,7 @@ public class Toolbox {
 	 * @return
 	 */
 	public static ImagePlus rotateImage(ImagePlus originalImage, double angle) {
-	
+
 		if(IrisFrontend.singleColonyRun==true){
 			ImagePlus rotatedImage = originalImage.duplicate();
 			rotatedImage.setRoi(originalImage.getRoi());
@@ -1789,20 +1796,19 @@ public class Toolbox {
 	 * @return
 	 */
 	public static double getRoiArea(ImagePlus imp){
-		
+
 		if(imp.getRoi()==null){
 			return(0);
 		}
-		
+
 		ImageProcessor ip = imp.getProcessor(); 
 		ip.setRoi(imp.getRoi()); 
 		ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MEAN, imp.getCalibration()); 
 		double area2 = stats.area;
 		return(area2);
 	}
-	
-	
-	
+
+
 
 
 

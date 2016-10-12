@@ -16,6 +16,7 @@ import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.security.CodeSource;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -26,6 +27,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -67,6 +69,9 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 		//memory threshold here is 1.5GB
 		long maxHeapSize = Runtime.getRuntime().maxMemory();
 		if(maxHeapSize>(long)1.5e9){
+			
+			System.setProperty("plugins.dir", "./plugins/");
+			System.setProperty("sun.java2d.opengl", "true");
 
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
@@ -324,21 +329,15 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 
 			//make user select a file here
 			File imageFile = selectFile();
+			if(imageFile==null)
+				return; // user didn't select a folder
 
 			try{
-				/*
-				 * normally I would invoke directly the plugin but it doesn't like it
-				 * the reason is that the plugin (annotate one picture) terminates after completion
-				 * so instead I'm going to give the plugin a folder to work on
-				 * ... which also didn't work, presumably because the plugin's run method runs on a separate Thread 
-				 * which I found no way to wait for (b/c ImageJ plugins are not of Thread class)
-
-					
-				 */
-				
 				String args[] = new String[2];
 				args[0] =  IrisFrontend.selectedProfile;
 				args[1] =  imageFile.getPath();
+				
+							
 				ColonyPickerFrontendBigMem.main(args);
 
 			}
@@ -388,24 +387,30 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 	 */
 	private File selectFile() {
 
-		return(new File("/Users/george/Desktop/small image test/icon_512x512.png"));
 
-		//		//create the filechooser object
-		//		final JFileChooser fc = new JFileChooser();
-		//
-		//
-		//		//make it show only folders
-		//		fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		//
-		//		int returnVal = fc.showOpenDialog(this);
-		//
-		//		if (returnVal == JFileChooser.APPROVE_OPTION) {
-		//			File directory = fc.getSelectedFile();
-		//			return(directory);
-		//		}
-		//		else{
-		//			return null;
-		//		}
+		boolean debugMode = false;
+
+		if(debugMode)
+			return(new File("/Users/george/Desktop/44hrs/cocort-44hr-lbnosalt-keio-1_D.JPG"));
+
+
+		//create the filechooser object
+		final JFileChooser fc = new JFileChooser();
+		fc.setFileFilter(new FileNameExtensionFilter(
+			    "Image files", ImageIO.getReaderFileSuffixes()));
+
+		//make it show only folders
+		//fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+		int returnVal = fc.showOpenDialog(this);
+
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+			File directory = fc.getSelectedFile();
+			return(directory);
+		}
+		else{
+			return null;
+		}
 	}
 
 

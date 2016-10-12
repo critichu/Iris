@@ -4,7 +4,9 @@
 package tileReaders;
 
 import fiji.threshold.Auto_Local_Threshold;
+import gui.IrisFrontend;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
@@ -16,6 +18,9 @@ import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+
+import java.awt.Point;
+
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
 import utils.StdStats;
@@ -47,110 +52,125 @@ public class BasicTileReaderHSB {
 
 		//-1. make a copy of the input tile, in case we need to pass it to HoughCircleFinder
 		ImagePlus tileCopy = input.tileImage.duplicate();
+		tileCopy.setRoi(input.tileImage.getRoi());
 
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
 
-		//1. apply a threshold at the tile, using a local thresholding algorithm
-		turnImageBW_Huang_auto(input.tileImage);
-		//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
+		if(!IrisFrontend.settings.userDefinedRoi){
+
+
+			//1. apply a threshold at the tile, using a local thresholding algorithm
+			turnImageBW_Huang_auto(input.tileImage);
+			//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
 
 
 
-		//2. perform particle analysis on the thresholded tile
+			//2. perform particle analysis on the thresholded tile
 
-		//create the results table, where the results of the particle analysis will be shown
-		ResultsTable resultsTable = new ResultsTable();
-		RoiManager roiManager = new RoiManager(true);
+			//create the results table, where the results of the particle analysis will be shown
+			ResultsTable resultsTable = new ResultsTable();
+			RoiManager roiManager = new RoiManager(true);
 
-		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER, 
-				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
-				resultsTable, 5, Integer.MAX_VALUE);
+			//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
+			ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER, 
+					Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+					resultsTable, 5, Integer.MAX_VALUE);
 
-		ParticleAnalyzer.setRoiManager(roiManager);
-		particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
+			ParticleAnalyzer.setRoiManager(roiManager);
+			particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
 
-		Roi[] rois = roiManager.getRoisAsArray();
-
-
-
-		//3.1 check if the returned results table is empty
-		if(resultsTable.getCounter()==0){
-			output.emptyResulsTable = true; // this is highly abnormal
-			output.colonySize = 0;//return a colony size of zero
-
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-
-			return(output);
-		}
-
-		//3.2 check to see if the tile was empty. If so, return a colony size of zero
-		//if variance is more than 1, then the brightness sum said there's a colony there
-		//so there's has to be both variance less than 1 and other filters saying that there's no colony there
-
-		boolean emptyTile = isTileEmpty(resultsTable, input.tileImage);
-		boolean emptyTile_simple = isTileEmpty_simple(input.tileImage);
+			Roi[] rois = roiManager.getRoisAsArray();
 
 
-		if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
 
-			output.emptyTile = true;
-			output.colonySize = 0;//return a colony size of zero
+			//3.1 check if the returned results table is empty
+			if(resultsTable.getCounter()==0){
+				output.emptyResulsTable = true; // this is highly abnormal
+				output.colonySize = 0;//return a colony size of zero
 
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
 
-			return(output);
-		}
-
-		//		if(isTileEmpty_simple2(resultsTable, input.tileImage)){
-		//			output.emptyTile = true;
-		//			output.colonySize = 0;//return a colony size of zero
-		//
-		//			input.cleanup(); //clear the tile image here, since we don't need it anymore
-		//
-		//			return(output);
-		//		}
-
-
-		if(!emptyTile){ //there's a colony in the tile which was detected in the traditional way
-
-			//3.2 if there was a colony there, return the area of the biggest particle
-			//this should also clear away contaminations, because normally the contamination
-			//area will be smaller than the colony area, so the contamination will never be reported
-			int indexOfBiggestParticle = Toolbox.getIndexOfBiggestParticle(resultsTable);
-			output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
-			output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-			output.colonyCenter = Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
-			output.colonyROI = rois[indexOfBiggestParticle];
-
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-
-			return(output);//returns the biggest result
-		}
-		else{ //there's a colony here, but we need to employ Hough to get it right
-
-			//but only if the user wishes to do so
-			input.settings.useHoughCircles=false; //it's better to fall back to KC's method as a backup
-			if(input.settings.useHoughCircles){
-
-				input.tileImage = tileCopy;
-				//input.tileImage.setRoi(rois[getIndexOfBiggestParticle(resultsTable)], false);
-
-				Hough_Circles.centerX = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
-				Hough_Circles.centerY = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
-				return(MyHoughCircleFinder.processTile(input));
+				return(output);
 			}
-			else{
-				//give up and return that the tile is empty
+
+			//3.2 check to see if the tile was empty. If so, return a colony size of zero
+			//if variance is more than 1, then the brightness sum said there's a colony there
+			//so there's has to be both variance less than 1 and other filters saying that there's no colony there
+
+			boolean emptyTile = isTileEmpty(resultsTable, input.tileImage);
+			boolean emptyTile_simple = isTileEmpty_simple(input.tileImage);
+
+
+			if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
+
 				output.emptyTile = true;
 				output.colonySize = 0;//return a colony size of zero
 
 				input.cleanup(); //clear the tile image here, since we don't need it anymore
 
-				return(output);				
+				return(output);
 			}
+
+			//		if(isTileEmpty_simple2(resultsTable, input.tileImage)){
+			//			output.emptyTile = true;
+			//			output.colonySize = 0;//return a colony size of zero
+			//
+			//			input.cleanup(); //clear the tile image here, since we don't need it anymore
+			//
+			//			return(output);
+			//		}
+
+
+			if(!emptyTile){ //there's a colony in the tile which was detected in the traditional way
+
+				//3.2 if there was a colony there, return the area of the biggest particle
+				//this should also clear away contaminations, because normally the contamination
+				//area will be smaller than the colony area, so the contamination will never be reported
+				int indexOfBiggestParticle = Toolbox.getIndexOfBiggestParticle(resultsTable);
+				output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
+				output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+				output.colonyCenter = Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+				output.colonyROI = rois[indexOfBiggestParticle];
+
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+
+				return(output);//returns the biggest result
+			}
+			else{ //there's a colony here, but we need to employ Hough to get it right
+
+				//but only if the user wishes to do so
+				input.settings.useHoughCircles=false; //it's better to fall back to KC's method as a backup
+				if(input.settings.useHoughCircles){
+
+					input.tileImage = tileCopy;
+					//input.tileImage.setRoi(rois[getIndexOfBiggestParticle(resultsTable)], false);
+
+					Hough_Circles.centerX = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterX();
+					Hough_Circles.centerY = rois[Toolbox.getIndexOfBiggestParticle(resultsTable)].getBounds().getCenterY();
+					return(MyHoughCircleFinder.processTile(input));
+				}
+				else{
+					//give up and return that the tile is empty
+					output.emptyTile = true;
+					output.colonySize = 0;//return a colony size of zero
+
+					input.cleanup(); //clear the tile image here, since we don't need it anymore
+
+					return(output);				
+				}
+			}
+		} 
+		else
+		{ // this is a user-defined ROI, we have to use this one 
+			
+			OvalRoi colonyRoi = (OvalRoi) input.tileImage.getRoi();
+			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);
+			output.circularity = 1; ///HACK: 1 means user-set ROI for now, need to change it to a proper circularity measurement
+			output.colonyCenter = new Point(colonyRoi.getBounds().width/2, colonyRoi.getBounds().height/2);
+			output.colonyROI = colonyRoi;
+			return(output);
 		}
 
 		//TODO: still there is no way to filter out contaminations in case the tile is empty
@@ -546,7 +566,7 @@ public class BasicTileReaderHSB {
 		if(circularities[indexOfMax]<0.30){
 			return(true); //it's empty
 		}
-		
+
 		//this is a bug of the particle detection algorithm. 
 		//It returns a particle of 0.791 circularity and area equal to the tile area
 		//when there's nothing on the tile 

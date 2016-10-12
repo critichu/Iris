@@ -78,8 +78,8 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 				ImagePlus colonyImage = saveColonyRoi_plugin();
 				
 				if(invokeIris)
-					ProcessFolderWorker.processSingleFile(new File(colonyImageFilename));
-
+					ProcessFolderWorker.processSingleFile(new File(colonyImageFilename));				
+				
 			} catch (Exception e1) {
 				//fail silently
 				e1.printStackTrace();
@@ -114,18 +114,18 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	{
 
 		File fileOrFolder = new File(arg0);
-
+		
 		//single file -- interactive mode
 		if(arg0.equals("") || !fileOrFolder.exists()){
-			imp = IJ.openImage(); 
-			WaitForUserDialog instructionsDialog = new WaitForUserDialog("Instructions", "Define colony areas, hit space to verify selection. \nHit escape when done");
+			imp = IJ.openImage();
+			WaitForUserDialog instructionsDialog = new WaitForUserDialog("Instructions", "Define colony areas, hit space to verify selection.\nRectangular selection: let iris detect the colony\nRound selection: manually-defined colony\n\nHit escape when done");
 			instructionsDialog.show();
 		}
 
 		//single file -- batch mode
 		else if(fileOrFolder.isFile()){
-			imp = IJ.openImage(fileOrFolder.getPath()); 
-		} 
+			imp = IJ.openImage(fileOrFolder.getPath());
+		}
 
 		/*
 		//folder mode -- call again this function until we've got all files in directory
@@ -195,7 +195,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 		//check if this is an OvalRoi, Shape, or Rectangle			
 		//OvalRoi selectedRoi = (OvalRoi) imp.getRoi();
 		Roi selectedRoi = (Roi) imp.getRoi();
-		imp.getProcessor().setBackgroundValue(255); //set background to black
+		imp.getProcessor().setBackgroundValue(255); //set background to black 255 is black b/c this has an inverted look-up table
 
 		//if the selectedRoi is not big enough then quit
 		//or too large? -- too large filter is not implemented, large might mean different things for different applications
