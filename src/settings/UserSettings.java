@@ -24,7 +24,7 @@ public class UserSettings {
 
 	boolean SingleColony = false;
 	boolean DebugMode = false;
-	ProfileSettings profileSettings[]; //= new ProfileSettings[3];
+	ProfileSettings profileSettings[] = new ProfileSettings[0];
 	public int ArrayFormat = 1536;
 
 	public class ProfileSettings {
@@ -158,6 +158,9 @@ public class UserSettings {
 	 * @return
 	 */
 	public ProfileSettings getProfileSettings(String profileName){
+		
+		if(this.profileSettings.length==0)
+			return(null);
 		
 		for (ProfileSettings profileSettings : this.profileSettings) {
 			if(profileSettings.ProfileName.equals(profileName)){

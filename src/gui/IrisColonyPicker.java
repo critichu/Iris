@@ -58,7 +58,20 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 	 */
 	public static JComboBox comboBox = null;
 
+	
+	private static IrisColonyPicker irisColonyPickerInstance = null;
+	
+	
+	
+	
+	/**
+	 * This function returns the Iris frame instance
+	 */
+	public static IrisColonyPicker getInstance(){
+		return(irisColonyPickerInstance);
+	}
 
+	
 	/**
 	 * Launch the application.
 	 */
@@ -76,15 +89,15 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					try {
-						IrisColonyPicker frame = new IrisColonyPicker();
+						irisColonyPickerInstance = new IrisColonyPicker();
 
 						//this call tells the system to redirect the System.out and System.err outputs
 						//from the console to the textPane object
-						frame.redirectSystemStreams();
+						irisColonyPickerInstance.redirectSystemStreams();
 
 						System.setProperty("apple.laf.useScreenMenuBar", "false");
-						frame.setResizable(false);
-						frame.setVisible(true);				
+						irisColonyPickerInstance.setResizable(false);
+						irisColonyPickerInstance.setVisible(true);				
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -360,8 +373,6 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 	 * @return
 	 */
 	private File selectFolder() {
-
-		//return(new File("/Users/george/Desktop/small image test/"));
 
 		//create the filechooser object
 		final JFileChooser fc = new JFileChooser();

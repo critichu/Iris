@@ -11,7 +11,7 @@
 			},
 			"croppingSettings": {
 				"UserCroppedImage": false,
-				"UseFixedCropping": false,
+				"UseFixedCropping": true,
 				"FixedCropping_X_Start": 470,
 				"FixedCropping_Y_Start": 330,
 				"FixedCropping_X_End": 4140,

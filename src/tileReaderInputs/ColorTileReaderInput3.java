@@ -3,6 +3,7 @@
  */
 package tileReaderInputs;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -39,6 +40,12 @@ public class ColorTileReaderInput3 extends TileReaderInput {
 		this.colonyRoi = colonyRoi_;
 		this.colonySize = colonySize_;
 		this.colonyCenter = colonyCenter_;
+		
+		if(IrisFrontend.settings.userDefinedRoi){
+			//get the user-defined ROI from the tile image 
+			//(this is where its normally saved when user selects the roi
+			this.colonyRoi = this.tileImage.getRoi(); 
+		}
 	}
 	
 	/**	
@@ -51,6 +58,12 @@ public class ColorTileReaderInput3 extends TileReaderInput {
 		settings = settings_;
 		this.colonyRoi = colonyRoi_;
 		this.colonyCenter = colonyCenter_;
+		
+		if(IrisFrontend.settings.userDefinedRoi){
+			//get the user-defined ROI from the tile image 
+			//(this is where its normally saved when user selects the roi
+			this.colonyRoi = this.tileImage.getRoi(); 
+		}
 	}
 	
 	

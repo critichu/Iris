@@ -244,12 +244,15 @@ public class MorphologyTileReader {
 		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
 
 		
-		input.tileImage.setRoi(input.colonyRoi);
+		//input.tileImage.setRoi(input.colonyRoi);
 		
 		
 		//get a copy of this tile, before it gets thresholded
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
-		grayscaleTileCopy.setRoi(input.tileImage.getRoi());
+		if(input.tileImage.getRoi()==null)
+			grayscaleTileCopy.setRoi(input.colonyRoi);
+		else
+			grayscaleTileCopy.setRoi(input.tileImage.getRoi());
 		//
 		//--------------------------------------------------
 		//
@@ -260,7 +263,7 @@ public class MorphologyTileReader {
 		if(!IrisFrontend.settings.userDefinedRoi || input.colonyRoi==null){
 
 			//1. apply a threshold at the tile, using the Otsu algorithm
-			turnImageBW_Otsu_auto(input.tileImage);		
+			turnImageBW_Otsu_auto(grayscaleTileCopy);		
 
 			//		input.tileImage.show();
 			//		input.tileImage.hide();
@@ -284,7 +287,7 @@ public class MorphologyTileReader {
 			RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
 			ParticleAnalyzer.setRoiManager(manager);
 
-			particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
+			particleAnalyzer.analyze(grayscaleTileCopy); //it gets the image processor internally
 			//
 			//--------------------------------------------------
 			//
@@ -305,14 +308,14 @@ public class MorphologyTileReader {
 			//Change for fuzzy colonies: first check out the variance of it's sum of brightnesses
 
 			//sum up the pixel values (brightness) on the x axis
-			double[] sumOfBrightnessXaxis = sumOfRows(input.tileImage);
+			double[] sumOfBrightnessXaxis = sumOfRows(grayscaleTileCopy);
 			double variance = StdStats.varp(sumOfBrightnessXaxis);
 
 			//		System.out.println(variance);
 
 			//if variance is more than 1, then the brightness sum said there's a colony there
 			//so there's has to be both variance less than 1 and other filters saying that there's no colony there
-			if(variance < varianceThreshold) {// && isTileEmpty(resultsTable, input.tileImage)){
+			if(variance < varianceThreshold) {// && isTileEmpty(resultsTable, grayscaleTileCopy)){
 				output.emptyTile = true;
 				output.colonySize = 0;//return a colony size of zero
 				output.circularity = 0;

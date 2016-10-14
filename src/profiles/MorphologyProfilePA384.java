@@ -38,6 +38,7 @@ import tileReaders.BasicTileReaderHSB;
 import tileReaders.ColorTileReaderHSB;
 import tileReaders.LaplacianFilterTileReader;
 import tileReaders.MorphologyTileReader;
+import tileReaders.MorphologyTileReaderStm;
 import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
@@ -117,16 +118,22 @@ public class MorphologyProfilePA384 extends Profile {
 
 
 		//set flag to honour a possible user-set ROI
-		if(IrisFrontend.singleColonyRun==true){
+		//if(IrisFrontend.singleColonyRun==true){
 			if(filename.contains("colony_")){
+				IrisFrontend.singleColonyRun=true;
+				settings.numberOfColumnsOfColonies=1;
+				settings.numberOfRowsOfColonies=1;
 				IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
 				originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
 			}
 			else if(filename.contains("tile_")){
+				IrisFrontend.singleColonyRun=true;
+				settings.numberOfColumnsOfColonies=1;
+				settings.numberOfRowsOfColonies=1;
 				IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
 				originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
 			}
-		}
+		//}
 
 
 		//
@@ -183,7 +190,7 @@ public class MorphologyProfilePA384 extends Profile {
 
 
 		ImagePlus croppedImage = null;
-		
+
 		if(userProfileSettings==null){ //default behavior
 			croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 		}
@@ -198,7 +205,7 @@ public class MorphologyProfilePA384 extends Profile {
 			int x_end = userProfileSettings.croppingSettings.FixedCropping_X_End;
 			int y_start = userProfileSettings.croppingSettings.FixedCropping_Y_Start;
 			int y_end = userProfileSettings.croppingSettings.FixedCropping_Y_End;
-			
+
 			//HACK for PA Ornithine screen
 			//NaiveImageCropper3.keepOnlyColoniesROI = new Roi(470, 330, 4140, 2750);
 			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
@@ -207,9 +214,9 @@ public class MorphologyProfilePA384 extends Profile {
 		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
 			croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 		}
-		
 
-		
+
+
 		ImagePlus colorCroppedImage = croppedImage.duplicate(); //it's already rotated
 		colorCroppedImage.setRoi(croppedImage.getRoi());
 		//flush the rotated picture, we won't be needing it anymore
@@ -318,15 +325,24 @@ public class MorphologyProfilePA384 extends Profile {
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
 				try{
+					//try 3 colony definition algorithms and pick the one who found the largest colony
 
 					basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
 							new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings)); 
 
-					//try once more using the other
-					if(basicTileReaderOutputs[i][j].colonySize==0){
-						basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
-								new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					BasicTileReaderOutput laplacianReaderOutput = LaplacianFilterTileReader.processTile(
+							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));	
+
+					BasicTileReaderOutput stmMorphologyReaderOutput = new BasicTileReaderOutput();
+					try{stmMorphologyReaderOutput = MorphologyTileReaderStm.processTileOverAgarOnly(colonyCenteredInput[i][j]);} catch(Exception e){};
+
+					if(basicTileReaderOutputs[i][j].colonySize<laplacianReaderOutput.colonySize && laplacianReaderOutput.circularity>0.3){
+						basicTileReaderOutputs[i][j] = laplacianReaderOutput;
 					}
+					if(basicTileReaderOutputs[i][j].colonySize<stmMorphologyReaderOutput.colonySize && stmMorphologyReaderOutput.circularity>0.3){
+						basicTileReaderOutputs[i][j] = stmMorphologyReaderOutput;
+					}
+
 
 
 					//set the known colony centers
@@ -345,8 +361,8 @@ public class MorphologyProfilePA384 extends Profile {
 
 						//get color for that colony
 						colorReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
-								new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], morphologyReaderOutputs[i][j].colonyROI, 
-										morphologyReaderOutputs[i][j].colonySize, morphologyReaderOutputs[i][j].colonyCenter, settings));
+								new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], 
+										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, basicTileReaderOutputs[i][j].colonyCenter, settings));
 
 						//opacity -- to check if colony darkness correlates with colour information -- true means opacities can get negative
 						//this is a fix for very dark colonies
@@ -375,10 +391,9 @@ public class MorphologyProfilePA384 extends Profile {
 		}
 
 
-
 		//check if a row or a column has most of it's tiles empty (then there was a problem with gridding)
 		//check rows first
-		if(checkRowsColumnsIncorrectGridding(morphologyReaderOutputs)){
+		if(checkRowsColumnsIncorrectGridding(basicTileReaderOutputs)){
 			//something was wrong with the gridding.
 			//just print an error message, save grid for debugging reasons and exit
 			System.err.println("\n"+profileName+": unable to process picture " + justFilename);
@@ -421,12 +436,14 @@ public class MorphologyProfilePA384 extends Profile {
 				"biofilm area size\t" +
 				"biofilm color intensity\t" +
 				"size normalized color intensity\t" +
-				"brightness corrected size normalized color intensity\n");
+				"brightness corrected size normalized color intensity\t" +
+				"average pixel saturation\n");
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
+
 
 				double brightnessCorrectedSizeNormalizedColorIntensity = 0;
 				if(basicTileReaderOutputs[i][j].colonySize>0)
@@ -447,7 +464,8 @@ public class MorphologyProfilePA384 extends Profile {
 						+ Integer.toString(colorReaderOutputs[i][j].biofilmArea) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
 						+ String.format("%.3f", colorReaderOutputs[i][j].relativeColorIntensity) + "\t"
-						+ String.format("%.3f", brightnessCorrectedSizeNormalizedColorIntensity) + "\n");
+						+ String.format("%.3f", brightnessCorrectedSizeNormalizedColorIntensity) + "\t"
+						+ String.format("%.3f", colorReaderOutputs[i][j].averagePixelSaturation) + "\n");
 			}
 		}
 
@@ -481,8 +499,7 @@ public class MorphologyProfilePA384 extends Profile {
 		if(settings.saveGridImage){
 
 			//draw the colony bounds, and the in-agar growth bounds
-			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, morphologyReaderOutputs);
-			drawInAgarGrowthBounds(colorCroppedImage, segmentationOutput, morphologyReaderOutputs);
+			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, basicTileReaderOutputs);
 
 			//calculate grid image
 			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(colorCroppedImage, segmentationOutput);
@@ -603,7 +620,11 @@ public class MorphologyProfilePA384 extends Profile {
 	 * @return
 	 */
 	private boolean checkRowsColumnsIncorrectGridding(
-			MorphologyTileReaderOutput[][] readerOutputs) {
+			BasicTileReaderOutput[][] readerOutputs) {
+
+		if(IrisFrontend.singleColonyRun){
+			return(false); //don't check the gridding if this is the only colony
+		}
 
 		int numberOfRows = readerOutputs.length;		
 		if(numberOfRows==0)

@@ -356,14 +356,16 @@ public class ColorTileReaderHSB {
 
 		//0. create the output object
 		ColorTileReaderOutput output = new ColorTileReaderOutput();
+		
+		ImagePlus tileImageCopy = input.tileImage.duplicate();
 
 		//set the pre-calculated ROI (of the largest particle = colony) on the original picture and fill everything around it with black
-		input.tileImage.setRoi(input.colonyRoi);
+		tileImageCopy.setRoi(input.colonyRoi);
 
 
 
 		try {
-			input.tileImage.getProcessor().fillOutside(input.colonyRoi);
+			tileImageCopy.getProcessor().fillOutside(input.colonyRoi);
 		} catch (Exception e) {
 			output.biofilmArea=0;
 			output.colorIntensitySum=0;
@@ -377,17 +379,17 @@ public class ColorTileReaderHSB {
 
 
 		//dilate 3 times to remove the colony periphery
-		input.tileImage.getProcessor().dilate();		
-		input.tileImage.getProcessor().dilate();
-		input.tileImage.getProcessor().dilate();
+		tileImageCopy.getProcessor().dilate();		
+		tileImageCopy.getProcessor().dilate();
+		tileImageCopy.getProcessor().dilate();
 		//
 		//--------------------------------------------------
 		//
 		//
 
 		//4. separate the color channels, calculate relative color intensity of red
-		//byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(input.tileImage, 2, 1, (float)1, (float)2); ///
-		//byte[] relativeColorIntensity_includingBrightness = calculateRelativeColorIntensity(input.tileImage, 2, 1);
+		//byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(tileImageCopy, 2, 1, (float)1, (float)2); ///
+		//byte[] relativeColorIntensity_includingBrightness = calculateRelativeColorIntensity(tileImageCopy, 2, 1);
 
 		//but because colonies get darker with accumulation of congo red..		
 
@@ -414,7 +416,7 @@ public class ColorTileReaderHSB {
 		
 		
 		//get pixel color values again, this time by means of integer values
-		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(input.tileImage, input.colonyRoi, 2, 1, (float)1, (float)2);
+		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(tileImageCopy, input.colonyRoi, 2, 1, (float)1, (float)2);
 		
 //		for(int i=0;i<pixelBiofilmScores_float.length;i++){
 //
@@ -434,7 +436,7 @@ public class ColorTileReaderHSB {
 //		}
 		
 		
-		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(input.tileImage, 2, 1, (float)1, (float)2); ///
+		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(tileImageCopy, 2, 1, (float)1, (float)2); ///
 		
 		for(int i=0;i<pixelBiofilmScores.length;i++){
 
@@ -494,7 +496,7 @@ public class ColorTileReaderHSB {
 		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
 		output.colonyROI = input.colonyRoi;
 		output.meanSampleColor = meanSampleColor;
-		//Toolbox.show(input.tileImage, "after processing");
+		//Toolbox.show(tileImageCopy, "after processing");
 
 
 		if(input.colonySize!=0)
@@ -502,7 +504,7 @@ public class ColorTileReaderHSB {
 		//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
 		
 		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
-		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
+		ImagePlus grayscaleTileCopy = tileImageCopy.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
 		
@@ -517,7 +519,7 @@ public class ColorTileReaderHSB {
 		if(output.colonyCenter!=null){
 			output.centerAreaOpacity = getAverageCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 			//also get the center area color
-			output.centerAreaColor = getAverageCenterAreaColor(input.tileImage, output.colonyCenter, diameter);
+			output.centerAreaColor = getAverageCenterAreaColor(tileImageCopy, output.colonyCenter, diameter);
 		} else {
 			output.centerAreaOpacity = 0;
 			output.centerAreaColor = 0;
@@ -525,6 +527,8 @@ public class ColorTileReaderHSB {
 
 
 		
+		//just returns the average pixel saturation over all pixels in the colony bounds
+		output.averagePixelSaturation = getAveragePixelSaturation(tileImageCopy, input.colonyRoi);
 		
 
 
@@ -692,6 +696,27 @@ public class ColorTileReaderHSB {
 	}
 
 
+	
+	
+	/**
+	 * This just returns a no-frills 0-255 representation of the colony pixels in an array
+	 * @param tile
+	 * @param colonyRoi
+	 * @return
+	 */
+	public static float getAveragePixelSaturation(ImagePlus tile, Roi colonyRoi){
+		Float[] allRoiPixelsSaturation = Toolbox.getRoiPixels(tile, colonyRoi, 'S');
+		
+		float saturationSum = 0;
+		for (int i = 0; i < allRoiPixelsSaturation.length; i++) {
+			saturationSum += allRoiPixelsSaturation[i].floatValue();
+		}
+		
+		float averagePixelSaturation0to255 = saturationSum/allRoiPixelsSaturation.length;
+		
+		return(averagePixelSaturation0to255/255);//I want it in a 0 to 1 range
+	}
+	
 
 	/**
 	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.

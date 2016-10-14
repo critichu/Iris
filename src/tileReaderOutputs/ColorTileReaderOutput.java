@@ -66,6 +66,12 @@ public class ColorTileReaderOutput extends BasicTileReaderOutput {
 	 * This is the ROI that defines the center of the colony
 	 */
 	public Roi centerROI = null;
+
+	
+	/**
+	 * This is the ROI that defines the center of the colony
+	 */
+	public float averagePixelSaturation = 0;
 	
 	
 	

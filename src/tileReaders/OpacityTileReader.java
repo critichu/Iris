@@ -15,6 +15,7 @@ import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
@@ -53,11 +54,11 @@ public class OpacityTileReader {
 		//
 		//
 
-		
+
 		Roi colonyRoi;
 		if(!IrisFrontend.settings.userDefinedRoi){
-			
-			
+
+
 			//1. apply a threshold at the tile, using the Otsu algorithm
 			Toolbox.turnImageBW_Otsu_auto(input.tileImage);
 
@@ -138,12 +139,12 @@ public class OpacityTileReader {
 			output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 			output.colonyROI = colonyRoi;
 		} 
-		
+
 		else { //user defined colony
 			colonyRoi = (OvalRoi) input.tileImage.getRoi();
 			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);
 			output.circularity = 1; ///HACK: 1 means user-set ROI for now, need to change it to a proper circularity measurement
-			output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi);
+			output.opacity = totalColonyBrightnessMinusBackground(grayscaleTileCopy, colonyRoi);
 			output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
 			output.colonyCenter = new Point(colonyRoi.getBounds().width/2, colonyRoi.getBounds().height/2);
 			output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
@@ -194,8 +195,10 @@ public class OpacityTileReader {
 	public static OpacityTileReaderOutput processDefinedColonyTile(OpacityTileReaderInput input, boolean useDarkColonies){
 
 		//in case no-one's done this for us, get the ROI the traditional way
-		if(input.colonyRoi==null){
+		if(input.colonyRoi==null && !IrisFrontend.settings.userDefinedRoi){
 			return(processTile(input));
+		} else if(IrisFrontend.settings.userDefinedRoi){
+			input.colonyRoi=input.tileImage.getRoi();
 		}
 
 
@@ -228,12 +231,15 @@ public class OpacityTileReader {
 		//for this, we need the Roi (region of interest) that corresponds to the colony
 		//so as to exclude the brightness of any contaminations
 
-		if(useDarkColonies==true){
-			output.opacity = getBiggestParticleOpacity_darkColonies(grayscaleTileCopy, input.colonyRoi);
-		}
-		else{
-			output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, input.colonyRoi);
-		}
+		//		if(useDarkColonies==true){
+		//			output.opacity = getBiggestParticleOpacity_darkColonies(grayscaleTileCopy, input.colonyRoi);
+		//		}
+		//		else{
+		//			output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, input.colonyRoi);
+		//		}
+
+		int colonyOpacity = totalColonyBrightnessMinusBackground(grayscaleTileCopy, input.colonyRoi);
+
 
 		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, input.colonyRoi);
 
@@ -251,6 +257,117 @@ public class OpacityTileReader {
 
 		return(output);
 
+	}
+
+
+
+	/**
+	 * @param grayscaleTileCopy
+	 * @param colonyRoi
+	 * @return
+	 */
+	private static int totalColonyBrightnessMinusBackground(
+			ImagePlus tileImage, Roi colonyROI) {
+
+		FloatProcessor backgroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
+		backgroundPixels.setRoi(colonyROI);
+		backgroundPixels.setValue(0);
+		backgroundPixels.setBackgroundValue(0);
+
+		backgroundPixels.fill(backgroundPixels.getMask());
+//		(new ImagePlus("keep-background mask",backgroundPixels)).show();
+
+		FloatProcessor foregroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
+		foregroundPixels.setRoi(colonyROI);
+		foregroundPixels.setValue(0);
+		foregroundPixels.setBackgroundValue(0);
+
+		foregroundPixels.fillOutside(colonyROI);
+//		(new ImagePlus("keep-foreground mask",foregroundPixels)).show();
+
+
+
+
+		int backgroundMedian = getBackgroundMedian(backgroundPixels);
+
+		int sumColonyBrightness = sumPixelOverBackgroundBrightness(foregroundPixels, backgroundMedian);
+
+
+		return(sumColonyBrightness);
+	}
+
+
+	/**
+	 * @param ip
+	 * @return
+	 */
+	private static int sumPixelOverBackgroundBrightness(FloatProcessor ip, int backgroundMedian) {
+
+		float[] pixels = (float[]) ip.getPixels();
+
+		ArrayList<Float> nonZeroPixels = new ArrayList<Float>();
+		ArrayList<Float> zeroPixels = new ArrayList<Float>();
+		ArrayList<Float> onePixels = new ArrayList<Float>();
+
+		for(float thisPixel : pixels){
+			if(thisPixel==255)
+				onePixels.add(thisPixel);
+			else if(thisPixel==0)
+				zeroPixels.add(thisPixel);//don't deal with pixels inside the colony ROI
+			else
+				nonZeroPixels.add(thisPixel);
+		}
+
+		int sum = 0;
+		for(Float thisPixel : nonZeroPixels){
+			sum += Math.round(thisPixel)-backgroundMedian;
+		}
+
+
+		return(sum);
+	}
+
+
+
+	/**
+	 * @param ip
+	 * @return
+	 */
+	private static int getBackgroundMedian(FloatProcessor ip) {
+
+		float[] pixels = (float[]) ip.getPixels();
+
+		ArrayList<Float> nonZeroPixels = new ArrayList<Float>();
+		ArrayList<Float> zeroPixels = new ArrayList<Float>();
+		ArrayList<Float> onePixels = new ArrayList<Float>();
+
+		for(float thisPixel : pixels){
+			if(thisPixel==255)
+				onePixels.add(thisPixel);
+			else if(thisPixel==0)
+				zeroPixels.add(thisPixel);//don't deal with pixels inside the colony ROI
+			else
+				nonZeroPixels.add(thisPixel);
+		}
+
+
+		return(Math.round(getMedian(nonZeroPixels.toArray(new Float[nonZeroPixels.size()]))));
+	}
+
+	/**
+	 * just gets the median, nothing to see here
+	 * @param inputArray
+	 * @return
+	 */
+	public static float getMedian(Float[] inputArray){
+		Arrays.sort(inputArray);
+		double median;
+		if (inputArray.length % 2 == 0)
+			median = ((double)inputArray[inputArray.length/2] + (double)inputArray[inputArray.length/2 - 1])/2;
+		else
+			median = (double) inputArray[inputArray.length/2];
+
+		return((float)median);
 	}
 
 
@@ -342,8 +459,12 @@ public class OpacityTileReader {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
 
-		//1. find the background level, which is the threshold set by Otsu
-		int background_level = getThresholdOtsu(grayscaleTileCopy);
+		//1. find the background level
+		FloatProcessor backgroundPixels = (FloatProcessor) grayscaleTile.getProcessor().convertToFloat().duplicate();
+		backgroundPixels.setRoi(colonyRoi);
+		backgroundPixels.setValue(0);
+		backgroundPixels.setBackgroundValue(0);
+		int background_level = getBackgroundMedian(backgroundPixels);
 
 		//2. check sanity of the given Roi
 		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
@@ -395,13 +516,20 @@ public class OpacityTileReader {
 	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
 	 * @param grayscaleTileCopy
 	 * @return
+	 * @deprecated, see sumPixelOverBackgroundBrightness
 	 */
 	private static int getBiggestParticleOpacity(ImagePlus grayscaleTile, Roi colonyRoi) {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
 
-		//1. find the background level, which is the threshold set by Otsu
-		int background_level = getThresholdOtsu(grayscaleTileCopy);
+		//1. find the background level, which is the median of the pixels not in the ROI
+		FloatProcessor backgroundPixels = (FloatProcessor) grayscaleTile.getProcessor().convertToFloat().duplicate();
+		backgroundPixels.setRoi(colonyRoi);
+		backgroundPixels.setValue(0);
+		backgroundPixels.setBackgroundValue(0);
+
+		backgroundPixels.fill(backgroundPixels.getMask());
+		int background_level = getBackgroundMedian(backgroundPixels);
 
 		//2. check sanity of the given Roi
 		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
@@ -443,7 +571,11 @@ public class OpacityTileReader {
 	}
 
 
+
+
 	/**
+	 * @deprecated, see sumPixelOverBackgroundBrightness
+	 * 
 	 * This method finds the Otsu threshold of the picture.
 	 * Then, it sums the brightness (0 to 255) value of each pixel in the image, as long as it's inside the colony.
 	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
@@ -454,8 +586,12 @@ public class OpacityTileReader {
 
 		ImagePlus grayscaleTileCopy = grayscaleTile.duplicate();
 
-		//1. find the background level, which is the threshold set by Otsu
-		int background_level = getThresholdOtsu(grayscaleTileCopy);
+		//1. find the background level
+		FloatProcessor backgroundPixels = (FloatProcessor) grayscaleTile.getProcessor().convertToFloat().duplicate();
+		backgroundPixels.setRoi(colonyRoi);
+		backgroundPixels.setValue(0);
+		backgroundPixels.setBackgroundValue(0);
+		int background_level = getBackgroundMedian(backgroundPixels);
 
 		//2. check sanity of the given Roi
 		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){

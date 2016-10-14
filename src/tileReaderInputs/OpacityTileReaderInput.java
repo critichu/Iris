@@ -3,6 +3,7 @@
  */
 package tileReaderInputs;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -47,7 +48,12 @@ public class OpacityTileReaderInput extends BasicTileReaderInput {
 		super(croppedImage_, tile_roi_, settings_);
 		this.colonyRoi = colonyRoi_;
 		this.colonySize = colonySize_;
-		// TODO Auto-generated constructor stub
+		
+		if(IrisFrontend.settings.userDefinedRoi){
+			//get the user-defined ROI from the tile image 
+			//(this is where its normally saved when user selects the roi
+			this.colonyRoi = this.tileImage.getRoi(); 
+		}
 	}
 
 	public OpacityTileReaderInput(BasicTileReaderInput that){

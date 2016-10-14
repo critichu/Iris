@@ -3,6 +3,7 @@
  */
 package tileReaders;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Roi;
@@ -66,14 +67,14 @@ public class MorphologyTileReaderStm {
 	 * tile measurement will ignore these number of circles from the outmost circle in the colony ROI
 	 */
 	private static int circlesToIgnore = 1;
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
 
 	/**
 	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how
@@ -433,17 +434,17 @@ public class MorphologyTileReaderStm {
 			grayscaleTileCopy.flush();
 
 			return(output);
-			
+
 		}catch(Exception e){
 			//if failed to threshold twice for whatever reason, fall back to the simple readout
-			
+
 			return(outputSimple);
 		}
 	}
-	
-	
-	
-	
+
+
+
+
 	/**
 	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how
 	 * "wrinkly" a colony is. Flat colonies would get a low morphology score, whereas colonies featuring a complicated structure
@@ -459,64 +460,75 @@ public class MorphologyTileReaderStm {
 
 		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
 
-		//3B. set the whole-colony ROI to the tileImage
-		//	then apply a threshold at the ROI-- that should get us just the colony
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
 		ImageConverter ic2 = new ImageConverter(grayscaleTileCopy);
 		ic2.convertToGray8();
 		grayscaleTileCopy.updateImage();
-		grayscaleTileCopy.setRoi(output.inAgarROI);
+		grayscaleTileCopy.deleteRoi();
 		Toolbox.turnImageBW_Minimum_auto(grayscaleTileCopy);
 		int colonyBrightnessThreshold = Toolbox.getThreshold(grayscaleTileCopy, Method.Minimum);
 
-		
-//		grayscaleTileCopy.show();
-//		grayscaleTileCopy.hide();
-		
 
-		//4B. perform particle analysis on the thresholded tile
-		ResultsTable resultsTable = new ResultsTable();
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
-				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
-				resultsTable, 5, Integer.MAX_VALUE);
-		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		ParticleAnalyzer.setRoiManager(manager);
-		particleAnalyzer.analyze(grayscaleTileCopy);
+		if(!IrisFrontend.settings.userDefinedRoi){
+
+			//4B. perform particle analysis on the thresholded tile
+			ResultsTable resultsTable = new ResultsTable();
+			ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
+					Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+					resultsTable, 5, Integer.MAX_VALUE);
+			RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+			ParticleAnalyzer.setRoiManager(manager);
+			particleAnalyzer.analyze(grayscaleTileCopy);
 
 
-		//5B. return the area of the biggest particle
-		//this should also clear away contaminations, because normally the contamination
-		//area will be smaller than the colony area, so the contamination will never be reported
-		int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
-		output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
-		output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-		output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
-		output.colonyOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.colonyROI, colonyBrightnessThreshold);
+			//5B. return the area of the biggest particle
+			//this should also clear away contaminations, because normally the contamination
+			//area will be smaller than the colony area, so the contamination will never be reported
+			int indexOfBiggestParticle = getIndexOfBiggestParticle(resultsTable);
+			if(indexOfBiggestParticle<0){
+				return(new MorphologyTileReaderOutput());
+			}
+			output.colonySize = getBiggestParticleArea(resultsTable, indexOfBiggestParticle);
+			output.circularity = getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+			output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
+			output.colonyOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.colonyROI, colonyBrightnessThreshold);
 
-		//this is a bug of the particle detection algorithm. 
-		//It returns a particle of 0.791 circularity and area equal to the tile area
-		//when there's nothing on the tile
-		if(output.circularity>0.790 & output.circularity<0.792){
-			
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-			grayscaleTileCopy.flush();
-			
-			output.colonySize = 0;
-			output.circularity = 0;
-			return(output);
+			//this is a bug of the particle detection algorithm. 
+			//It returns a particle of 0.791 circularity and area equal to the tile area
+			//when there's nothing on the tile
+			if(output.circularity>0.790 & output.circularity<0.792){
+
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+				grayscaleTileCopy.flush();
+
+				output.colonySize = 0;
+				output.circularity = 0;
+				return(output);
+			}
+
+			//6B. get the morphology of the over-agar colony
+
+			//this will give us that the circles will not start in an awkward location, even in cases where
+			//we might have oddly shaped colonies (e.g. budding shaped)
+			Point colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+			output.colonyCenter = colonyCenter;
+
 		}
+		else{ // user-defined colony ROI
 
-		//6B. get the morphology of the over-agar colony
-
-		//this will give us that the circles will not start in an awkward location, even in cases where
-		//we might have oddly shaped colonies (e.g. budding shaped)
-		Point colonyCenter = getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+			OvalRoi colonyRoi = (OvalRoi) input.tileImage.getRoi();
+			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);
+			output.circularity = 1; ///HACK: 1 means user-set ROI for now, need to change it to a proper circularity measurement
+			output.colonyOpacity = getBiggestParticleOpacity(grayscaleTileCopy, colonyRoi, colonyBrightnessThreshold);
+			output.colonyCenter = new Point(colonyRoi.getBounds().width/2, colonyRoi.getBounds().height/2);
+			output.colonyROI = colonyRoi;
+		}
 
 		//for this, we need the Roi (region of interest) that corresponds to the colony
 		//so as to exclude the brightness of any contaminations
 
 		grayscaleTileCopy.setRoi(output.colonyROI);
-		ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, output.colonyROI, colonyCenter);
+		ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, output.colonyROI, output.colonyCenter);
 
 		if(elevationCounts.size()==0){
 			//check if we've hit empty space with the first circle already
@@ -540,8 +552,8 @@ public class MorphologyTileReaderStm {
 		grayscaleTileCopy.flush();
 
 		return(output);
-		
-		
+
+
 	}
 
 
@@ -979,7 +991,13 @@ public class MorphologyTileReaderStm {
 
 	private static int getIndexOfBiggestParticle(ResultsTable resultsTable){
 		//get the areas of all the particles the particle analyzer has found
-		float areas[] = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
+
+		float[] areas;
+		try{
+			areas = resultsTable.getColumn(resultsTable.getColumnIndex("Area"));
+		} catch(IllegalArgumentException e){
+			return (-1);
+		}
 
 		//get the index of the biggest particle (in area in pixels)
 		int indexOfMax = getIndexOfMaximumElement(areas);
