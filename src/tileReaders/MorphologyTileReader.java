@@ -223,9 +223,9 @@ public class MorphologyTileReader {
 		return(output);
 
 	}
-	
-	
-	
+
+
+
 
 	/**
 	 * This tile reader is specialized in capturing the colony morphology. It returns a measure of how
@@ -243,10 +243,10 @@ public class MorphologyTileReader {
 		//0. create the output object
 		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
 
-		
+
 		//input.tileImage.setRoi(input.colonyRoi);
-		
-		
+
+
 		//get a copy of this tile, before it gets thresholded
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
 		if(input.tileImage.getRoi()==null)
@@ -260,7 +260,7 @@ public class MorphologyTileReader {
 
 		Roi colonyRoi;
 		Point colonyCenter;
-		if(!IrisFrontend.settings.userDefinedRoi || input.colonyRoi==null){
+		if(!IrisFrontend.settings.userDefinedRoi && input.colonyRoi==null){
 
 			//1. apply a threshold at the tile, using the Otsu algorithm
 			turnImageBW_Otsu_auto(grayscaleTileCopy);		
@@ -350,8 +350,13 @@ public class MorphologyTileReader {
 			//		copyOfTileImage.show();
 			//		copyOfTileImage.hide();
 		}
-		else { //user defined ROI
+		else { //user defined ROI or pre-defined Roi
 			colonyRoi = (OvalRoi) input.tileImage.getRoi();
+			if(colonyRoi==null){//predefined, not user defined
+				colonyRoi = input.colonyRoi;
+				input.tileImage.setRoi(colonyRoi);
+			}
+
 			colonyCenter = new Point(colonyRoi.getBounds().width/2, colonyRoi.getBounds().height/2); 
 			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);		
 			output.circularity = 1; ///HACK: 1 means user-set ROI for now, need to change it to a proper circularity measurement
@@ -391,11 +396,11 @@ public class MorphologyTileReader {
 		return(output);
 
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 
 
 	/**
@@ -419,6 +424,7 @@ public class MorphologyTileReader {
 		//0. first do a simple run using the old tile reader
 		MorphologyTileReaderOutput outputSimple = MorphologyTileReader.processTile(input);
 
+		//revert to the initial input
 		input.tileImage = inputTileImage.duplicate();
 		input.tileImage.setRoi(inputTileImage.getRoi());
 
@@ -438,7 +444,7 @@ public class MorphologyTileReader {
 		if(outputSimple.circularity>0.6){
 			return(outputSimple);
 		}
-		
+
 		if(IrisFrontend.settings.userDefinedRoi){
 			return(outputSimple);
 		}

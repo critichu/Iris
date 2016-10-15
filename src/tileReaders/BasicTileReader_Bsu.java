@@ -4,6 +4,7 @@
 package tileReaders;
 
 import fiji.threshold.Auto_Local_Threshold;
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Roi;
@@ -51,108 +52,120 @@ public class BasicTileReader_Bsu {
 
 		//-1. make a copy of the input tile, in case we need to pass it to HoughCircleFinder
 		ImagePlus tileCopy = input.tileImage.duplicate();
+		tileCopy.setRoi(input.tileImage.getRoi());
 
-		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();				
+		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
+		grayscaleTileCopy.setRoi(input.tileImage.getRoi());
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
 
 		ImagePlus thresholded_tile = tileCopy.duplicate();
-		//turnImageBW_Local_auto(thresholded_tile);
-		Toolbox.turnImageBW_Otsu_auto(thresholded_tile);
-		Toolbox.turnImageBW_Otsu_auto(input.tileImage);
-
+		
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
 
-		//1. apply a threshold at the tile, using a local thresholding algorithm
-		//turnImageBW_Huang_auto(input.tileImage);
+		if(!IrisFrontend.settings.userDefinedRoi){
 
-		//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
-
-
-
-		//2. perform particle analysis on the thresholded tile
-
-		//create the results table, where the results of the particle analysis will be shown
-		ResultsTable resultsTable = new ResultsTable();
-		RoiManager roiManager = new RoiManager(true);
-
-		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER, 
-				Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
-				resultsTable, 5, Integer.MAX_VALUE);
-
-		ParticleAnalyzer.setRoiManager(roiManager);
-		particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
-
-		Roi[] rois = roiManager.getRoisAsArray();
+			//1. apply a threshold at the tile, using a local thresholding algorithm
+			
+			//turnImageBW_Local_auto(thresholded_tile);
+			Toolbox.turnImageBW_Otsu_auto(thresholded_tile);
+			Toolbox.turnImageBW_Otsu_auto(input.tileImage);
+			//turnImageBW_Huang_auto(input.tileImage);
+			//turnImageBW_Local_auto(input.tileImage); //no need, image is already local thresholded
 
 
 
-		//3.1 check if the returned results table is empty
-		if(resultsTable.getCounter()==0){
-			output.emptyResulsTable = true; // this is highly abnormal
-			output.colonySize = 0;//return a colony size of zero
+			//2. perform particle analysis on the thresholded tile
 
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
+			//create the results table, where the results of the particle analysis will be shown
+			ResultsTable resultsTable = new ResultsTable();
+			RoiManager roiManager = new RoiManager(true);
 
-			return(output);
+			//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
+			ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.INCLUDE_HOLES+ParticleAnalyzer.ADD_TO_MANAGER, 
+					Measurements.CENTER_OF_MASS + Measurements.AREA+Measurements.CIRCULARITY+Measurements.RECT+Measurements.PERIMETER, 
+					resultsTable, 5, Integer.MAX_VALUE);
+
+			ParticleAnalyzer.setRoiManager(roiManager);
+			particleAnalyzer.analyze(input.tileImage); //it gets the image processor internally
+
+			Roi[] rois = roiManager.getRoisAsArray();
+
+
+
+			//3.1 check if the returned results table is empty
+			if(resultsTable.getCounter()==0){
+				output.emptyResulsTable = true; // this is highly abnormal
+				output.colonySize = 0;//return a colony size of zero
+
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+
+				return(output);
+			}
+
+			//3.2 check to see if the tile was empty. If so, return a colony size of zero
+			//if variance is more than 1, then the brightness sum said there's a colony there
+			//so there's has to be both variance less than 1 and other filters saying that there's no colony there
+
+
+			boolean emptyTile_simple = isTileEmpty_simple(input.tileImage);
+
+			//HACK 11.04.2016: don't check for empty tiles, it was messing up detection of 1-2 known colonies
+			emptyTile_simple = false;
+
+
+			if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
+
+				output.emptyTile = true;
+				output.colonySize = 0;//return a colony size of zero
+
+				input.cleanup(); //clear the tile image here, since we don't need it anymore
+
+				return(output);
+			}
+
+
+			//3.2 if there was a colony there, return the area of the biggest particle
+			//this should also clear away contaminations, because normally the contamination
+			//area will be smaller than the colony area, so the contamination will never be reported
+			int indexOfBiggestParticle = Toolbox.getIndexOfBiggestParticle(resultsTable);
+			output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
+			output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
+			output.colonyROI = rois[indexOfBiggestParticle];
+
+			//only calculate a new center if one wasn't given already at the input
+			if(input.colonyCenter==null){
+				output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy);//Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
+			}
+			else{
+				output.colonyCenter = new Point(input.colonyCenter);
+			}
+
 		}
-
-		//3.2 check to see if the tile was empty. If so, return a colony size of zero
-		//if variance is more than 1, then the brightness sum said there's a colony there
-		//so there's has to be both variance less than 1 and other filters saying that there's no colony there
-
-
-		boolean emptyTile_simple = isTileEmpty_simple(input.tileImage);
-
-		//HACK 11.04.2016: don't check for empty tiles, it was messing up detection of 1-2 known colonies
-		emptyTile_simple = false;
-		
-
-		if(emptyTile_simple) { //even with the variance criteria, there was no colony found here, quitting 
-
-			output.emptyTile = true;
-			output.colonySize = 0;//return a colony size of zero
-
-			input.cleanup(); //clear the tile image here, since we don't need it anymore
-
-			return(output);
-		}
-
-
-		//3.2 if there was a colony there, return the area of the biggest particle
-		//this should also clear away contaminations, because normally the contamination
-		//area will be smaller than the colony area, so the contamination will never be reported
-		int indexOfBiggestParticle = Toolbox.getIndexOfBiggestParticle(resultsTable);
-		output.colonySize = Toolbox.getBiggestParticleAreaPlusPerimeter(resultsTable, indexOfBiggestParticle);
-		output.circularity = Toolbox.getBiggestParticleCircularity(resultsTable, indexOfBiggestParticle);
-		output.colonyROI = rois[indexOfBiggestParticle];
-
-		//only calculate a new center if one wasn't given already at the input
-		if(input.colonyCenter==null){
-			output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy);//Toolbox.getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
-		}
-		else{
-			output.colonyCenter = new Point(input.colonyCenter);
+		else { //user defined colony ROI
+			output.colonyROI = input.tileImage.getRoi();
+			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);
+			output.circularity = 1; ///HACK: 1 means user-set ROI for now, need to change it to a proper circularity measurement
+			output.colonyCenter = new Point(output.colonyROI.getBounds().width/2, output.colonyROI.getBounds().height/2);
 		}
 
 		//get minimum radius
-		Point[] colonyRoiPerimeter = Toolbox.getRoiEdgePoints(input.tileImage.duplicate().duplicate(), output.colonyROI);
+		Point[] colonyRoiPerimeter = Toolbox.getRoiEdgePoints(input.tileImage.duplicate(), output.colonyROI);
 		double minimumDistance = Toolbox.getMinimumPointDistance(output.colonyCenter, colonyRoiPerimeter);
 		//double medianDistance = Toolbox.getMedianPointDistance(output.colonyCenter, colonyRoiPerimeter);
-		
-		
+
+
 		output.colonyROIround = new OvalRoi(
 				output.colonyCenter.x-minimumDistance, 
 				output.colonyCenter.y -minimumDistance, 
 				minimumDistance*2, minimumDistance*2);
-		
-		
+
+
 		output.colonyRoundSize = (int)Math.round(Math.PI*Math.pow(minimumDistance, 2));
-		
-			
+
+
 
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore

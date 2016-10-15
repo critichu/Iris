@@ -3,8 +3,8 @@
  */
 package tileReaders;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
-import ij.gui.Roi;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
@@ -38,11 +38,14 @@ public class CPRGColorTileReaderHSV {
 		//
 		//
 		
+		ImagePlus colorTileCopy = input.tileImage.duplicate();
+		colorTileCopy.setRoi(input.tileImage.getRoi());
+		
 		int typicalTileSize = 15000;
 
 		//1. measure weighted color sums from the whole tile
 		//make sure to normalize if by the tile size before outputting
-		int[] relativeColorIntensity_tile = calculateRelativeColorIntensity_CPRG_HSV(input.tileImage);
+		int[] relativeColorIntensity_tile = calculateRelativeColorIntensity_CPRG_HSV(input.tileImage.duplicate());
 
 		long sum_relativeColorIntensity_tile = 0;
 		for(int i=0; i<relativeColorIntensity_tile.length; i++){
@@ -58,6 +61,10 @@ public class CPRGColorTileReaderHSV {
 		//--------------------------------------------------
 		//
 		//
+
+
+		if(!IrisFrontend.settings.userDefinedRoi){
+
 
 
 
@@ -104,9 +111,9 @@ public class CPRGColorTileReaderHSV {
 
 
 		//4. remove the background to measure color only from the colony
-		Roi colonyRoi = manager.getRoisAsArray()[biggestParticleIndex];//RoiManager.getInstance().getRoisAsArray()[biggestParticleIndex];
+		output.colonyROI = manager.getRoisAsArray()[biggestParticleIndex];//RoiManager.getInstance().getRoisAsArray()[biggestParticleIndex];
 		//first check that there is actually a selection there..
-		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
+		if(output.colonyROI.getBounds().width<=0||output.colonyROI.getBounds().height<=0){
 			output.colorSumInTile=0;
 			output.colorSumInColony=0;
 			output.errorOccurred=true;
@@ -116,10 +123,15 @@ public class CPRGColorTileReaderHSV {
 		}
 
 		//set that ROI (of the largest particle = colony) on the original picture and fill everything around it with black
-		input.tileImage.setRoi(colonyRoi);
-
+		input.tileImage.setRoi(output.colonyROI);
+		}
+		else { //user has already defined the colony ROI
+			output.colonyROI = input.tileImage.getRoi();
+		}
+		
+		
 		try {
-			input.tileImage.getProcessor().fillOutside(colonyRoi);
+			colorTileCopy.getProcessor().fillOutside(output.colonyROI);
 
 		} catch (Exception e) {
 			output.colorSumInTile=0;
@@ -132,16 +144,13 @@ public class CPRGColorTileReaderHSV {
 
 
 		//dilate 3 times to remove the colony periphery
-		input.tileImage.getProcessor().dilate();
-		input.tileImage.getProcessor().dilate();
-		input.tileImage.getProcessor().dilate();
-
-
-		
+		colorTileCopy.getProcessor().dilate();
+		colorTileCopy.getProcessor().dilate();
+		colorTileCopy.getProcessor().dilate();
 
 
 		int typicalColonySize = 1800;
-		int numberOfPixelsInColony = colonyRoi.getMask().getPixelCount();
+		int numberOfPixelsInColony = output.colonyROI.getMask().getPixelCount();
 		
 		//skip normalizing colony by size
 		typicalColonySize=1;
@@ -149,7 +158,7 @@ public class CPRGColorTileReaderHSV {
 
 		//5. get the weighed color intensities just for the colony
 		//make sure this is normalized for colony size
-		int[] relativeColorIntensity_colony = calculateRelativeColorIntensity_CPRG_HSV(input.tileImage);
+		int[] relativeColorIntensity_colony = calculateRelativeColorIntensity_CPRG_HSV(colorTileCopy);
 
 
 		long sum_relativeColorIntensity_colony = 0;
@@ -181,8 +190,8 @@ public class CPRGColorTileReaderHSV {
 		//		else
 		output.colorSumInColony = (int) Math.round(Math.ceil(Math.sqrt(size_normalized_color_colony)));
 
-		output.colonyROI = colonyRoi;
 
+		colorTileCopy.flush();
 		input.cleanup();
 		return output;
 	}

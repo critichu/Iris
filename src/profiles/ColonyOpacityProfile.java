@@ -8,18 +8,14 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Roi;
-import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
-import ij.process.ImageProcessor;
-import imageCroppers.GenericImageCropper2;
+import imageCroppers.GenericImageCropper;
 import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
-import imageSegmenters.SimpleImageSegmenter;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,8 +23,8 @@ import java.io.IOException;
 import settings.BasicSettings;
 import settings.UserSettings.ProfileSettings;
 import tileReaderInputs.OpacityTileReaderInput;
-import tileReaderOutputs.MorphologyTileReaderOutput;
-import tileReaders.MorphologyTileReader;
+import tileReaderOutputs.OpacityTileReaderOutput;
+import tileReaders.OpacityTileReader;
 import utils.Toolbox;
 
 /**
@@ -37,28 +33,24 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class MorphologyProfileCandida96 extends Profile {
+public class ColonyOpacityProfile extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Morphology Profile [Candida colonies]";
+	public static String profileName = "Colony Opacity Profile";
 
 
 	/**
 	 * this is a description of the profile that will be shown to the user on hovering the profile name 
 	 */
-	public static String profileNotes = "This profile quantifies the amount of colony structure (how 'wrinkly' a colony is)";
+	public static String profileNotes = "This profile is calibrated for use in measuring colony size, density, and opacity";
 
 
 	/**
 	 * This holds access to the settings object
 	 */
 	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
-
-
-
-
 
 	/**
 	 * This function will analyze the picture using the basic profile
@@ -91,6 +83,7 @@ public class MorphologyProfileCandida96 extends Profile {
 			return;
 		}
 
+
 		//find any user settings pertaining to this profile
 		ProfileSettings userProfileSettings = null;
 		if(IrisFrontend.userSettings!=null){
@@ -114,19 +107,18 @@ public class MorphologyProfileCandida96 extends Profile {
 		}
 
 
+
 		//
 		//--------------------------------------------------
 		//
 		//
 
-
 		//2. rotate the whole image
 		double imageAngle = 0;
-		if(userProfileSettings==null || IrisFrontend.singleColonyRun){
-			//default behavior
+		if(userProfileSettings==null || IrisFrontend.singleColonyRun){ 
 			//if no settings loaded
 			//or if this is a single colony image
-			imageAngle = 0;
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
 		}
 		else if(userProfileSettings.rotationSettings.autoRotateImage){
 			imageAngle = Toolbox.calculateImageRotation(originalImage);
@@ -140,25 +132,24 @@ public class MorphologyProfileCandida96 extends Profile {
 		originalImage.flush();
 
 
+		//output how much the image needed to be rotated
+		if(imageAngle!=0){
+			System.out.println("Image had to be rotated by  " + imageAngle + " degrees");
+		}
+
+
+
+
 		//
 		//--------------------------------------------------
 		//
 		//
 
-
 		//3. crop the plate to keep only the colonies
-
-
-
 		ImagePlus croppedImage = null;
-		if(userProfileSettings==null){ //default behavior
-			int x_start = 400;
-			int x_end = 4250;
-			int y_start = 260;
-			int y_end = 2870;
 
-			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
-			croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		if(userProfileSettings==null){ //default behavior
+			croppedImage = GenericImageCropper.cropPlate(rotatedImage);
 		}
 		else if(userProfileSettings.croppingSettings.UserCroppedImage || IrisFrontend.singleColonyRun){
 			//perform no cropping if the user already cropped the picture
@@ -176,14 +167,12 @@ public class MorphologyProfileCandida96 extends Profile {
 			croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
 		}
 		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
-			croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+			croppedImage = GenericImageCropper.cropPlate(rotatedImage);
 		}
 
-
-
-		ImagePlus colorCroppedImage = croppedImage.duplicate(); //it's already rotated
-		colorCroppedImage.setRoi(croppedImage.getRoi());
+		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
+
 
 
 
@@ -193,13 +182,12 @@ public class MorphologyProfileCandida96 extends Profile {
 		//
 
 		//4. pre-process the picture (i.e. make it grayscale)
+		ImagePlus colourCroppedImage = croppedImage.duplicate();
+		colourCroppedImage.setRoi(croppedImage.getRoi());
+
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
-		//4b. also make BW the input to the image segmenter
-		ImagePlus BWimageToSegment = croppedImage.duplicate();
-		BWimageToSegment.setRoi(croppedImage.getRoi());
-		Toolbox.turnImageBW_Otsu_auto(BWimageToSegment);
 
 		//
 		//--------------------------------------------------
@@ -207,34 +195,30 @@ public class MorphologyProfileCandida96 extends Profile {
 		//
 
 
-		//5. segment the cropped picture
-		//first change the settings, to get a 96 plate segmentation
-		SimpleImageSegmenter.offset = 10;
-		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
-		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+		calculateGridSpacing(settings, croppedImage);
 
-		segmentationInput.settings.maximumDistanceBetweenRows = 500;
-		segmentationInput.settings.minimumDistanceBetweenRows = 200;
+		//5. segment the cropped picture
+		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 
-
+		//let the tile boundaries "breathe"
 		if(userProfileSettings==null){//default behavior
-			//let the tile boundaries "breathe"
-			ColonyBreathing.breathingSpace = 100;//20;
-			segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
+			ColonyBreathing.breathingSpace = 8;
 			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
 		}
 		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
-			segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
 			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
 			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		}
 
+		
 
+		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
 
-			System.err.println("\nOpacity profile: unable to process picture " + justFilename);
+			System.err.println("\n"+profileName+": unable to process picture " + justFilename);
 
 			System.err.print("Image segmentation algorithm failed:\n");
 
@@ -255,10 +239,13 @@ public class MorphologyProfileCandida96 extends Profile {
 			//save the grid before exiting
 			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
-			croppedImage.flush();
-			BWimageToSegment.flush();
+
 			return;
 		}
+
+		//6. colony breathing
+		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
 		int y = segmentationOutput.getTopLeftRoi().getBounds().y;
@@ -269,43 +256,45 @@ public class MorphologyProfileCandida96 extends Profile {
 		output.append("#bottom right of the grid found at (" +x+ " , " +y+ ")\n");
 
 
+
+
 		//
 		//--------------------------------------------------
 		//
 		//
-
+		
 		//retrieve the user-defined detection thresholds
 		float minimumValidColonyCircularity;
 		try{minimumValidColonyCircularity = userProfileSettings.detectionSettings.MinimumValidColonyCircularity;} 
-		catch(Exception e) {minimumValidColonyCircularity = (float)0.0;}
+		catch(Exception e) {minimumValidColonyCircularity = (float)0.3;}
 
 		int minimumValidColonySize;
 		try{minimumValidColonySize = userProfileSettings.detectionSettings.MinimumValidColonySize;} 
 		catch(Exception e) {minimumValidColonySize = 50;}
 
+		
 
-		//6. analyze each tile
+		//7. analyze each tile
 
 		//create an array of measurement outputs
-		MorphologyTileReaderOutput [][] readerOutputs = new MorphologyTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		OpacityTileReaderOutput [][] readerOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				try{
-					readerOutputs[i][j] = MorphologyTileReader.processTileWrinkly(
-							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
-				}catch(Exception e){
-					System.err.print("\tError getting morphology at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
-					readerOutputs[i][j] = new MorphologyTileReaderOutput();
-				}
+				readerOutputs[i][j] = OpacityTileReader.processTile(
+						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
 				//each generated tile image is cleaned up inside the tile reader
 				
+				//colony QC
 				if(readerOutputs[i][j].colonySize<minimumValidColonySize ||
 						readerOutputs[i][j].circularity<minimumValidColonyCircularity){
-					readerOutputs[i][j] = new MorphologyTileReaderOutput();
+					readerOutputs[i][j] = new OpacityTileReaderOutput();
 				}
+
+				
 			}
 		}
 
@@ -320,39 +309,20 @@ public class MorphologyProfileCandida96 extends Profile {
 			System.err.print("Image segmentation algorithm failed:\n");
 			System.err.println("\ttoo many empty rows/columns");
 
-			/*
-			 * HACK: just carry on outputting an iris file, since we know that there's pictures with many
-			 * empty spots 
-			 * 
 			//calculate and save grid image
-			ColonyBreathing.paintSegmentedImage(croppedImage, segmentationOutput);
-			Toolbox.savePicture(croppedImage, filename + ".grid.jpg");
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
 			return;
-			 */
-
-			System.err.println("\tWarning: writing iris file anyway");
 		}
 
 
-		//7. output the results
 
 
-		//7.1 output the colony measurements as a text file
-		//output.append("row\tcolumn\tcolony size\tcolony circularity\tcolony morphology score\tcolony normalized morphology score\t\n");
-		output.append("row\t" +
-				"column\t" +
-				"colony size\t" +
-				"colony circularity\t" +
-				"colony opacity\t" +
-				"morphology score fixed circles\t" +
-				"morphology score whole colony\t" +
-				"normalized morphology score\t" +
-				"in agar size\t" +
-				"in agar circularity\t" +
-				"in agar opacity\t" + 
-				"whole tile opacity\n");
+		//8. output the results
 
+		//8.1 output the colony measurements as a text file
+		output.append("row\tcolumn\tsize\tcircularity\topacity\n");
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -360,14 +330,7 @@ public class MorphologyProfileCandida96 extends Profile {
 				output.append(Integer.toString(i+1) + "\t" + Integer.toString(j+1) + "\t" 
 						+ Integer.toString(readerOutputs[i][j].colonySize) + "\t"
 						+ String.format("%.3f", readerOutputs[i][j].circularity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].colonyOpacity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].morphologyScoreFixedNumberOfCircles) + "\t"
-						+ Integer.toString(readerOutputs[i][j].morphologyScoreWholeColony) + "\t"
-						+ String.format("%.3f", readerOutputs[i][j].normalizedMorphologyScore) + "\t"
-						+ Integer.toString(readerOutputs[i][j].inAgarSize) + "\t"
-						+ String.format("%.3f", readerOutputs[i][j].inAgarCircularity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].inAgarOpacity) + "\t"
-						+ Integer.toString(readerOutputs[i][j].wholeTileOpacity) + "\n");
+						+ Integer.toString(readerOutputs[i][j].opacity) + "\n");
 			}
 		}
 
@@ -382,124 +345,47 @@ public class MorphologyProfileCandida96 extends Profile {
 		}
 
 
-		//7.2 save any intermediate picture files, if requested
+
+		//8.2 save any intermediate picture files, if requested
 		settings.saveGridImage = true;
 		if(settings.saveGridImage){
-
-			//draw the colony bounds, and the in-agar growth bounds
-			Toolbox.drawColonyBounds(colorCroppedImage, segmentationOutput, readerOutputs);
-			drawInAgarGrowthBounds(colorCroppedImage, segmentationOutput, readerOutputs);
-
 			//calculate grid image
-			ImagePlus paintedImage = ColonyBreathing.paintSegmentedImage(colorCroppedImage, segmentationOutput);
-
-			Toolbox.savePicture(paintedImage, filename + ".grid.jpg");
+			colourCroppedImage = ColonyBreathing.paintSegmentedImage(colourCroppedImage, segmentationOutput);
+			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, readerOutputs);
+			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 		}
 
 	}
 
 
-
 	/**
-	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
-	 * offsets found in the segmenterOutput.  
-	 * @param segmentedImage
-	 * @param segmenterOutput
-	 */
-	public static void drawInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
-
-
-		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
-		ByteProcessor[][] colonyBounds = getInAgarGrowthBounds(croppedImage, segmenterOutput, tileReaderOutputs);
-
-
-		//paint those bounds on the original cropped image
-		ImageProcessor bigPictureProcessor = croppedImage.getProcessor();
-		//bigPictureProcessor.setColor(Color.black);
-		bigPictureProcessor.setColor(Color.red);
-		bigPictureProcessor.setLineWidth(1);
-
-
-		//for all rows
-		for(int i=0; i<tileReaderOutputs.length; i++){
-			//for all columns
-			for(int j=0; j<tileReaderOutputs[0].length; j++) {
-
-				if(tileReaderOutputs[i][j].colonySize==0)
-					continue; //don't go through the trouble for emtpy tiles
-
-				//get tile offsets
-				int tile_y_offset = segmenterOutput.ROImatrix[i][j].getBounds().y;
-				int tile_x_offset = segmenterOutput.ROImatrix[i][j].getBounds().x;
-				int tileWidth = segmenterOutput.ROImatrix[i][j].getBounds().width;
-				int tileHeight = segmenterOutput.ROImatrix[i][j].getBounds().height;
-
-
-				//for each pixel, if it is colony bounds, paint it on the big picture
-				for(int x=0; x<tileWidth; x++){
-					for(int y=0; y<tileHeight; y++){
-						if(colonyBounds[i][j].getPixel(x, y)==255){ //it is a colony bounds pixel
-							bigPictureProcessor.drawDot(x+tile_x_offset, y+tile_y_offset); //paint it on the big picture
-						}
-					}
-				}
-
-			}
-
-		}
-	}
-
-
-	/**
-	 * This function will get original picture, segment it into tiles.
-	 * For each one, it will apply the colony ROI on it (except it it was empty -- add an empty ROI).
-	 * Then, it will get the mask from the ROI and find it's bounds.
-	 * At the end, for each original tile, we'll have 0/1 tiles, with 1s where the colony bounds are.
+	 * This function calculates the minimum and maximum grid distances according to the
+	 * cropped image size and
+	 * the number of rows and columns that need to be found.
+	 * Since the cropped image needs to be segmented roughly in equal distances, the
+	 * nominal distance in which the columns will be spaced apart will be
+	 * nominal distance = image width / number of columns
+	 * this should be equal to the (image height / number of rows), which is not calculated separately.
+	 * Using this nominal distance, we can calculate the minimum and maximum distances, which are then used
+	 * by the image segmentation algorithm. Distances that do in practice lead the segmentation algorithm
+	 * to a legitimate segmentation of the picture are:
+	 * minimum = 2/3 * nominal distance
+	 * maximum = 4/3 * nominal distance
+	 * 
+	 * @param settings_
 	 * @param croppedImage
-	 * @param segmenterOutput
-	 * @param colonyRoi
-	 * @return
 	 */
-	public static ByteProcessor[][] getInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
+	private void calculateGridSpacing(BasicSettings settings_,
+			ImagePlus croppedImage) {
 
-		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
+		int image_width = croppedImage.getWidth();
+		float nominal_width = image_width / settings_.numberOfColumnsOfColonies;
 
-		//for all rows
-		for(int i=0;i<tileReaderOutputs.length; i++){
-			//for all columns
-			for (int j = 0; j<tileReaderOutputs[0].length; j++) {
+		//save the results directly to the settings object
+		settings_.minimumDistanceBetweenRows = Math.round(nominal_width*2/3);
+		settings_.maximumDistanceBetweenRows = Math.round(nominal_width*3/2);
 
-				//get the tile
-				croppedImage.setRoi(segmentationOutput.ROImatrix[i][j]);
-				croppedImage.copy(false);
-				ImagePlus tile = ImagePlus.getClipboard();
-
-
-				//apply the ROI, get the mask
-				ImageProcessor tileProcessor = tile.getProcessor();
-				tileProcessor.setRoi(tileReaderOutputs[i][j].inAgarROI);
-
-				tileProcessor.setColor(Color.white);
-				tileProcessor.setBackgroundValue(0);
-				tileProcessor.fill(tileProcessor.getMask());
-				//tileProcessor.fill(tileReaderOutputs[i][j].colonyROI.getMask());
-
-				//get the bounds of the mask, that's it, save it
-				tileProcessor.findEdges();
-				colonyBounds[i][j] = (ByteProcessor) tileProcessor.convertToByte(true);		
-
-
-			}
-		}
-
-		croppedImage.deleteRoi();
-
-		return(colonyBounds);
 	}
-
-
-
-
 
 
 	/**
@@ -509,7 +395,7 @@ public class MorphologyProfileCandida96 extends Profile {
 	 * @return
 	 */
 	private boolean checkRowsColumnsIncorrectGridding(
-			MorphologyTileReaderOutput[][] readerOutputs) {
+			OpacityTileReaderOutput[][] readerOutputs) {
 
 		int numberOfRows = readerOutputs.length;		
 		if(numberOfRows==0)
@@ -549,6 +435,8 @@ public class MorphologyProfileCandida96 extends Profile {
 
 		return(false);
 	}
+
+
 
 
 	/**

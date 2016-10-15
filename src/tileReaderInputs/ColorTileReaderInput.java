@@ -3,6 +3,7 @@
  */
 package tileReaderInputs;
 
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -18,7 +19,7 @@ public class ColorTileReaderInput extends TileReaderInput {
 	public ColorSettings settings;
 	public ImagePlus tileImage;
 	public Point colonyCenter;
-	
+
 	/**
 	 * Creates a BasicTileReaderInput obect, given the cropped, grayscaled image and the ROI
 	 * corresponding to the image tile to be processed.
@@ -29,13 +30,20 @@ public class ColorTileReaderInput extends TileReaderInput {
 	 * @param settings_
 	 */
 	public ColorTileReaderInput(ImagePlus croppedImage, Roi roi, ColorSettings settings_){
-		croppedImage.setRoi(roi);
-		croppedImage.copy(false);
-		
-		this.tileImage = ImagePlus.getClipboard();
+
+		if(IrisFrontend.settings.userDefinedRoi==true){
+			this.tileImage = croppedImage.duplicate(); // otherwise I'd have to delete the user-defined ROI
+			this.tileImage.setRoi(croppedImage.getRoi());
+		}
+		else{
+			croppedImage.setRoi(roi);
+			croppedImage.copy(false);
+
+			this.tileImage = ImagePlus.getClipboard();
+		}
 		this.settings = settings_;
 	}
-	
+
 	/**	
 	 * Creates a ColorTileReaderInput object, given the image tile to be processed
 	 * @param tileImage_
@@ -45,8 +53,8 @@ public class ColorTileReaderInput extends TileReaderInput {
 		tileImage = tileImage_;
 		settings = settings_;
 	}
-	
-	
+
+
 	/**
 	 * @param colourCroppedImage
 	 * @param roi
@@ -55,12 +63,19 @@ public class ColorTileReaderInput extends TileReaderInput {
 	 */
 	public ColorTileReaderInput(ImagePlus croppedImage, Roi roi,
 			ColorSettings settings_, Point colonyCenter_) {
-		croppedImage.setRoi(roi);
-		croppedImage.copy(false);
-		
-		this.tileImage = ImagePlus.getClipboard();
+
+		if(IrisFrontend.settings.userDefinedRoi==true){
+			this.tileImage = croppedImage.duplicate(); // otherwise I'd have to delete the user-defined ROI
+			this.tileImage.setRoi(croppedImage.getRoi());
+		}
+		else{
+			croppedImage.setRoi(roi);
+			croppedImage.copy(false);
+
+			this.tileImage = ImagePlus.getClipboard();
+		}
 		this.settings = settings_;
-		
+
 		colonyCenter = new Point(colonyCenter_);
 	}
 

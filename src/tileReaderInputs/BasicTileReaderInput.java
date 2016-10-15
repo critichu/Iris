@@ -33,8 +33,13 @@ public class BasicTileReaderInput extends TileReaderInput {
 	public BasicTileReaderInput(ImagePlus croppedImage, Roi roi, BasicSettings settings_){
 
 		if(IrisFrontend.singleColonyRun==true){
-			this.tileImage = croppedImage.duplicate(); // otherwise I'd have to delete the user-defined ROI
-			this.tileImage.setRoi(croppedImage.getRoi());
+			//single colony: tile is the croppedImage itself
+			this.tileImage = croppedImage.duplicate(); 
+
+			if(IrisFrontend.settings.userDefinedRoi==true){
+				//preserve the user-defined ROI
+				this.tileImage.setRoi(croppedImage.getRoi());
+			}
 		}
 		else{		
 			synchronized(settings_){

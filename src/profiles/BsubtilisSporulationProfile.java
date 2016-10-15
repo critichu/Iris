@@ -7,6 +7,7 @@ import fiji.threshold.Auto_Local_Threshold;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
@@ -17,8 +18,10 @@ import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
+import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
+import imageSegmenters.ColonyBreathing;
 import imageSegmenters.RisingTideSegmenter;
 
 import java.awt.Color;
@@ -29,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import settings.ColorSettings;
+import settings.UserSettings.ProfileSettings;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput;
 import tileReaderOutputs.BasicTileReaderOutput;
@@ -46,7 +50,7 @@ public class BsubtilisSporulationProfile extends Profile{
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "B.subtilis Sporulation (HSB)";
+	public static String profileName = "B.subtilis Sporulation";
 
 
 	/**
@@ -93,13 +97,50 @@ public class BsubtilisSporulationProfile extends Profile{
 			System.err.println("Could not open image file: " + filename);
 			return;
 		}
+
+
+		//find any user settings pertaining to this profile
+		ProfileSettings userProfileSettings = null;
+		if(IrisFrontend.userSettings!=null){
+			userProfileSettings = IrisFrontend.userSettings.getProfileSettings(profileName);
+		}
+
+		//set flag to honour a possible user-set ROI
+		if(filename.contains("colony_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+			originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+		else if(filename.contains("tile_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+			originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+
+
+
 		//
 		//--------------------------------------------------
 		//
 		//
 
 		//2. rotate the whole image
-		double imageAngle = calculateImageRotation(originalImage);
+		double imageAngle = 0;
+		if(userProfileSettings==null || IrisFrontend.singleColonyRun){ 
+			//if no settings loaded
+			//or if this is a single colony image
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(!userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = userProfileSettings.rotationSettings.manualImageRotationDegrees;
+		}
 
 		//create a copy of the original image and rotate it, then clear the original picture
 		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
@@ -112,7 +153,28 @@ public class BsubtilisSporulationProfile extends Profile{
 
 
 		//3. crop the plate to keep only the colonies
-		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		ImagePlus croppedImage = null;
+		if(userProfileSettings==null){ //default behavior
+			croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		}
+		else if(userProfileSettings.croppingSettings.UserCroppedImage || IrisFrontend.singleColonyRun){
+			//perform no cropping if the user already cropped the picture
+			//or if this is a single-colony picture
+			croppedImage = rotatedImage.duplicate();
+			croppedImage.setRoi(rotatedImage.getRoi());
+		}
+		else if(userProfileSettings.croppingSettings.UseFixedCropping){
+			int x_start = userProfileSettings.croppingSettings.FixedCropping_X_Start;
+			int x_end = userProfileSettings.croppingSettings.FixedCropping_X_End;
+			int y_start = userProfileSettings.croppingSettings.FixedCropping_Y_Start;
+			int y_end = userProfileSettings.croppingSettings.FixedCropping_Y_End;
+
+			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
+			croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		}
+		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
+			croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		}
 
 		//flush the original pictures, we won't be needing them anymore
 		rotatedImage.flush();
@@ -129,6 +191,7 @@ public class BsubtilisSporulationProfile extends Profile{
 		//4. pre-process the picture (i.e. make it grayscale), but keep a copy so that we have the colour information
 		//This is how you do it the HSB way
 		ImagePlus colourCroppedImage = croppedImage.duplicate();
+		colourCroppedImage.setRoi(croppedImage.getRoi());
 		ImageProcessor ip =  croppedImage.getProcessor();
 
 		ColorProcessor cp = (ColorProcessor)ip;
@@ -162,6 +225,15 @@ public class BsubtilisSporulationProfile extends Profile{
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+
+		//let the tile boundaries "breathe"
+		if(userProfileSettings==null){//default behavior
+			//do nothing more
+		}
+		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
+			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
+			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		}
 
 
 		//check if something went wrong
@@ -202,13 +274,6 @@ public class BsubtilisSporulationProfile extends Profile{
 		//--------------------------------------------------
 		//
 		//
-
-
-		//6. colony breathing
-		//EDIT 02.11.2015 don't breathe, it spoils the RC bounds for the pre-run
-		//segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
-
-
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
 		int y = segmentationOutput.getTopLeftRoi().getBounds().y;
 		output.append("#top left of the grid found at (" +x+ " , " +y+ ")\n");
@@ -226,6 +291,16 @@ public class BsubtilisSporulationProfile extends Profile{
 		//--------------------------------------------------
 		//
 		//
+
+		//retrieve the user-defined detection thresholds
+		float minimumValidColonyCircularity;
+		try{minimumValidColonyCircularity = userProfileSettings.detectionSettings.MinimumValidColonyCircularity;} 
+		catch(Exception e) {minimumValidColonyCircularity = (float)0.3;}
+
+		int minimumValidColonySize;
+		try{minimumValidColonySize = userProfileSettings.detectionSettings.MinimumValidColonySize;} 
+		catch(Exception e) {minimumValidColonySize = 50;}
+
 
 		//6. analyze each tile
 
@@ -261,7 +336,7 @@ public class BsubtilisSporulationProfile extends Profile{
 			int rowMedian = (int) Toolbox.median(rowYs.toArray(simpleArray), 0.0, true);
 			rowYsMedians.add(rowMedian);
 		}
-		
+
 		ArrayList<Integer> columnXsMedians = new ArrayList<Integer>();
 		for(int j=0; j<settings.numberOfColumnsOfColonies; j++){
 			ArrayList<Double> columnXs = new ArrayList<Double>();
@@ -273,8 +348,8 @@ public class BsubtilisSporulationProfile extends Profile{
 			int columnMedian = (int) Toolbox.median(columnXs.toArray(simpleArray), 0.0, true);
 			columnXsMedians.add(columnMedian);
 		}
-		
-		
+
+
 		//save the pre-calculated colony centers in a matrix of input to basic tile reader
 		//all the tile readers will get it from there
 		BasicTileReaderInput [][] centeredTileReaderInput = new BasicTileReaderInput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
@@ -287,10 +362,10 @@ public class BsubtilisSporulationProfile extends Profile{
 						new Point(columnXsMedians.get(j), rowYsMedians.get(i)));
 			}
 		}
-		
-		
-		
-		
+
+
+
+
 
 
 
@@ -304,6 +379,13 @@ public class BsubtilisSporulationProfile extends Profile{
 				//first get the colony size (so that the user doesn't have to run 2 profiles for this)
 				basicTileReaderOutputs[i][j] = BasicTileReader_Bsu.processTile(centeredTileReaderInput[i][j]);
 
+				
+				//colony QC
+				if(basicTileReaderOutputs[i][j].colonySize<minimumValidColonySize ||
+						basicTileReaderOutputs[i][j].circularity<minimumValidColonyCircularity){
+					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+				}
+				
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
 					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processTile(centeredColorTileReaderInput[i][j]);
@@ -415,7 +497,7 @@ public class BsubtilisSporulationProfile extends Profile{
 
 	}
 
-	
+
 
 	/**
 	 * This function will use the ROI information in each TileReader to get the colony bounds on the picture, with
@@ -608,8 +690,8 @@ public class BsubtilisSporulationProfile extends Profile{
 	}
 
 
-	
-	
+
+
 
 
 

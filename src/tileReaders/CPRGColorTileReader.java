@@ -3,8 +3,10 @@
  */
 package tileReaders;
 
+import javax.swing.GrayFilter;
+
+import gui.IrisFrontend;
 import ij.ImagePlus;
-import ij.gui.Roi;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
@@ -35,11 +37,14 @@ public class CPRGColorTileReader {
 		//
 		//
 		
+		ImagePlus colorTileCopy = input.tileImage.duplicate();
+		colorTileCopy.setRoi(input.tileImage.getRoi());
+
 		int typicalTileSize = 15000;
 
 		//1. measure weighted color sums from the whole tile
 		//make sure to normalize if by the tile size before outputting
-		int[] relativeColorIntensity_tile = calculateRelativeColorIntensity_CPRG(input.tileImage);
+		int[] relativeColorIntensity_tile = calculateRelativeColorIntensity_CPRG(input.tileImage.duplicate());
 
 		long sum_relativeColorIntensity_tile = 0;
 		for(int i=0; i<relativeColorIntensity_tile.length; i++){
@@ -56,67 +61,74 @@ public class CPRGColorTileReader {
 		//
 		//
 
+		if(!IrisFrontend.settings.userDefinedRoi){
 
 
 
-		//1. get a grayscale image as a copy
-		ImagePlus grayTile = input.tileImage.duplicate();
-		ImageConverter imageConverter = new ImageConverter(grayTile);
-		imageConverter.convertToGray8();
-		//
-		//--------------------------------------------------
-		//
-		//
+			//1. get a grayscale image as a copy
+			ImagePlus grayTile = input.tileImage.duplicate();
+			grayTile.setRoi(input.tileImage.getRoi());
+			ImageConverter imageConverter = new ImageConverter(grayTile);
+			imageConverter.convertToGray8();
+			//
+			//--------------------------------------------------
+			//
+			//
 
-		//2. threshold the image, 
-		//get the bitmask of the largest particle
-		//get the coordinates of its perimeter pixels
-		turnImageBW_Otsu_auto(grayTile);
-
-
-		//2.1 perform particle analysis on the thresholded tile
-
-		//create the results table, where the results of the particle analysis will be shown
-		ResultsTable resultsTable = new ResultsTable();
-
-		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER, 
-				Measurements.AREA+Measurements.PERIMETER, resultsTable, 5, Integer.MAX_VALUE);
-
-		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		ParticleAnalyzer.setRoiManager(manager);
-
-		particleAnalyzer.analyze(grayTile); //it gets the image processor internally
-		grayTile.flush();//we don't need it anymore
-
-		//2.2 pick the largest particle, the check if there is something in the tile has already been performed
-		int biggestParticleIndex = getBiggestParticleAreaIndex(resultsTable);
-
-		//
-		//--------------------------------------------------
-		//
-		//
+			//2. threshold the image, 
+			//get the bitmask of the largest particle
+			//get the coordinates of its perimeter pixels
+			turnImageBW_Otsu_auto(grayTile);
 
 
+			//2.1 perform particle analysis on the thresholded tile
+
+			//create the results table, where the results of the particle analysis will be shown
+			ResultsTable resultsTable = new ResultsTable();
+
+			//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
+			ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER, 
+					Measurements.AREA+Measurements.PERIMETER, resultsTable, 5, Integer.MAX_VALUE);
+
+			RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+			ParticleAnalyzer.setRoiManager(manager);
+
+			particleAnalyzer.analyze(grayTile); //it gets the image processor internally
+			grayTile.flush();//we don't need it anymore
+
+			//2.2 pick the largest particle, the check if there is something in the tile has already been performed
+			int biggestParticleIndex = getBiggestParticleAreaIndex(resultsTable);
+
+			//
+			//--------------------------------------------------
+			//
+			//
 
 
-		//4. remove the background to measure color only from the colony
-		Roi colonyRoi = manager.getRoisAsArray()[biggestParticleIndex];//RoiManager.getInstance().getRoisAsArray()[biggestParticleIndex];
-		//first check that there is actually a selection there..
-		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
-			output.colorSumInTile=0;
-			output.colorSumInColony=0;
-			output.errorOccurred=true;
 
-			input.cleanup();
-			return(output);
+
+			//4. remove the background to measure color only from the colony
+			output.colonyROI = manager.getRoisAsArray()[biggestParticleIndex];//RoiManager.getInstance().getRoisAsArray()[biggestParticleIndex];
+			//first check that there is actually a selection there..
+			if(output.colonyROI.getBounds().width<=0 || output.colonyROI.getBounds().height<=0){
+				output.colorSumInTile=0;
+				output.colorSumInColony=0;
+				output.errorOccurred=true;
+
+				input.cleanup();
+				return(output);
+			}
+
+			//set that ROI (of the largest particle = colony) on the original picture and fill everything around it with black
+			input.tileImage.setRoi(output.colonyROI);
 		}
-
-		//set that ROI (of the largest particle = colony) on the original picture and fill everything around it with black
-		input.tileImage.setRoi(colonyRoi);
+		else { //user has already defined the colony ROI
+			output.colonyROI = input.tileImage.getRoi();
+		}
+		
 
 		try {
-			input.tileImage.getProcessor().fillOutside(colonyRoi);
+			colorTileCopy.getProcessor().fillOutside(output.colonyROI);
 
 		} catch (Exception e) {
 			output.colorSumInTile=0;
@@ -129,24 +141,24 @@ public class CPRGColorTileReader {
 
 
 		//dilate 3 times to remove the colony periphery
-		input.tileImage.getProcessor().dilate();
-		input.tileImage.getProcessor().dilate();
-		input.tileImage.getProcessor().dilate();
+		colorTileCopy.getProcessor().dilate();
+		colorTileCopy.getProcessor().dilate();
+		colorTileCopy.getProcessor().dilate();
 
 
-		
+
 
 
 		int typicalColonySize = 1800;
-		int numberOfPixelsInColony = colonyRoi.getMask().getPixelCount();
-		
+		int numberOfPixelsInColony = output.colonyROI.getMask().getPixelCount();
+
 		//skip normalizing colony by size
 		typicalColonySize=1;
 		numberOfPixelsInColony=1;
 
 		//5. get the weighed color intensities just for the colony
 		//make sure this is normalized for colony size
-		int[] relativeColorIntensity_colony = calculateRelativeColorIntensity_CPRG(input.tileImage);
+		int[] relativeColorIntensity_colony = calculateRelativeColorIntensity_CPRG(colorTileCopy);
 
 
 		long sum_relativeColorIntensity_colony = 0;
@@ -156,7 +168,7 @@ public class CPRGColorTileReader {
 				sum_relativeColorIntensity_colony += typicalColonySize*relativeColorIntensity_colony[i];
 		}
 
-		
+
 		int size_normalized_color_colony = Math.round((sum_relativeColorIntensity_colony)/(float)numberOfPixelsInColony);
 
 
@@ -178,8 +190,9 @@ public class CPRGColorTileReader {
 		//			output.colorSumInColony = 0;
 		//		else
 		output.colorSumInColony = size_normalized_color_colony;
-		output.colonyROI = colonyRoi;
-
+		
+		
+		colorTileCopy.flush();
 		input.cleanup();
 		return output;
 	}

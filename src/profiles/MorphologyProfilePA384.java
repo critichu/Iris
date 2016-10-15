@@ -53,7 +53,7 @@ public class MorphologyProfilePA384 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Morphology Profile [Pseudomonas 384-plates]";
+	public static String profileName = "Morphology&Color Profile [Pseudomonas colonies]";
 
 
 	/**
@@ -115,25 +115,22 @@ public class MorphologyProfilePA384 extends Profile {
 			userProfileSettings = IrisFrontend.userSettings.getProfileSettings(profileName);
 		}
 
-
-
 		//set flag to honour a possible user-set ROI
-		//if(IrisFrontend.singleColonyRun==true){
-			if(filename.contains("colony_")){
-				IrisFrontend.singleColonyRun=true;
-				settings.numberOfColumnsOfColonies=1;
-				settings.numberOfRowsOfColonies=1;
-				IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
-				originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
-			}
-			else if(filename.contains("tile_")){
-				IrisFrontend.singleColonyRun=true;
-				settings.numberOfColumnsOfColonies=1;
-				settings.numberOfRowsOfColonies=1;
-				IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
-				originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
-			}
-		//}
+		if(filename.contains("colony_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+			originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+		else if(filename.contains("tile_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+			originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+
 
 
 		//
@@ -259,7 +256,7 @@ public class MorphologyProfilePA384 extends Profile {
 
 		//let the tile boundaries "breathe"
 		if(userProfileSettings==null){//default behavior
-			//do 
+			//do nothing more
 		}
 		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
 			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
@@ -309,6 +306,18 @@ public class MorphologyProfilePA384 extends Profile {
 		//
 		//
 
+
+		//retrieve the user-defined detection thresholds
+		float minimumValidColonyCircularity;
+		try{minimumValidColonyCircularity = userProfileSettings.detectionSettings.MinimumValidColonyCircularity;} 
+		catch(Exception e) {minimumValidColonyCircularity = (float)0.3;}
+
+		int minimumValidColonySize;
+		try{minimumValidColonySize = userProfileSettings.detectionSettings.MinimumValidColonySize;} 
+		catch(Exception e) {minimumValidColonySize = 50;}
+
+
+
 		//precalculate the colony centers
 		ColorTileReaderInput [][] colonyCenteredInput = Toolbox.precalculateColonyCenters(colorCroppedImage, segmentationOutput, settings);
 
@@ -320,6 +329,10 @@ public class MorphologyProfilePA384 extends Profile {
 		MorphologyTileReaderOutput [][] morphologyReaderOutputs = new MorphologyTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 		ColorTileReaderOutput [][] colorReaderOutputs = new ColorTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 
+		
+		//colonies are smaller here, so we need to start with tiny circles
+		MorphologyTileReader.initialRadius = 15;
+		
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -336,13 +349,17 @@ public class MorphologyProfilePA384 extends Profile {
 					BasicTileReaderOutput stmMorphologyReaderOutput = new BasicTileReaderOutput();
 					try{stmMorphologyReaderOutput = MorphologyTileReaderStm.processTileOverAgarOnly(colonyCenteredInput[i][j]);} catch(Exception e){};
 
-					if(basicTileReaderOutputs[i][j].colonySize<laplacianReaderOutput.colonySize && laplacianReaderOutput.circularity>0.3){
+					if(basicTileReaderOutputs[i][j].colonySize<laplacianReaderOutput.colonySize && laplacianReaderOutput.circularity>minimumValidColonyCircularity){
 						basicTileReaderOutputs[i][j] = laplacianReaderOutput;
 					}
-					if(basicTileReaderOutputs[i][j].colonySize<stmMorphologyReaderOutput.colonySize && stmMorphologyReaderOutput.circularity>0.3){
+					if(basicTileReaderOutputs[i][j].colonySize<stmMorphologyReaderOutput.colonySize && stmMorphologyReaderOutput.circularity>minimumValidColonyCircularity){
 						basicTileReaderOutputs[i][j] = stmMorphologyReaderOutput;
 					}
 
+					//if colony smaller than user-defined minimum
+					if(basicTileReaderOutputs[i][j].colonySize<minimumValidColonySize){
+						basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+					}
 
 
 					//set the known colony centers
@@ -355,20 +372,27 @@ public class MorphologyProfilePA384 extends Profile {
 					if(basicTileReaderOutputs[i][j].colonySize>0){
 
 						//get morphology for that colony
-						morphologyReaderOutputs[i][j] = MorphologyTileReader.processDefinedColonyTile(
-								new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
-										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
+
+						try{
+							morphologyReaderOutputs[i][j] = MorphologyTileReader.processDefinedColonyTile(
+									new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
+						}catch(Exception e){ morphologyReaderOutputs[i][j] = new MorphologyTileReaderOutput(); }
 
 						//get color for that colony
-						colorReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
-								new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], 
-										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, basicTileReaderOutputs[i][j].colonyCenter, settings));
+
+						try{
+							colorReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
+									new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], 
+											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, basicTileReaderOutputs[i][j].colonyCenter, settings));
+						}catch(Exception e){ colorReaderOutputs[i][j] = new ColorTileReaderOutput(); }
 
 						//opacity -- to check if colony darkness correlates with colour information -- true means opacities can get negative
-						//this is a fix for very dark colonies
-						opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
-								new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
-										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
+						try{
+							opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
+									new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
+						}catch(Exception e){ opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput(); }
 
 
 					} else {
@@ -380,8 +404,9 @@ public class MorphologyProfilePA384 extends Profile {
 				}
 
 				catch(Exception e){
-					System.err.print("\tError getting morphology at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
+					System.err.print("\tError getting values at tile "+ Integer.toString(i+1) +" "+ Integer.toString(j+1) + "\n");
 					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 					morphologyReaderOutputs[i][j] = new MorphologyTileReaderOutput();
 					colorReaderOutputs[i][j] = new ColorTileReaderOutput();
 				}
@@ -428,10 +453,10 @@ public class MorphologyProfilePA384 extends Profile {
 				"morphology score fixed circles\t" +
 				"morphology score whole colony\t" +
 				"normalized morphology score\t" +
-				"in agar size\t" +
-				"in agar circularity\t" +
-				"in agar opacity\t" + 
-				"whole tile opacity\t" +
+//				"in agar size\t" +
+//				"in agar circularity\t" +
+//				"in agar opacity\t" + 
+//				"whole tile opacity\t" +
 				"colony color intensity\t" +
 				"biofilm area size\t" +
 				"biofilm color intensity\t" +
@@ -456,10 +481,10 @@ public class MorphologyProfilePA384 extends Profile {
 						+ Integer.toString(morphologyReaderOutputs[i][j].morphologyScoreFixedNumberOfCircles) + "\t"
 						+ Integer.toString(morphologyReaderOutputs[i][j].morphologyScoreWholeColony) + "\t"
 						+ String.format("%.3f", morphologyReaderOutputs[i][j].normalizedMorphologyScore) + "\t"
-						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarSize) + "\t"
-						+ String.format("%.3f", morphologyReaderOutputs[i][j].inAgarCircularity) + "\t"
-						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarOpacity) + "\t"
-						+ Integer.toString(morphologyReaderOutputs[i][j].wholeTileOpacity) + "\t"
+//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarSize) + "\t"
+//						+ String.format("%.3f", morphologyReaderOutputs[i][j].inAgarCircularity) + "\t"
+//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarOpacity) + "\t"
+//						+ Integer.toString(morphologyReaderOutputs[i][j].wholeTileOpacity) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySum) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].biofilmArea) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"

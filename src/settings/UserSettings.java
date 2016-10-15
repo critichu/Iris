@@ -32,6 +32,7 @@ public class UserSettings {
 		public RoatationSettings rotationSettings = new RoatationSettings();
 		public CroppingSettings croppingSettings = new CroppingSettings();
 		public SegmentationSettings segmentationSettings = new SegmentationSettings();
+		public DetectionSettings detectionSettings = new DetectionSettings();
 	}
 	public class RoatationSettings {
 		public boolean autoRotateImage = true;
@@ -48,6 +49,10 @@ public class UserSettings {
 	public class SegmentationSettings {
 		public boolean ColonyBreathing = false;
 		public int ColonyBreathingSpace = 30;
+	}
+	public class DetectionSettings {
+		public int MinimumValidColonySize = 100;
+		public float MinimumValidColonyCircularity = (float) 0.3;
 	}
 
 	//dummy settings	

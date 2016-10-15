@@ -1,6 +1,5 @@
 package ij.process;
 import ij.IJ;
-import java.util.Arrays;
 
 /** Autothresholding methods from the Auto_Threshold plugin (http://pacific.mpi-cbg.de/wiki/index.php/Auto_Threshold)
     by G.Landini at bham dot ac dot uk. */
@@ -628,13 +627,14 @@ public class AutoThresholder {
 			iter++;
 			if (iter>10000) {
 				threshold = -1;
-				IJ.log("Minimum: threshold not found after 10000 iterations.");
+				//EDIT: removed this warning, will deal with this on the caller level
+				//IJ.log("Minimum: threshold not found after 10000 iterations.");
 				return threshold;
 			}
 		}
 		// The threshold is the minimum between the two peaks.
 		for (int i=1; i<255; i++) {
-			//IJ.log(" "+i+"  "+iHisto[i]);
+			//IJ.log(" "+i+" "+iHisto[i]);
 			if (iHisto[i-1] > iHisto[i] && iHisto[i+1] >= iHisto[i]) {
 				threshold = i;
 				break;

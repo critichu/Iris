@@ -4,6 +4,7 @@
 package tileReaders;
 
 import fiji.threshold.Auto_Local_Threshold;
+import gui.IrisFrontend;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Roi;
@@ -51,8 +52,13 @@ public class ColorTileReaderHSB {
 
 	public static ColorTileReaderOutput processTile(ColorTileReaderInput input){
 
+		//Note: this is a pass-through function
+		//all it does is it thresholds the tile and passes both the original and the thresholded tiles
+		//down to processThresholdedTile
+
 		//1. get a grayscale image as a copy
 		ImagePlus grayTile = input.tileImage.duplicate();
+
 		ImageProcessor ip =  grayTile.getProcessor();
 
 		ColorProcessor cp = (ColorProcessor)ip;
@@ -74,8 +80,6 @@ public class ColorTileReaderHSB {
 		//creates a new image using the bSource (brightness)
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
 		grayTile = new ImagePlus("", bpBri);
-
-
 
 		//
 		//--------------------------------------------------
@@ -106,62 +110,75 @@ public class ColorTileReaderHSB {
 
 		//0. create the output object and make a copy of the color picture for later
 		ImagePlus colorTile = input.tileImage.duplicate();
+		colorTile.setRoi(input.tileImage.getRoi());
+
 		ColorTileReaderOutput output = new ColorTileReaderOutput();
 
-		ImagePlus grayscaleTileCopy = colorTile.duplicate();				
+		
+		ImagePlus grayscaleTileCopy = colorTile.duplicate();
+		grayscaleTileCopy.setRoi(colorTile.getRoi());
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
 
-		//1. get the thresholded tile ready from the input
-		ImagePlus BW_tile = input.thresholdedTileImage;
-		turnImageBW_Huang_auto(BW_tile);
+		if(!IrisFrontend.settings.userDefinedRoi){
+			
+			//1. get the thresholded tile ready from the input
+			ImagePlus BW_tile = input.thresholdedTileImage;
+			turnImageBW_Huang_auto(BW_tile);
 
 
-		//2.1 perform particle analysis on the thresholded tile
+			//2.1 perform particle analysis on the thresholded tile
 
-		//create the results table, where the results of the particle analysis will be shown
-		ResultsTable resultsTable = new ResultsTable();
+			//create the results table, where the results of the particle analysis will be shown
+			ResultsTable resultsTable = new ResultsTable();
 
-		//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
-		ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
-				Measurements.CENTER_OF_MASS+Measurements.AREA+Measurements.PERIMETER, resultsTable, 5, Integer.MAX_VALUE);
+			//arguments: some weird ParticleAnalyzer.* options , what to measure (area), where to store the results, what is the minimum particle size, maximum particle size
+			ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.SHOW_NONE+ParticleAnalyzer.ADD_TO_MANAGER+ParticleAnalyzer.INCLUDE_HOLES, 
+					Measurements.CENTER_OF_MASS+Measurements.AREA+Measurements.PERIMETER, resultsTable, 5, Integer.MAX_VALUE);
 
-		RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
-		ParticleAnalyzer.setRoiManager(manager);
+			RoiManager manager = new RoiManager(true);//we do this so that the RoiManager window will not pop up
+			ParticleAnalyzer.setRoiManager(manager);
 
-		particleAnalyzer.analyze(BW_tile); //it gets the image processor internally
+			particleAnalyzer.analyze(BW_tile); //it gets the image processor internally
 
-		//2.2 pick the largest particle, the check if there is something in the tile has already been performed
-		int biggestParticleIndex = getBiggestParticleAreaIndex(resultsTable);
+			//2.2 pick the largest particle, the check if there is something in the tile has already been performed
+			int biggestParticleIndex = getBiggestParticleAreaIndex(resultsTable);
 
-		Roi colonyRoi = manager.getRoisAsArray()[biggestParticleIndex];//RoiManager.getInstance().getRoisAsArray()[biggestParticleIndex];
+			output.colonyROI = manager.getRoisAsArray()[biggestParticleIndex];//RoiManager.getInstance().getRoisAsArray()[biggestParticleIndex];
 
 
-		int colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, biggestParticleIndex);
-		//
-		//--------------------------------------------------
-		//
-		//
+			int colonySize = getBiggestParticleAreaPlusPerimeter(resultsTable, biggestParticleIndex);
+			//
+			//--------------------------------------------------
+			//
+			//
 
-		//3. remove the background to measure color only from the colony
+			//3. remove the background to measure color only from the colony
 
-		//first check that there is actually a selection there..
-		if(colonyRoi.getBounds().width<=0||colonyRoi.getBounds().height<=0){
-			output.biofilmArea=0;
-			output.colorIntensitySum=0;
-			output.colorIntensitySumInBiofilmArea=0;
-			output.relativeColorIntensity=0;			
-			output.errorOccurred=true;
+			//first check that there is actually a selection there..
+			if(output.colonyROI.getBounds().width<=0||output.colonyROI.getBounds().height<=0){
+				output.biofilmArea=0;
+				output.colorIntensitySum=0;
+				output.colorIntensitySumInBiofilmArea=0;
+				output.relativeColorIntensity=0;			
+				output.errorOccurred=true;
 
-			input.cleanup();
-			return(output);
+				input.cleanup();
+				return(output);
+			}
+
+			//set that ROI (of the largest particle = colony) on the original picture and fill everything around it with black
+			input.tileImage.setRoi(output.colonyROI);
+
+		}
+		else { //user-defined ROI
+			output.colonyROI = (OvalRoi) input.tileImage.getRoi();
+			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);
+			output.colonyCenter = new Point(output.colonyROI.getBounds().width/2, output.colonyROI.getBounds().height/2);
 		}
 
-		//set that ROI (of the largest particle = colony) on the original picture and fill everything around it with black
-		input.tileImage.setRoi(colonyRoi);
-
 		try {
-			input.tileImage.getProcessor().fillOutside(colonyRoi);
+			input.tileImage.getProcessor().fillOutside(output.colonyROI);
 		} catch (Exception e) {
 			output.biofilmArea=0;
 			output.colorIntensitySum=0;
@@ -225,9 +242,8 @@ public class ColorTileReaderHSB {
 		output.colorIntensitySum = colonyColorSum;
 		output.biofilmArea = biofilmPixelCount;
 		output.colorIntensitySumInBiofilmArea = biofilmColorSum;
-		output.colonyROI = colonyRoi;
-		if(colonySize!=0)
-			output.relativeColorIntensity = (double) colonyColorSum / (double) colonySize;
+		if(output.colonySize!=0)
+			output.relativeColorIntensity = (double) colonyColorSum / (double) output.colonySize;
 		//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
 
 
@@ -264,16 +280,16 @@ public class ColorTileReaderHSB {
 
 		if(output.colonyRoundSize!=0)
 			output.relativeColorIntensityForRoundSize = (double) colonyColorSum / (double) output.colonyRoundSize;
-		
-		
-		
+
+
+
 		//if the minimum radius is less than the colony center radius, don't output a colonyCenter ROI
 		if((2*minimumDistance) < diameter){
 			output.centerAreaColor = 0;
 			output.centerAreaOpacity = 0;
 			output.centerROI = null;
 		}
-		
+
 
 		colorTile.flush();
 		input.cleanup();
@@ -356,7 +372,7 @@ public class ColorTileReaderHSB {
 
 		//0. create the output object
 		ColorTileReaderOutput output = new ColorTileReaderOutput();
-		
+
 		ImagePlus tileImageCopy = input.tileImage.duplicate();
 
 		//set the pre-calculated ROI (of the largest particle = colony) on the original picture and fill everything around it with black
@@ -413,31 +429,31 @@ public class ColorTileReaderHSB {
 		int colonyColorSum = 0;
 		int biofilmPixelCount = 0;
 		int biofilmColorSum = 0;
-		
-		
+
+
 		//get pixel color values again, this time by means of integer values
 		Float[] pixelBiofilmScores_float = calculateRelativeColorIntensityUsingSaturationAndBrightness_float(tileImageCopy, input.colonyRoi, 2, 1, (float)1, (float)2);
-		
-//		for(int i=0;i<pixelBiofilmScores_float.length;i++){
-//
-//			float pixelBiofilmScoreByteValue = pixelBiofilmScores_float[i];
-//
-//			if(pixelBiofilmScoreByteValue>0){
-//				colonyColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
-//			}
-//			else{
-//				continue;
-//			}
-//
-//			if(pixelBiofilmScoreByteValue>input.settings.colorThreshold){
-//				biofilmPixelCount++;
-//				biofilmColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
-//			}
-//		}
-		
-		
+
+		//		for(int i=0;i<pixelBiofilmScores_float.length;i++){
+		//
+		//			float pixelBiofilmScoreByteValue = pixelBiofilmScores_float[i];
+		//
+		//			if(pixelBiofilmScoreByteValue>0){
+		//				colonyColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
+		//			}
+		//			else{
+		//				continue;
+		//			}
+		//
+		//			if(pixelBiofilmScoreByteValue>input.settings.colorThreshold){
+		//				biofilmPixelCount++;
+		//				biofilmColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
+		//			}
+		//		}
+
+
 		byte[] pixelBiofilmScores = calculateRelativeColorIntensityUsingSaturationAndBrightness(tileImageCopy, 2, 1, (float)1, (float)2); ///
-		
+
 		for(int i=0;i<pixelBiofilmScores.length;i++){
 
 			float pixelBiofilmScoreByteValue = pixelBiofilmScores[i];
@@ -454,7 +470,7 @@ public class ColorTileReaderHSB {
 				biofilmColorSum += (int)Math.round(pixelBiofilmScoreByteValue);
 			}
 		}
-		
+
 
 
 		//7. also get an estimate of the colony color, through random pixel sampling, this should be 1000 pixels 
@@ -485,9 +501,9 @@ public class ColorTileReaderHSB {
 		//divide by the number of samples
 		double meanSampleColor = sampleColorSum/(double)numerOfSamplesInBounds;
 
-		
-		
-		
+
+
+
 
 
 
@@ -502,12 +518,12 @@ public class ColorTileReaderHSB {
 		if(input.colonySize!=0)
 			output.relativeColorIntensity = (double) colonyColorSum / (double) input.colonySize;
 		//output.relativeColorIntensity = 10000 * (int) Math.round(Math.log10(colonyColorSum+1)  / colonySize);
-		
+
 		//also get the center area opacity -- this may also be a good proxy to get how much mutants sporulate
 		ImagePlus grayscaleTileCopy = tileImageCopy.duplicate();				
 		ImageConverter imageConverter = new ImageConverter(grayscaleTileCopy);
 		imageConverter.convertToGray8();
-		
+
 		if(input.colonyCenter==null){
 			try{ output.colonyCenter = Toolbox.getParticleUltimateErosionPoint(grayscaleTileCopy.duplicate()); }//getBiggestParticleCenterOfMass(resultsTable, indexOfBiggestParticle);
 			catch(Exception e){ output.colonyCenter = null; }
@@ -526,10 +542,10 @@ public class ColorTileReaderHSB {
 		}
 
 
-		
+
 		//just returns the average pixel saturation over all pixels in the colony bounds
-		output.averagePixelSaturation = getAveragePixelSaturation(tileImageCopy, input.colonyRoi);
-		
+		output.averagePixelSaturation = getAveragePixelSaturation(tileImageCopy, output.colonyROI);
+
 
 
 
@@ -696,8 +712,8 @@ public class ColorTileReaderHSB {
 	}
 
 
-	
-	
+
+
 	/**
 	 * This just returns a no-frills 0-255 representation of the colony pixels in an array
 	 * @param tile
@@ -706,17 +722,17 @@ public class ColorTileReaderHSB {
 	 */
 	public static float getAveragePixelSaturation(ImagePlus tile, Roi colonyRoi){
 		Float[] allRoiPixelsSaturation = Toolbox.getRoiPixels(tile, colonyRoi, 'S');
-		
+
 		float saturationSum = 0;
 		for (int i = 0; i < allRoiPixelsSaturation.length; i++) {
 			saturationSum += allRoiPixelsSaturation[i].floatValue();
 		}
-		
+
 		float averagePixelSaturation0to255 = saturationSum/allRoiPixelsSaturation.length;
-		
+
 		return(averagePixelSaturation0to255/255);//I want it in a 0 to 1 range
 	}
-	
+
 
 	/**
 	 * This function gets the 3 separate channels, and calculates a per-pixel relative intensity on the color.

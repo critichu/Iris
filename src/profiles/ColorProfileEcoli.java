@@ -18,6 +18,7 @@ import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
 import imageCroppers.GenericImageCropper2;
 import imageCroppers.NaiveImageCropper;
+import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import settings.ColorSettings;
+import settings.UserSettings.ProfileSettings;
 import tileReaderInputs.BasicTileReaderInput;
 import tileReaderInputs.ColorTileReaderInput3;
 import tileReaderInputs.OpacityTileReaderInput;
@@ -48,7 +50,7 @@ public class ColorProfileEcoli extends Profile{
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Biofilm formation Ecoli";
+	public static String profileName = "Biofilm formation";
 
 
 	/**
@@ -98,25 +100,46 @@ public class ColorProfileEcoli extends Profile{
 			return;
 		}
 
-		//set flag to honour a possible user-set ROI
-		if(IrisFrontend.singleColonyRun==true){
-			if(filename.contains("colony_")){
-				IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
-				originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
-			}
-			else if(filename.contains("tile_")){
-				IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
-				originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
-			}
+		//find any user settings pertaining to this profile
+		ProfileSettings userProfileSettings = null;
+		if(IrisFrontend.userSettings!=null){
+			userProfileSettings = IrisFrontend.userSettings.getProfileSettings(profileName);
 		}
 
+		//set flag to honour a possible user-set ROI
+		if(filename.contains("colony_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+			originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+		else if(filename.contains("tile_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+			originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
 		//
 		//--------------------------------------------------
 		//
 		//
 
 		//2. rotate the whole image
-		double imageAngle = Toolbox.calculateImageRotation(originalImage);
+		double imageAngle = 0;
+		if(userProfileSettings==null || IrisFrontend.singleColonyRun){ 
+			//if no settings loaded
+			//or if this is a single colony image
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(!userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = userProfileSettings.rotationSettings.manualImageRotationDegrees;
+		}
+
 
 		//create a copy of the original image and rotate it, then clear the original picture
 		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
@@ -129,10 +152,29 @@ public class ColorProfileEcoli extends Profile{
 
 
 		//3. crop the plate to keep only the colonies
-		//				ImagePlus croppedImage = NaiveImageCropper2.cropPlate(rotatedImage);
-		ImagePlus colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 
+		ImagePlus colourCroppedImage = null;
+		if(userProfileSettings==null){ //default behavior
+			colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		}
+		else if(userProfileSettings.croppingSettings.UserCroppedImage || IrisFrontend.singleColonyRun){
+			//perform no cropping if the user already cropped the picture
+			//or if this is a single-colony picture
+			colourCroppedImage = rotatedImage.duplicate();
+			colourCroppedImage.setRoi(rotatedImage.getRoi());
+		}
+		else if(userProfileSettings.croppingSettings.UseFixedCropping){
+			int x_start = userProfileSettings.croppingSettings.FixedCropping_X_Start;
+			int x_end = userProfileSettings.croppingSettings.FixedCropping_X_End;
+			int y_start = userProfileSettings.croppingSettings.FixedCropping_Y_Start;
+			int y_end = userProfileSettings.croppingSettings.FixedCropping_Y_End;
 
+			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
+			colourCroppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		}
+		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
+			colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		}
 		//flush the original pictures, we won't be needing them anymore
 		rotatedImage.flush();
 		originalImage.flush();
@@ -208,7 +250,7 @@ public class ColorProfileEcoli extends Profile{
 			//save the grid before exiting
 			ImagePlus croppedImageSegmented = grayscaleCroppedImage.duplicate();
 			croppedImageSegmented.setRoi(grayscaleCroppedImage.getRoi());
-			
+
 			RisingTideSegmenter.paintSegmentedImage(colourCroppedImage, segmentationOutput); //calculate grid image
 			Toolbox.savePicture(croppedImageSegmented, filename + ".grid.jpg");
 
@@ -226,10 +268,15 @@ public class ColorProfileEcoli extends Profile{
 
 
 		//6. colony breathing
-		//gkri 25.08.2014		
-		//segmentationOutput = ColonyBreathing_variance.segmentPicture(segmentationOutput, segmentationInput);
-		//gkri 17.11.2014: variance wasn't such a good idea after all..
-		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
+		//let the tile boundaries "breathe"
+		if(userProfileSettings==null){//default behavior
+			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		}
+		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
+			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
+			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		}
 
 
 		int x = segmentationOutput.getTopLeftRoi().getBounds().x;
@@ -249,6 +296,16 @@ public class ColorProfileEcoli extends Profile{
 		//--------------------------------------------------
 		//
 		//
+
+		//retrieve the user-defined detection thresholds
+		float minimumValidColonyCircularity;
+		try{minimumValidColonyCircularity = userProfileSettings.detectionSettings.MinimumValidColonyCircularity;} 
+		catch(Exception e) {minimumValidColonyCircularity = (float)0.3;}
+
+		int minimumValidColonySize;
+		try{minimumValidColonySize = userProfileSettings.detectionSettings.MinimumValidColonySize;} 
+		catch(Exception e) {minimumValidColonySize = 50;}
+
 
 		//6. analyze each tile
 
@@ -278,6 +335,14 @@ public class ColorProfileEcoli extends Profile{
 							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				}
+				
+				
+				//colony QC
+				if(basicTileReaderOutputs[i][j].colonySize<minimumValidColonySize ||
+						basicTileReaderOutputs[i][j].circularity<minimumValidColonyCircularity){
+					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+				}
+				
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
@@ -361,20 +426,7 @@ public class ColorProfileEcoli extends Profile{
 					colony_flagged=true;
 				}
 
-				/*
-				//check if a colony is too close to the background 
-				if( SNO < maximumDarkColonySizeNormalizedOpacityThreshold){
-					continue; //we spare the very dark colonies
-				}
 
-				if( SNO < minimumSizeNormalizedOpacityThreshold){					
-					colony_flagged=true; //if not much darker than the background, and also still close to the background, then it's background
-				}
-
-				if( basicTileReaderOutputs[i][j].circularity < minimumCircularityThreshold){					
-					colony_flagged=true; //if it's really low in circularity, then just discard it
-				}
-				 */
 
 				//if we flagged the colony in any of the previous steps, remove it from the results
 				if(colony_flagged){
@@ -414,7 +466,7 @@ public class ColorProfileEcoli extends Profile{
 			//calculate and save grid image
 			ImagePlus croppedImageSegmented = colourCroppedImage.duplicate();
 			croppedImageSegmented.setRoi(colourCroppedImage.getRoi());
-			
+
 			Toolbox.drawColonyBounds(colourCroppedImage, segmentationOutput, basicTileReaderOutputs);
 			Toolbox.savePicture(colourCroppedImage, filename + ".grid.jpg");
 
@@ -440,6 +492,7 @@ public class ColorProfileEcoli extends Profile{
 				"biofilm area ratio\t" +
 				"size normalized color intensity\t" +
 				"mean sampled color intensity\t" +
+				"average pixel saturation\t" +
 				"opacity\t" + 
 				"max 10% opacity\n");
 
@@ -464,7 +517,8 @@ public class ColorProfileEcoli extends Profile{
 						+ Integer.toString(colourTileReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
 						+ String.format("%.3f", biofilmAreaRatio) + "\t"
 						+ String.format("%.3f", colourTileReaderOutputs[i][j].relativeColorIntensity) + "\t" 
-						+ String.format("%.3f", colourTileReaderOutputs[i][j].meanSampleColor) + "\t" 
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].meanSampleColor) + "\t"
+						+ String.format("%.3f", colourTileReaderOutputs[i][j].averagePixelSaturation) + "\t"
 						+ Integer.toString(opacityTileReaderOutputs[i][j].opacity) + "\t"
 						+ String.format("%.3f", opacityTileReaderOutputs[i][j].max10percentOpacity) + "\n");
 			}

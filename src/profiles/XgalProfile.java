@@ -6,6 +6,7 @@ package profiles;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
@@ -14,6 +15,7 @@ import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import imageCroppers.GenericImageCropper;
+import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
 import imageSegmenters.ColonyBreathing;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import settings.BasicSettings;
+import settings.UserSettings.ProfileSettings;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.OpacityTileReaderOutput;
 import tileReaders.OpacityTileReaderForHazyColonies;
@@ -97,6 +100,29 @@ public class XgalProfile extends Profile {
 		}
 
 
+		//find any user settings pertaining to this profile
+		ProfileSettings userProfileSettings = null;
+		if(IrisFrontend.userSettings!=null){
+			userProfileSettings = IrisFrontend.userSettings.getProfileSettings(profileName);
+		}
+
+		//set flag to honour a possible user-set ROI
+		if(filename.contains("colony_")){
+			IrisFrontend.singleColonyRun=true;
+			IrisFrontend.settings.numberOfColumnsOfColonies=1;
+			IrisFrontend.settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+			originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+		else if(filename.contains("tile_")){
+			IrisFrontend.singleColonyRun=true;
+			IrisFrontend.settings.numberOfColumnsOfColonies=1;
+			IrisFrontend.settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+			originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+
+
 
 
 		//
@@ -104,8 +130,18 @@ public class XgalProfile extends Profile {
 		//
 		//
 
-		//2. rotate the whole image
-		double imageAngle = calculateImageRotation(originalImage);
+		double imageAngle = 0;
+		if(userProfileSettings==null || IrisFrontend.singleColonyRun){ 
+			//if no settings loaded
+			//or if this is a single colony image
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(!userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = userProfileSettings.rotationSettings.manualImageRotationDegrees;
+		}
 
 		//create a copy of the original image and rotate it, then clear the original picture
 		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
@@ -122,9 +158,29 @@ public class XgalProfile extends Profile {
 		//
 		//
 
-		//3. crop the plate to keep only the colonies
-		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		ImagePlus croppedImage = null;
 
+		if(userProfileSettings==null){ //default behavior
+			croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		}
+		else if(userProfileSettings.croppingSettings.UserCroppedImage || IrisFrontend.singleColonyRun){
+			//perform no cropping if the user already cropped the picture
+			//or if this is a single-colony picture
+			croppedImage = rotatedImage.duplicate();
+			croppedImage.setRoi(rotatedImage.getRoi());
+		}
+		else if(userProfileSettings.croppingSettings.UseFixedCropping){
+			int x_start = userProfileSettings.croppingSettings.FixedCropping_X_Start;
+			int x_end = userProfileSettings.croppingSettings.FixedCropping_X_End;
+			int y_start = userProfileSettings.croppingSettings.FixedCropping_Y_Start;
+			int y_end = userProfileSettings.croppingSettings.FixedCropping_Y_End;
+
+			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
+			croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		}
+		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
+			croppedImage = GenericImageCropper.cropPlate(rotatedImage);
+		}
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
 
@@ -138,6 +194,7 @@ public class XgalProfile extends Profile {
 
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImagePlus colourCroppedImage = croppedImage.duplicate();
+		colourCroppedImage.setRoi(croppedImage.getRoi());
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -166,7 +223,17 @@ public class XgalProfile extends Profile {
 		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture(segmentationInput);
 
 		//let colonies breathe
-		segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+
+
+		//let the tile boundaries "breathe"
+		if(userProfileSettings==null){//default behavior
+			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		}
+		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
+			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
+			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		}
+
 
 
 		//check if something went wrong
@@ -213,6 +280,17 @@ public class XgalProfile extends Profile {
 		//
 		//
 
+		//retrieve the user-defined detection thresholds
+		float minimumValidColonyCircularity;
+		try{minimumValidColonyCircularity = userProfileSettings.detectionSettings.MinimumValidColonyCircularity;} 
+		catch(Exception e) {minimumValidColonyCircularity = (float)0.3;}
+
+		int minimumValidColonySize;
+		try{minimumValidColonySize = userProfileSettings.detectionSettings.MinimumValidColonySize;} 
+		catch(Exception e) {minimumValidColonySize = 50;}
+
+
+
 		//6. analyze each tile
 
 		//create an array of measurement outputs
@@ -226,6 +304,10 @@ public class XgalProfile extends Profile {
 						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], IrisFrontend.settings));
 
 				//each generated tile image is cleaned up inside the tile reader
+				if(readerOutputs[i][j].colonySize<minimumValidColonySize || 
+						readerOutputs[i][j].circularity<minimumValidColonyCircularity){
+					readerOutputs[i][j] = new OpacityTileReaderOutput();
+				}
 			}
 		}
 

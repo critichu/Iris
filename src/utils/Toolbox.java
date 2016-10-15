@@ -250,6 +250,8 @@ public class Toolbox {
 		//create a new image with the original title and the brightness HSB channel of the input image
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
 		ImagePlus grayscaleImage = new ImagePlus(originalImage.getTitle(), bpBri);
+		
+		
 		if(IrisFrontend.settings.userDefinedRoi){
 			grayscaleImage.setRoi(originalImage.getRoi());
 		}

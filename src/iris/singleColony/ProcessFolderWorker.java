@@ -26,7 +26,7 @@ import profiles.ColorProfileEcoliNaturalIsolates;
 import profiles.ColorProfilePA;
 import profiles.ColorProfile_SimpleSegmentation;
 import profiles.EcoliGrowthProfile;
-import profiles.EcoliOpacityProfile;
+import profiles.ColonyOpacityProfile;
 import profiles.EcoliOpacityProfile384;
 import profiles.EcoliOpacityProfile384_HazyColonies;
 import profiles.EcoliOpacityProfile96;
@@ -157,8 +157,8 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		}
 
 		else if(profileName.equals("Ecoli opacity 1536")){
-			EcoliOpacityProfile ecoliOpacityProfile = new EcoliOpacityProfile();
-			ecoliOpacityProfile.analyzePicture(filename);			
+			ColonyOpacityProfile colonyOpacityProfile = new ColonyOpacityProfile();
+			colonyOpacityProfile.analyzePicture(filename);			
 		}			
 
 		else if(profileName.equals("B.subtilis Opacity (HSB)")){

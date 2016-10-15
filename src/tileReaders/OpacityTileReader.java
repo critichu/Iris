@@ -49,6 +49,7 @@ public class OpacityTileReader {
 
 		//get a copy of this tile, before it gets thresholded
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
+		grayscaleTileCopy.setRoi(input.tileImage.getRoi());
 		//
 		//--------------------------------------------------
 		//
@@ -61,9 +62,6 @@ public class OpacityTileReader {
 
 			//1. apply a threshold at the tile, using the Otsu algorithm
 			Toolbox.turnImageBW_Otsu_auto(input.tileImage);
-
-
-
 			//
 			//--------------------------------------------------
 			//
@@ -238,7 +236,7 @@ public class OpacityTileReader {
 		//			output.opacity = getBiggestParticleOpacity(grayscaleTileCopy, input.colonyRoi);
 		//		}
 
-		int colonyOpacity = totalColonyBrightnessMinusBackground(grayscaleTileCopy, input.colonyRoi);
+		output.opacity = totalColonyBrightnessMinusBackground(grayscaleTileCopy, input.colonyRoi);
 
 
 		output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, input.colonyRoi);

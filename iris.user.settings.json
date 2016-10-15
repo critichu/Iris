@@ -4,7 +4,7 @@
 	"ArrayFormat": 384,
 	"profileSettings": [
 		{
-			"ProfileName": "Morphology Profile [Pseudomonas 384-plates]",
+			"ProfileName": "Morphology&Color Profile [Pseudomonas colonies]",
 			"rotationSettings":{
 				"autoRotateImage": true,
 				"manualImageRotationDegrees": 0
@@ -20,10 +20,14 @@
 			"segmentationSettings":{
 				"ColonyBreathing": false,
 				"ColonyBreathingSpace": 100
+			},
+			"detectionSettings":{
+				"MinimumValidColonySize": 50,
+				"MinimumValidColonyCircularity": 0.3
 			}
 		},
 		{
-			"ProfileName": "Biofilm formation PA",
+			"ProfileName": "Biofilm formation",
 			"rotationSettings":{
 				"autoRotateImage": true,
 				"manualImageRotationDegrees": 0
@@ -39,6 +43,10 @@
 			"segmentationSettings":{
 				"ColonyBreathing": true,
 				"ColonyBreathingSpace": 30
+			},
+			"detectionSettings":{
+				"MinimumValidColonySize": 50,
+				"MinimumValidColonyCircularity": 0.3
 			}
 		}
 	]

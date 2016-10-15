@@ -6,6 +6,7 @@ package profiles;
 import gui.IrisFrontend;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.AutoThresholder;
@@ -13,6 +14,7 @@ import ij.process.AutoThresholder.Method;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import imageCroppers.GenericImageCropper2;
 import imageCroppers.NaiveImageCropper3;
 import imageSegmenterInput.BasicImageSegmenterInput;
 import imageSegmenterOutput.BasicImageSegmenterOutput;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 
 import settings.BasicSettings;
 import settings.ColorSettings;
+import settings.UserSettings.ProfileSettings;
 import tileReaderInputs.ColorTileReaderInput;
 import tileReaderInputs.OpacityTileReaderInput;
 import tileReaderOutputs.CPRGTileReaderOutput;
@@ -49,7 +52,7 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "CPRG readout Profile for 384 plates __ ";
+	public static String profileName = "CPRG profile";
 
 
 	/**
@@ -75,11 +78,6 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 
 
 		//0. initialize settings and open files for input and output
-		//since this is a 384 plate, make sure the settings are redefined to match our setup
-		if(IrisFrontend.singleColonyRun==false){
-			settings.numberOfColumnsOfColonies = 24;
-			settings.numberOfRowsOfColonies = 16;
-		}
 		//
 		//--------------------------------------------------
 		//
@@ -109,6 +107,30 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 		}
 
 
+		//find any user settings pertaining to this profile
+		ProfileSettings userProfileSettings = null;
+		if(IrisFrontend.userSettings!=null){
+			userProfileSettings = IrisFrontend.userSettings.getProfileSettings(profileName);
+		}
+
+		//set flag to honour a possible user-set ROI
+		if(filename.contains("colony_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=true; //doesn't hurt to re-set it
+			originalImage.setRoi(new OvalRoi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+		else if(filename.contains("tile_")){
+			IrisFrontend.singleColonyRun=true;
+			settings.numberOfColumnsOfColonies=1;
+			settings.numberOfRowsOfColonies=1;
+			IrisFrontend.settings.userDefinedRoi=false; //doesn't hurt to re-set it
+			originalImage.setRoi(new Roi(0,0,originalImage.getWidth(),originalImage.getHeight()));
+		}
+
+
+
 
 
 		//
@@ -117,7 +139,18 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 		//
 
 		//2. rotate the whole image
-		double imageAngle = calculateImageRotation(originalImage);
+		double imageAngle = 0;
+		if(userProfileSettings==null || IrisFrontend.singleColonyRun){ 
+			//if no settings loaded
+			//or if this is a single colony image
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = Toolbox.calculateImageRotation(originalImage);
+		}
+		else if(!userProfileSettings.rotationSettings.autoRotateImage){
+			imageAngle = userProfileSettings.rotationSettings.manualImageRotationDegrees;
+		}
 
 		//create a copy of the original image and rotate it, then clear the original picture
 		ImagePlus rotatedImage = Toolbox.rotateImage(originalImage, imageAngle);
@@ -135,9 +168,35 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 		//
 
 		//3. crop the plate to keep only the colonies
-		//		ImagePlus croppedImage = GenericImageCropper.cropPlate(rotatedImage);
-		NaiveImageCropper3.keepOnlyColoniesROI = new Roi(470, 325, 4150, 2770);
-		ImagePlus croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		ImagePlus croppedImage = null;
+
+		if(userProfileSettings==null){ //default behavior
+			int x_start = 470;
+			int x_end = 4150;
+			int y_start = 325;
+			int y_end = 2770;
+
+			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
+			croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		}
+		else if(userProfileSettings.croppingSettings.UserCroppedImage || IrisFrontend.singleColonyRun){
+			//perform no cropping if the user already cropped the picture
+			//or if this is a single-colony picture
+			croppedImage = rotatedImage.duplicate();
+			croppedImage.setRoi(rotatedImage.getRoi());
+		}
+		else if(userProfileSettings.croppingSettings.UseFixedCropping){
+			int x_start = userProfileSettings.croppingSettings.FixedCropping_X_Start;
+			int x_end = userProfileSettings.croppingSettings.FixedCropping_X_End;
+			int y_start = userProfileSettings.croppingSettings.FixedCropping_Y_Start;
+			int y_end = userProfileSettings.croppingSettings.FixedCropping_Y_End;
+
+			NaiveImageCropper3.keepOnlyColoniesROI = new Roi(x_start, y_start, x_end, y_end);
+			croppedImage = NaiveImageCropper3.cropPlate(rotatedImage);
+		}
+		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
+			croppedImage = GenericImageCropper2.cropPlate(rotatedImage);
+		}
 
 		//flush the original picture, we won't be needing it anymore
 		rotatedImage.flush();
@@ -152,7 +211,9 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 
 		//4. pre-process the picture (i.e. make it grayscale)
 		ImagePlus colourCroppedImage = croppedImage.duplicate();
+		colourCroppedImage.setRoi(croppedImage.getRoi());
 		ImagePlus colourCroppedImage_duplicate = colourCroppedImage.duplicate();
+		colourCroppedImage_duplicate.setRoi(colourCroppedImage.getRoi());
 		ImageConverter imageConverter = new ImageConverter(croppedImage);
 		imageConverter.convertToGray8();
 
@@ -173,12 +234,18 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 
 
 
-
-
-
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(croppedImage, settings);
 		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+
+		//let the tile boundaries "breathe"
+		if(userProfileSettings==null){//default behavior
+			//do nothing more
+		}
+		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
+			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
+			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+		}
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -224,6 +291,18 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 		//
 		//
 
+		//retrieve the user-defined detection thresholds
+		float minimumValidColonyCircularity;
+		try{minimumValidColonyCircularity = userProfileSettings.detectionSettings.MinimumValidColonyCircularity;} 
+		catch(Exception e) {minimumValidColonyCircularity = (float)0.3;}
+
+		int minimumValidColonySize;
+		try{minimumValidColonySize = userProfileSettings.detectionSettings.MinimumValidColonySize;} 
+		catch(Exception e) {minimumValidColonySize = 50;}
+
+
+
+
 		//6. analyze each tile
 
 		//create an array of measurement outputs
@@ -241,6 +320,12 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				//each generated tile image is cleaned up inside the tile reader
+				
+				//colony QC
+				if(opacityReaderOutputs[i][j].colonySize<minimumValidColonySize ||
+						opacityReaderOutputs[i][j].circularity<minimumValidColonyCircularity){
+					opacityReaderOutputs[i][j] = new OpacityTileReaderOutput();
+				}
 
 				//only run the CPRG color analysis if there is a colony in the tile
 				if(opacityReaderOutputs[i][j].colonySize>0){

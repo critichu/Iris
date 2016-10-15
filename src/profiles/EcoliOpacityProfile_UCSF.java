@@ -36,7 +36,7 @@ import utils.Toolbox;
  * @author George Kritikos
  *
  */
-public class EcoliOpacityProfile extends Profile {
+public class EcoliOpacityProfile_UCSF extends Profile {
 
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
