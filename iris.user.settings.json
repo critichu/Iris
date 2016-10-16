@@ -4,7 +4,7 @@
 	"ArrayFormat": 384,
 	"profileSettings": [
 		{
-			"ProfileName": "Morphology&Color Profile [Pseudomonas colonies]",
+			"ProfileName": "Morphology&Color Profile",
 			"rotationSettings":{
 				"autoRotateImage": true,
 				"manualImageRotationDegrees": 0

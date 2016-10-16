@@ -33,23 +33,24 @@ public class LaplacianFilterTileReader {
 
 	public static BasicTileReaderOutput processTile(BasicTileReaderInput input){
 
-		
 		ImagePlus tileImageCopy = input.tileImage.duplicate();
+		tileImageCopy.setRoi(input.tileImage.getRoi());
 		
-		//median filter radius
-		double radius = 2.0;
-		//laplacian filter scale 
-		double scale = 4.0;
-		//gaussian radius (sigma)
-		double sigma = 1.0;
-
-
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
+		
+
 
 		if(!IrisFrontend.settings.userDefinedRoi){
-
+			
+			//median filter radius
+			double radius = 2.0;
+			//laplacian filter scale 
+			double scale = 4.0;
+			//gaussian radius (sigma)
+			double sigma = 1.0;
+			
 			//normally here we would check if the tile is empty, but we're gonna give Laplacian Filter a chance
 
 			//this is the input image
@@ -183,6 +184,12 @@ public class LaplacianFilterTileReader {
 					return(output);
 				}
 			}
+			
+			//I will double-check here if this tile reader returns the whole tile
+			if(output.colonySize == input.tileImage.getWidth()*input.tileImage.getHeight()){
+				return(new BasicTileReaderOutput());
+			}
+			
 
 			return(output);//returns the biggest result
 		}

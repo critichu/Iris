@@ -136,6 +136,12 @@ public class BasicTileReaderHSB {
 
 				input.cleanup(); //clear the tile image here, since we don't need it anymore
 
+				
+				//I will double-check here if this tile reader returns the whole tile
+				if(output.colonySize == input.tileImage.getWidth()*input.tileImage.getHeight()){
+					return(new BasicTileReaderOutput());
+				}
+				
 				return(output);//returns the biggest result
 			}
 			else{ //there's a colony here, but we need to employ Hough to get it right

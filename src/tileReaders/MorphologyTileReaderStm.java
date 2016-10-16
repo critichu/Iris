@@ -493,6 +493,13 @@ public class MorphologyTileReaderStm {
 			output.colonyROI = manager.getRoisAsArray()[indexOfBiggestParticle];
 			output.colonyOpacity = getBiggestParticleOpacity(grayscaleTileCopy, output.colonyROI, colonyBrightnessThreshold);
 
+			
+			//this is interesting, but I've seen this algorithm converge to returning the entire tile as the colony
+			//I will check for this here and return accordingly
+			if(output.colonySize == input.tileImage.getWidth()*input.tileImage.getHeight()){
+				return(new MorphologyTileReaderOutput());
+			}
+			
 			//this is a bug of the particle detection algorithm. 
 			//It returns a particle of 0.791 circularity and area equal to the tile area
 			//when there's nothing on the tile

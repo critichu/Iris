@@ -13,6 +13,7 @@ import ij.io.FileInfo;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
@@ -38,7 +39,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 		System.setProperty("plugins.dir", "./plugins/");
 		System.setProperty("sun.java2d.opengl", "true");
 	}
-	
+
 	/*
 	@Override
 	public void mouseClicked(MouseEvent e) {}
@@ -60,7 +61,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		
+
 	}
 
 	@Override
@@ -68,30 +69,31 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		
+
 		int keyCode = e.getKeyCode();
 		char keyChar = e.getKeyChar();
 
 		//user hit space
 		if(keyCode==32 || keyChar==' '){
-			try {
-				ImagePlus colonyImage = saveColonyRoi_plugin();
-				
-				if(invokeIris)
-					ProcessFolderWorker.processSingleFile(new File(colonyImageFilename));				
-				
+			try {				
+				//ImagePlus colonyImage = saveColonyRoi_plugin();
+				saveColonyRoi_plugin();
+
+				if(invokeIris){
+					ProcessFolderWorker.processSingleFile(new File(colonyImageFilename));
+				}
+
 			} catch (Exception e1) {
-				//fail silently
 				e1.printStackTrace();
 			}
 		}
-		
+
 		//user hit escape
 		if(keyCode==KeyEvent.VK_ESCAPE){
 			imp.close();
 			System.exit(0);
 		}
-		
+
 	}
 
 	/* obsolete, run through ColonyPickerFrontendBigMem
@@ -114,7 +116,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	{
 
 		File fileOrFolder = new File(arg0);
-		
+
 		//single file -- interactive mode
 		if(arg0.equals("") || !fileOrFolder.exists()){
 			imp = IJ.openImage();
@@ -134,26 +136,26 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 			File[] filesInDirectory = fileOrFolder.listFiles(new PicturesFilenameFilter());
 
 			for (File file : filesInDirectory) {
-				
+
 				try{
 					if(!file.exists()) continue; //if its not a file or it doesn't exist, skip to the next one
 					if(!file.isFile()) continue;
-				
-					
+
+
 					userIsDone = false;
-					
+
 					this.run(file.getPath());
-					
+
 					while(!userIsDone )
 						this.wait();
-					
-					
+
+
 				} catch(Exception e){
 					System.out.println("Error processing file!\n");
 				}
 			}
 		}
-		*/
+		 */
 
 
 
@@ -228,6 +230,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 			return(null);
 		}
 
+
 		//convert ROI to the bounding rect
 		imp.setRoi(new Rectangle(selectedRoi.getBounds()));
 
@@ -244,34 +247,35 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 		imp.copy();
 		ImagePlus colonyImage = ImagePlus.getClipboard();
 
-		//reset ROI back to the one the user selected 
+		//reset ROI back to the one the user selected
+		imp.deleteRoi();
 		imp.setRoi(selectedRoi);
 
 		//apply the same ROI to the colony image
-		if(imp.getRoi().getClass().equals(OvalRoi.class)){
+		if(selectedRoi.getClass().equals(OvalRoi.class)){//oval selection
 			colonyImage.setRoi(new OvalRoi(
 					0, 0,
 					selectedRoi.getBounds().width,
 					selectedRoi.getBounds().height));
+			imp.setOverlay(imp.getRoi(), Color.cyan, 1, new Color(0, 0, 0, 0));
+
 		}
-		else if(imp.getRoi().getClass().equals(Roi.class)){
+		else if(selectedRoi.getClass().equals(Roi.class)){//rectangular selection
 			colonyImage.setRoi(new Roi(
 					0, 0,
 					selectedRoi.getBounds().width,
 					selectedRoi.getBounds().height));
+			imp.setOverlay(selectedRoi.getBounds(), Color.cyan, new BasicStroke(1));
 		}
 
 
-		//set overlay of the new ROI
-		//
-
 		IJ.saveAs(colonyImage, "Jpeg", colonyImageFilename);
-		
-		
-		//change overlay to show to the user that something actually happened
-		imp.setOverlay(imp.getRoi(), Color.cyan, 1, new Color(0, 0, 0, 0));
 
-		
+
+
+
+
+
 		return(colonyImage);
 	}
 

@@ -42,13 +42,16 @@ public class MorphologyProfileCandida96 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Morphology Profile [Candida colonies]";
+	public static String profileName = "Morphology Profile";
 
 
 	/**
 	 * this is a description of the profile that will be shown to the user on hovering the profile name 
 	 */
-	public static String profileNotes = "This profile quantifies the amount of colony structure (how 'wrinkly' a colony is)";
+	public static String profileNotes = 
+			"This profile quantifies the amount of colony structure (how 'wrinkly' a colony is)\n"+
+			"as well as the extent of the in-agar growth of the colony.\n"+
+			"This profile was originally used to quantify both such features of two collections of C. albicans mutants";
 
 
 	/**

@@ -6,6 +6,7 @@ package gui;
 
 import ij.IJ;
 import ij.ImageJ;
+import ij.gui.ImageWindow;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -57,12 +58,20 @@ class ColonyPickerFrontendBigMem {
 						"Define colony areas, hit space to verify selection.\n\n"+
 								"Rectangular selection: let Iris detect the colony\n"+
 								"Round selection: manually define the colony\n\n"+
-								
+
 								"Zoom in/out using the magnifying lens icon\n\n"+
-								
+
 								"Hit escape when done",
 								"Quick instructions",
 								JOptionPane.PLAIN_MESSAGE);
+
+
+				//just make sure the current window has the focus
+				//otherwise setting a ROI and hitting space will fail the first 1-2 times
+				try{
+					ImageWindow imageWindow = ij.WindowManager.getCurrentWindow();
+					imageWindow.requestFocus();
+				} catch (Exception e){}
 
 				return;
 			}

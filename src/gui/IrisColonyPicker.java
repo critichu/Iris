@@ -97,7 +97,7 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 
 						System.setProperty("apple.laf.useScreenMenuBar", "false");
 						irisColonyPickerInstance.setResizable(false);
-						irisColonyPickerInstance.setVisible(true);				
+						irisColonyPickerInstance.setVisible(true);			
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
