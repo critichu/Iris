@@ -77,26 +77,14 @@ You can abort the process at any time, by closing the program.</p>
 <p>Valid profile names are the following:  </p>
 
 <ul>
-<li>"Stm growth",<br>
-</li>
-<li>"Ecoli growth",<br>
-</li>
-<li>"Ecoli opacity",<br>
-</li>
-<li>"Ecoli opacity 384",<br>
-</li>
-<li>"Ecoli growth 384 - hazy colonies",<br>
-</li>
-<li>"B.subtilis Opacity (HSB)",<br>
-</li>
-<li>"B.subtilis Sporulation (HSB)",<br>
-</li>
-<li>"Biofilm formation",<br>
-</li>
-<li>"Biofilm formation (HSB)",<br>
-</li>
-<li>"Morphology profile [Candida 96-plates]"<br>
-</li>
+<li>"Colony Opacity"</li>
+<li>"Colony Opacity inverted"</li>
+<li>"Biofilm formation"</li>
+<li>"Sporulation (B.subtilis)"</li>
+<li>"CPRG detection"</li>
+<li>"Xgal assay"</li>
+<li>"Morphology"</li>
+<li>"Morphology&amp;Color"</li>
 </ul>
 
 <p><strong>NOTE: please keep the quotes when inputting the profile name</strong></p>
@@ -115,7 +103,7 @@ They are in fact plain text tab-delimited files, which can easily be opened with
 <h5>
 <a id="grid-files" class="anchor" href="#grid-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>.grid files</h5>
 
-<p>these are currently saved mainly for debugging purposes, as they demonstrate the results of gridding algorithm.</p>
+<p>these are currently saved mainly for debugging purposes, as they demonstrate the results of gridding algorithm. In grid files, colony boundaries are painted in cyan color, so grid files can also be used to check the results of the colony detection algorithms.</p>
 
 <h5>
 <a id="log-files" class="anchor" href="#log-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>.log files</h5>
@@ -127,6 +115,20 @@ They are in fact plain text tab-delimited files, which can easily be opened with
 
 <p>Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
 Contact: kritikos at embl dot de</p>
+
+<hr>
+
+<h2>
+<a id="iris-colonypicker" class="anchor" href="#iris-colonypicker" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris ColonyPicker</h2>
+
+<p>In case your colonies are not in a grid format (96, 384, 1536, or 6144), you can use the Iris' sister software: <strong>ColonyPicker</strong>. Just double-click on it's jar file, select an iris profile to quantify a colony, and your image file.</p>
+
+<p><strong>How to use it:</strong></p>
+
+<ul>
+<li>Picking a colony using round (oval) selection will tell Iris to get the features within those manually defined bounds.</li>
+<li>Using a rectangular selection surrounding one colony will get Iris to automatically detect the colony bounds and subsequently analyze this colony.</li>
+</ul>
 
 <hr>
 
@@ -156,6 +158,17 @@ Contact: kritikos at embl dot de</p>
 <a id="where-can-i-get-it" class="anchor" href="#where-can-i-get-it" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>where can I get it?</h3>
 
 <p>you can download all scripts and example input and output files <a href="https://oc.embl.de/index.php/s/NHKrarvREW7o5uw/download">here</a></p>
+
+<h3>
+<a id="acknowledgements" class="anchor" href="#acknowledgements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>acknowledgements</h3>
+
+<p>Iris makes use of the following open source projects:</p>
+
+<ul>
+<li><a href="https://github.com/imagej">ImageJ</a></li>
+<li><a href="https://github.com/google/gson">gson</a></li>
+<li><a href="http://opencsv.sourceforge.net/">opencsv</a></li>
+</ul>
       </section>
     </div>
 
