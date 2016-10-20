@@ -90,6 +90,16 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 				public void run() {
 					try {
 						irisColonyPickerInstance = new IrisColonyPicker();
+						
+						
+						//try to set the icon
+						try {
+							irisColonyPickerInstance.setIconImage(ImageIO.read(new File("resources/icon_256x256.png")));
+						}
+						catch (Exception e) {
+						    //no worries if it failed
+						}
+						
 
 						//this call tells the system to redirect the System.out and System.err outputs
 						//from the console to the textPane object
