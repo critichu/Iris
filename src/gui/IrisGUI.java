@@ -5,6 +5,7 @@ package gui;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -17,7 +18,6 @@ import java.util.HashSet;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -68,8 +68,8 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 					System.setProperty("apple.laf.useScreenMenuBar", "false");
 					frame.setResizable(false);
 					frame.setVisible(true);
-					
-					
+
+
 					if(IrisFrontend.userSettings!=null){
 						System.out.println("Successfully loaded user settings for profiles:");
 						HashSet<String> loadedUserSettings = IrisFrontend.userSettings.getLoadedUserSettings();
@@ -77,7 +77,7 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 							System.out.println("\t"+loadedProfileName);	
 						}
 						System.out.println();
-						
+
 					} else{
 						System.out.println("Could not load user settings,\nusing default settings");
 					}
@@ -85,8 +85,8 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 					System.out.println("\tSingle colony mode:\t"+IrisFrontend.singleColonyRun);
 					System.out.println("\tnumber of rows:\t"+IrisFrontend.settings.numberOfRowsOfColonies);
 					System.out.println("\tnumber of columns:\t"+IrisFrontend.settings.numberOfColumnsOfColonies);
-					
-					
+
+
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -308,10 +308,37 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 
 	}
 
+
+
+	
 	/**
 	 * @return
 	 */
 	private File selectFolder() {
+
+		//create the filechooser object
+		System.setProperty("apple.awt.fileDialogForDirectories", "true");
+	    FileDialog fc = new FileDialog(this);
+	    fc.setTitle("please select a folder");
+	    fc.setVisible(true);
+	   
+	    
+	    String directoryPath = fc.getDirectory() + fc.getFile();
+	    File directory = new File(directoryPath);
+	    
+	    if(directory.exists())
+	    	return(directory);
+	    else
+	    	return(null);
+	    	
+	}
+	
+	
+	
+	/**
+	 * @return
+	 */
+	/*private File selectFolder() {
 
 		//create the filechooser object
 		final JFileChooser fc = new JFileChooser();
@@ -329,5 +356,5 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 		else{
 			return null;
 		}
-	}
+	}*/
 }

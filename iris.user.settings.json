@@ -4,7 +4,7 @@
 	"ArrayFormat": 384,
 	"profileSettings": [
 		{
-			"ProfileName": "Morphology&Color Profile",
+			"ProfileName": "Morphology&Color profile",
 			"rotationSettings":{
 				"autoRotateImage": true,
 				"manualImageRotationDegrees": 0

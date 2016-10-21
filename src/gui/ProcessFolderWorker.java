@@ -171,7 +171,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			bsubtilisHazyProfileHSB.analyzePicture(filename);			
 		}
 
-		else if(profileName.equals("B.subtilis Sporulation")){
+		else if(profileName.equals("B.subtilis sporulation")){
 			BsubtilisSporulationProfile bsubtilisSporulationProfile = new BsubtilisSporulationProfile();
 			bsubtilisSporulationProfile.analyzePicture(filename);			
 		}
@@ -261,7 +261,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			morphologyProfile.analyzePicture(filename);
 		}
 		
-		else if(profileName.equals("Morphology Profile")){
+		else if(profileName.equals("Morphology profile")){
 			MorphologyProfileCandida96 morphologyProfile = new MorphologyProfileCandida96();
 			morphologyProfile.analyzePicture(filename);
 		}
@@ -276,7 +276,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			morphologyProfile.analyzePicture(filename);
 		}
 		
-		else if(profileName.equals("Morphology&Color Profile")){//pseudomonas colonies but it'll work for more than that
+		else if(profileName.equals("Morphology&Color profile")){//pseudomonas colonies but it'll work for more than that
 			MorphologyProfilePA384 morphologyProfile = new MorphologyProfilePA384();
 			morphologyProfile.analyzePicture(filename);
 		}
@@ -291,7 +291,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			profile.analyzePicture(filename);
 		}
 
-		else if(profileName.equals("Colony Opacity inverted")){
+		else if(profileName.equals("Colony opacity inverted")){
 			ColonyOpacityProfileInverted profile = new ColonyOpacityProfileInverted();
 			profile.analyzePicture(filename);
 		}

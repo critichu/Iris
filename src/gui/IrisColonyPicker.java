@@ -5,6 +5,7 @@ package gui;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -20,7 +21,6 @@ import java.util.HashSet;
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -28,7 +28,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -409,34 +408,35 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 
 	}
 
+	
+	
 	/**
 	 * @return
 	 */
-	private File selectFolder() {
+	private File selectFile() {
 
 		//create the filechooser object
-		final JFileChooser fc = new JFileChooser();
-
-
-		//make it show only folders
-		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-		int returnVal = fc.showOpenDialog(this);
-
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			File directory = fc.getSelectedFile();
-			return(directory);
-		}
-		else{
-			return null;
-		}
+		//System.setProperty("apple.awt.fileDialogForDirectories", "true");
+	    FileDialog fc = new FileDialog(this);
+	    fc.setTitle("please select a file");
+	    fc.setFilenameFilter(new PicturesFilenameFilter());
+	    fc.setVisible(true);
+	   
+	    String directoryPath = fc.getDirectory() + fc.getFile();
+	    File directory = new File(directoryPath);
+	    
+	    if(directory.exists())
+	    	return(directory);
+	    else
+	    	return(null);
+	    	
 	}
 
 
 	/**
 	 * @return
 	 */
-	private File selectFile() {
+	/*private File selectFile() {
 
 
 		boolean debugMode = false;
@@ -462,7 +462,7 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 		else{
 			return null;
 		}
-	}
+	}*/
 
 
 
