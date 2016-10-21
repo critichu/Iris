@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
+import java.util.HashSet;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -75,16 +77,17 @@ public class UserSettings {
 	 * @return
 	 */
 	public static UserSettings loadUserSettings(){
-		InputStream inputStream;
+		InputStream inputStream = null;
 		try {
 			inputStream = new FileInputStream(new File("iris.user.settings.json"));
 		} catch (FileNotFoundException e) {
-			System.err.println("no user settings file found, using default settings");
-			return(new UserSettings());
+//			System.err.println("no user settings file found, using default settings");
+//			return(new UserSettings());
+			return(null); //return null if file not found
 		}
 		return(loadUserSettings(inputStream));
 	}
-
+	
 
 	/**
 	 * loads the user setings from the given input stream corresponding to a JSON file
@@ -96,12 +99,13 @@ public class UserSettings {
 		String jsonString = readStream(inputStream);
 
 		Gson gson = new Gson();
-		UserSettings loadedSettings;
+		UserSettings loadedSettings = null;
 		try {
 			loadedSettings = gson.fromJson(jsonString, UserSettings.class);
 		} catch (JsonSyntaxException e) {
-			System.err.println("no user settings file found, using default settings");
-			return(new UserSettings());
+//			System.err.println("no user settings file found, using default settings");
+//			return(new UserSettings());
+			return(null); //return null settings if it didn't work out
 		}
 		return(loadedSettings);
 	}
@@ -174,6 +178,30 @@ public class UserSettings {
 		}
 		return(null);//no settings supplied for this profile
 	}
+	
+	
+	
+	/**
+	 * gets the subset of loaded settings that matched a known profile name
+	 * @return
+	 */
+	public HashSet<String> getLoadedUserSettings(){
+		
+		HashSet<String> allProfileNames = new HashSet<String>();
+		Collections.addAll(allProfileNames, IrisFrontend.profileCollection);
+		
+		HashSet<String> allLoadedUserSettings = new HashSet<String>();
+		
+		for (ProfileSettings profileSettings : this.profileSettings) {
+			allLoadedUserSettings.add(profileSettings.ProfileName);
+		}
+		
+		//keep only the profile names with loaded settings
+		allProfileNames.retainAll(allLoadedUserSettings);
+		
+		return(allProfileNames);
+	}
+
 
 
 

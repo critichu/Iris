@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.security.CodeSource;
+import java.util.HashSet;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -32,6 +33,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+
+import settings.UserSettings;
 
 /**
  * @author George Kritikos
@@ -83,6 +86,14 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 		long maxHeapSize = Runtime.getRuntime().maxMemory();
 		if(maxHeapSize>(long)1.5e9){
 			
+			
+
+			IrisFrontend.userSettings = UserSettings.loadUserSettings();
+			
+			//apply user settings
+			UserSettings.applyUserSettings(IrisFrontend.userSettings);
+			
+			
 			System.setProperty("plugins.dir", "./plugins/");
 			System.setProperty("sun.java2d.opengl", "true");
 
@@ -107,7 +118,26 @@ public class IrisColonyPicker extends JFrame implements ActionListener, Property
 
 						System.setProperty("apple.laf.useScreenMenuBar", "false");
 						irisColonyPickerInstance.setResizable(false);
-						irisColonyPickerInstance.setVisible(true);			
+						irisColonyPickerInstance.setVisible(true);
+						
+						
+						
+
+
+						if(IrisFrontend.userSettings!=null){
+							System.out.println("Successfully loaded user settings for profiles:");
+							HashSet<String> loadedUserSettings = IrisFrontend.userSettings.getLoadedUserSettings();
+							for (String loadedProfileName : loadedUserSettings) {
+								System.out.println("\t"+loadedProfileName);	
+							}
+							System.out.println();
+							
+						} else{
+							System.out.println("Could not load user settings,\nusing default settings");
+						}					
+						
+						
+						
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

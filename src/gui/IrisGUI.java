@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.HashSet;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -66,7 +67,26 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 
 					System.setProperty("apple.laf.useScreenMenuBar", "false");
 					frame.setResizable(false);
-					frame.setVisible(true);				
+					frame.setVisible(true);
+					
+					
+					if(IrisFrontend.userSettings!=null){
+						System.out.println("Successfully loaded user settings for profiles:");
+						HashSet<String> loadedUserSettings = IrisFrontend.userSettings.getLoadedUserSettings();
+						for (String loadedProfileName : loadedUserSettings) {
+							System.out.println("\t"+loadedProfileName);	
+						}
+						System.out.println();
+						
+					} else{
+						System.out.println("Could not load user settings,\nusing default settings");
+					}
+					System.out.println("Global settings used:");
+					System.out.println("\tSingle colony mode:\t"+IrisFrontend.singleColonyRun);
+					System.out.println("\tnumber of rows:\t"+IrisFrontend.settings.numberOfRowsOfColonies);
+					System.out.println("\tnumber of columns:\t"+IrisFrontend.settings.numberOfColumnsOfColonies);
+					
+					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
