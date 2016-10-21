@@ -42,15 +42,18 @@ Also Iris can be easily expanded to new phenotypes, by writing a new readout mod
 <h3>
 <a id="how-can-i-download-the-software" class="anchor" href="#how-can-i-download-the-software" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How can I download the software?</h3>
 
-<p>That's easy, just follow this link, it includes a binary distribution (a .jar, see below) and some example files to see how the software works:
-<a href="https://goo.gl/j0ZpIi">https://goo.gl/j0ZpIi</a></p>
+<p>That's easy, just follow this link to the latest binary distribution (.jar files), as well as the source code:
+<a href="https://github.com/critichu/Iris/releases/latest">https://github.com/critichu/Iris/releases/latest</a></p>
+
+<p><a href="https://www.dropbox.com/sh/q9zhksibaey8epd/AADF5mHx2-fgjB4Qt3cpmNr8a?dl=1">Here</a> you can find some example files to play around with (includes example output)</p>
 
 <h3>
 <a id="using-iris" class="anchor" href="#using-iris" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using Iris</h3>
 
 <p>Iris is written in Java, which makes it compatible with most operating systems (Windows, macOS, *nix).
-Java software is typically distributed in JAR files (.jar ending), which you can run by a double-click (see below command-line alternatives).
-Next, click "open folder", and select a folder which holds the pictures to be processed. Iris will process any pictures with a ".jpg" file ending, displaying any messages on the application window. 
+Java software is typically distributed in JAR files (.jar ending), which you can run by a double-click (see below command-line alternatives).</p>
+
+<p>Next, click "open folder", and select a folder which holds the pictures to be processed. Iris will process any pictures with a ".jpg" file ending, displaying any messages on the application window. 
 You can abort the process at any time, by closing the program.</p>
 
 <h4>
@@ -61,30 +64,29 @@ You can abort the process at any time, by closing the program.</p>
 
 <p>To run Iris as a window (GUI) application, open a command line window, cd into the folder the Iris JAR file is in, and run the following command:  </p>
 
-<pre><code>java -Xmx1g -jar Iris_0.9.x.xx.jar  
+<pre><code>java -Xmx2g -jar iris.jar
 </code></pre>
 
-<p>Note: the Iris jar file can also be run on all systems by double clicking. To do this, first make sure you have permanently set the maximum Java heap size to 1g (1 Gigabyte). Google on how to do that in your particular system/setup.</p>
+<p>Note: the Iris jar file can also be run on all systems by double clicking. Iris will attempt to set the heap space automatically. If you run into "out of memory" error messages, please make sure you have permanently set the maximum Java heap size to 2g (2 Gigabyte). Google on how to do that in your particular system/setup.</p>
 
 <h5>
 <a id="iris-console-eg-for-scripting" class="anchor" href="#iris-console-eg-for-scripting" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris console (e.g. for scripting)</h5>
 
 <p>To run Iris as a console application (no GUI window), which can be rather useful for scripting, you need to provide Iris with a profile name and a folder that pictures are found in:</p>
 
-<pre><code>java -Xmx1g -jar Iris_0.9.x.xx.jar "profile name" "folder location”
+<pre><code>java -Xmx1g -jar iris.jar "profile name" "folder location”
 </code></pre>
 
 <p>Valid profile names are the following:  </p>
 
 <ul>
-<li>"Colony Opacity"</li>
-<li>"Colony Opacity inverted"</li>
-<li>"Biofilm formation"</li>
-<li>"Sporulation (B.subtilis)"</li>
-<li>"CPRG detection"</li>
-<li>"Xgal assay"</li>
-<li>"Morphology"</li>
-<li>"Morphology&amp;Color"</li>
+<li>"Colony opacity",</li>
+<li>"B.subtilis sporulation",</li>
+<li>"CPRG profile",</li>
+<li>"Biofilm formation",</li>
+<li>"Morphology profile",</li>
+<li>"Morphology&amp;Color profile",</li>
+<li>"Colony opacity inverted"</li>
 </ul>
 
 <p><strong>NOTE: please keep the quotes when inputting the profile name</strong></p>
@@ -110,11 +112,23 @@ They are in fact plain text tab-delimited files, which can easily be opened with
 
 <p>Each time Iris is run, it creates a timestamped log file. This is a text file that is currently used for debugging reasons; any error messages will also be written on this file.</p>
 
-<h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h3>
+<h2>
+<a id="visualizing-iris-output" class="anchor" href="#visualizing-iris-output" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Visualizing Iris output</h2>
 
-<p>Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
-Contact: kritikos at embl dot de</p>
+<p>For this you will need:</p>
+
+<ul>
+<li>a folder containing iris files (can be only one file)</li>
+<li>the name of a column in the iris file</li>
+</ul>
+
+<p>Download <a href="https://www.dropbox.com/sh/6e6a2t98p3j10sg/AAB4UJCip0no7LfhBYP5U_y_a?dl=1">these files</a> and extract the zip.
+On a terminal, change your directory to the unzipped folder, and run the following:</p>
+
+<pre><code>./plot.colony.phenotype.R --folder [folderName] --phenotype [columnName]
+</code></pre>
+
+<p>This will make pdf files saved next to your iris files.</p>
 
 <hr>
 
@@ -155,12 +169,14 @@ Contact: kritikos at embl dot de</p>
 </ul>
 
 <h3>
-<a id="where-can-i-get-it" class="anchor" href="#where-can-i-get-it" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>where can I get it?</h3>
+<a id="where-can-i-get-the-kinetic-tool" class="anchor" href="#where-can-i-get-the-kinetic-tool" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>where can I get the kinetic tool?</h3>
 
 <p>you can download all scripts and example input and output files <a href="https://oc.embl.de/index.php/s/NHKrarvREW7o5uw/download">here</a></p>
 
-<h3>
-<a id="acknowledgements" class="anchor" href="#acknowledgements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>acknowledgements</h3>
+<hr>
+
+<h2>
+<a id="acknowledgements" class="anchor" href="#acknowledgements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Acknowledgements</h2>
 
 <p>Iris makes use of the following open source projects:</p>
 
@@ -169,6 +185,12 @@ Contact: kritikos at embl dot de</p>
 <li><a href="https://github.com/google/gson">gson</a></li>
 <li><a href="http://opencsv.sourceforge.net/">opencsv</a></li>
 </ul>
+
+<h2>
+<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h2>
+
+<p>Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
+Contact: kritikos at embl dot de</p>
       </section>
     </div>
 
