@@ -47,7 +47,7 @@ public class IrisConsole {
 		} else{
 			System.out.println("Could not load user settings,\nusing default settings");
 		}
-		System.out.println("Global settings used:");
+		System.out.println("Global settings used: ");
 		System.out.println("\tSingle colony mode:\t"+IrisFrontend.singleColonyRun);
 		System.out.println("\tnumber of rows:\t"+IrisFrontend.settings.numberOfRowsOfColonies);
 		System.out.println("\tnumber of columns:\t"+IrisFrontend.settings.numberOfColumnsOfColonies);
