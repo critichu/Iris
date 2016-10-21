@@ -77,6 +77,12 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		int max = filesInDirectory.length;
 
 		for (File file : filesInDirectory) {
+			
+			if(!file.exists())
+				continue;
+			
+			if(file.isDirectory())
+				continue;
 
 			try{
 				processSingleFile(file);

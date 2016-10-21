@@ -36,6 +36,9 @@ public class PicturesFilenameFilter implements FilenameFilter {
 		if(filename.startsWith("tile_")){
 			return(false);
 		}
+		if((new File(dir, filename)).isDirectory()){
+			return(false);
+		}
 		if(filename.contains(".jpg") || filename.contains(".JPG") || filename.contains(".png") || filename.contains(".tif")){ //png is a hack to also process screenshots
 			return(true);
 		}
