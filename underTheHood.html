@@ -32,6 +32,9 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
+
+<p><img src="http://critichu.github.io/Iris/images/icon_256x256.png" alt="iris logo"></p>
+
 <h2 id="toc_0">Image analysis workflow</h2>
 
 <p>Generally, Iris takes the following steps to analyze colonies:</p>
@@ -42,20 +45,20 @@
 <li>analyzes each tile independently to get size other phenotypic characteristics</li>
 </ul>
 
-<p><img src="http://critichu.github.io/Iris/images/process.overview.png" alt="iris workflow"></p>
+<p><img src="http://critichu.github.io/Iris/images/process.overview.transparent.png" alt="iris workflow"></p>
 
 <h2 id="toc_1">Iris design</h2>
 
 <p>Iris was designed in a modular fashion; in other words, the above worflow steps are separate modules that one can plug in, modify, and replace at will.  </p>
 
-<p><img src="http://critichu.github.io/Iris/images/iris.design.jpeg" alt="iris design 1"></p>
+<p><img src="http://critichu.github.io/Iris/images/iris.design.png" alt="iris design 1"></p>
 
 <h3 id="toc_2">module interoperability</h3>
 
 <p>To help new/modified modules connect in the same way to the profile class, I use <em>connecting classes</em>, such as <strong>TileReaderInput</strong> and <strong>TileReaderOutput</strong> (illustrated as green and pink shapes in the above)<br>
 These connecting classes only need to be extended if you add new readouts not already covered by existing connecting subclasses.</p>
 
-<p><img src="http://critichu.github.io/Iris/images/iris.design2.jpeg" alt="iris design 2"></p>
+<p><img src="http://critichu.github.io/Iris/images/iris.design2.png" alt="iris design 2"></p>
 
 <h2 id="toc_3">Algorithms used per profile</h2>
 
@@ -67,6 +70,7 @@ Here is a table listing the algorithms used per profile:
 
 <p>Please post a question on the
 <a href="https://groups.google.com/forum/#!forum/iris-microbial-colony-phenotyping">Iris Q&amp;A forum</a></p>
+
 
       </section>
     </div>
