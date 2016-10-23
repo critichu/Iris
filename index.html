@@ -31,7 +31,10 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p><img src="https://oc.embl.de/index.php/s/WMRT5wiwToW4Tgk/download" alt="alt text" title="Iris Logo"></p>
+        <p><img src="http://critichu.github.io/Iris/images/icon_256x256.png" alt="iris logo"></p>
+
+<h1>
+<a id="iris-expanding-the-palette-of-microbial-phenotypic-readouts" class="anchor" href="#iris-expanding-the-palette-of-microbial-phenotypic-readouts" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris: expanding the palette of microbial phenotypic readouts</h1>
 
 <h3>
 <a id="what-does-iris-do" class="anchor" href="#what-does-iris-do" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What does Iris do?</h3>
@@ -77,6 +80,8 @@ You can abort the process at any time, by closing the program.</p>
 <pre><code>java -Xmx1g -jar iris.jar "profile name" "folder location”
 </code></pre>
 
+<p><strong>NOTE: please keep the quotes when inputting the profile name</strong></p>
+
 <p>Valid profile names are the following:  </p>
 
 <ul>
@@ -89,7 +94,13 @@ You can abort the process at any time, by closing the program.</p>
 <li>"Colony opacity inverted"</li>
 </ul>
 
-<p><strong>NOTE: please keep the quotes when inputting the profile name</strong></p>
+<p>Here is a visual overview of those profiles, and the <a href="http://critichu.github.io/Iris/underTheHood.html">Iris workflow</a>:  </p>
+
+<p><img src="http://critichu.github.io/Iris/images/iris.overview.profiles.png" alt="iris overview"></p>
+
+<p>Here you can find a table listing all algorithms used in each Iris profile:  </p>
+
+<p><img src="http://critichu.github.io/Iris/images/iris.profiles.algorithms.used.crop.png" alt="Iris algorithms"></p>
 
 <h4>
 <a id="iris-output" class="anchor" href="#iris-output" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iris output</h4>
@@ -128,7 +139,10 @@ On a terminal, change your directory to the unzipped folder, and run the followi
 <pre><code>./plot.colony.phenotype.R --folder [folderName] --phenotype [columnName]
 </code></pre>
 
-<p>This will make pdf files saved next to your iris files.</p>
+<p>This will make pdf files saved next to your iris files.<br>
+Here is an example of what you can do using this script:  </p>
+
+<p><img src="http://critichu.github.io/Iris/images/visualizing.iris.values.png" alt="iris visualization"></p>
 
 <hr>
 
@@ -187,11 +201,17 @@ On a terminal, change your directory to the unzipped folder, and run the followi
 </ul>
 
 <h2>
+<a id="how-does-iris-work" class="anchor" href="#how-does-iris-work" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How does Iris work?</h2>
+
+<p>I thought you'd never ask.  Lets take a <a href="http://critichu.github.io/Iris/underTheHood.html">look under the hood</a></p>
+
+<h2>
 <a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h2>
 
 <p>Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.</p>
 
-<p>You can get help on Iris-related questions or issues on the <a href="https://groups.google.com/forum/#!forum/iris-microbial-colony-phenotyping">Iris Q&amp;A forum</a></p>
+<p>You can get help on Iris-related questions or issues on the<br>
+<a href="https://groups.google.com/forum/#!forum/iris-microbial-colony-phenotyping">Iris Q&amp;A forum</a></p>
       </section>
     </div>
 
