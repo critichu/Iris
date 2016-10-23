@@ -1,8 +1,41 @@
-<p><img src="resources/icon_256x256.png" alt="iris logo"></p>
+<!DOCTYPE html>
+<html>
 
-<h1 id="toc_0">Iris under the hood</h1>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Iris : enabling versatile high-throughput phenotyping in microbes">
 
-<h2 id="toc_1">Iris workflow</h2>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Iris</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/critichu/Iris">View on GitHub</a>
+
+          <h1 id="project_title">Iris</h1>
+          <h2 id="project_tagline">enabling versatile high-throughput phenotyping in microbes</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/critichu/Iris/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/critichu/Iris/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><img src="https://oc.embl.de/index.php/s/WMRT5wiwToW4Tgk/download" alt="alt text" title="Iris Logo"></p>
+
+<p><img src="http://critichu.github.io/Iris/images/icon_256x256.png" alt="iris logo"></p>
+
+<h2 id="toc_0">Image analysis workflow</h2>
 
 <p>Generally, Iris follows the following steps:</p>
 
@@ -12,23 +45,44 @@
 <li>analyzes each tile independently to get size other phenotypic characteristics</li>
 </ul>
 
-<p><img src="resources/process.overview.png" alt="iris workflow"></p>
+<p><img src="http://critichu.github.io/Iris/images/process.overview.png" alt="iris workflow"></p>
 
-<h2 id="toc_2">Iris design</h2>
+<h2 id="toc_1">Iris design</h2>
 
 <p>Iris was designed in a modular fashion; in other words, the above worflow steps are separate modules that one can plug in, modify, and replace at will.  </p>
 
-<p><img src="resources/iris.design.jpeg" alt="iris design 1"></p>
+<p><img src="http://critichu.github.io/Iris/images/iris.design.jpeg" alt="iris design 1"></p>
 
-<h3 id="toc_3">module interoperability</h3>
+<h3 id="toc_2">module interoperability</h3>
 
 <p>To help new/modified modules connect in the same way to the profile class, I use <em>connecting classes</em>, such as <strong>TileReaderInput</strong> and <strong>TileReaderOutput</strong> (illustrated as green and pink shapes in the above)<br>
 These connecting classes only need to be extended if you add new readouts not already covered by existing connecting subclasses.</p>
 
-<p><img src="resources/iris.design2.jpeg" alt="iris design 2"></p>
+<p><img src="http://critichu.github.io/Iris/images/iris.design2.jpeg" alt="iris design 2"></p>
 
-<h2 id="toc_4">Algorithms used per profile</h2>
+<h2 id="toc_3">Algorithms used per profile</h2>
 
 <p>Each profile calls different modules (as illustrated above), but different profiles can call on the same modules.<br>
 Here is a table listing the algorithms used per profile: 
-<img src="resources/iris.profiles.algorithms.used.crop.png" alt="Iris algorithms"></p>
+<img src="http://critichu.github.io/Iris/images/iris.profiles.algorithms.used.crop.png" alt="Iris algorithms"></p>
+
+<h2 id="toc_4">I have questions regarding Iris development</h2>
+
+<p>Please post a question on the
+<a href="https://groups.google.com/forum/#!forum/iris-microbial-colony-phenotyping">Iris Q&amp;A forum</a></p>
+
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Iris maintained by <a href="https://github.com/critichu">critichu</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
