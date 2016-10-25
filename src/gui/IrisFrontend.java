@@ -44,7 +44,7 @@ public class IrisFrontend {
 	 * these are added specially for the multithreading case
 	 */
 	public static boolean multiThreaded = false;
-	public static ExecutorService executorService;
+	static ExecutorService executorService;
 	public static List<Callable<Object>> todoThread;
 	public static int numberOfThreads = 4;
 
@@ -87,7 +87,7 @@ public class IrisFrontend {
 		//"Opacity (fixed grid)"
 	};
 
-	public static String selectedProfile = IrisFrontend.profileCollection[0];
+	static String selectedProfile = IrisFrontend.profileCollection[0];
 
 
 	/**
@@ -95,7 +95,7 @@ public class IrisFrontend {
 	 * Iris opens it for appending on every invocation of the software, writing a header with the time.
 	 * It closes it after a run is done.
 	 */
-	public static BufferedWriter logFile = null;
+	private static BufferedWriter logFile = null;
 
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
@@ -116,7 +116,7 @@ public class IrisFrontend {
 	/**
 	 * This value calls whether Iris will not overwrite existing iris files (nice) or not
 	 */
-	public static boolean nice = false;
+	static boolean nice = false;
 
 
 
@@ -173,7 +173,7 @@ public class IrisFrontend {
 	/**
 	 * This function will create a unique log filename and open it for writing
 	 */
-	public static void openLog(String path){		
+	static void openLog(String path){		
 		String uniqueLogFilename = path + File.separator + getUniqueLogFilename();
 		try {
 			logFile = new BufferedWriter(new FileWriter(uniqueLogFilename));
@@ -186,7 +186,7 @@ public class IrisFrontend {
 	/**
 	 * Does what it says in the box
 	 */
-	public static void writeToLog(String text){
+	static void writeToLog(String text){
 		try {
 			if(logFile!=null){
 				logFile.write(text);
@@ -201,7 +201,7 @@ public class IrisFrontend {
 	/**
 	 * Does what it says in the box
 	 */
-	public static void closeLog(){
+	static void closeLog(){
 
 		try {
 			if(logFile!=null) 
@@ -217,7 +217,7 @@ public class IrisFrontend {
 	 * This function will create a unique filename, using the Iris version and the current time
 	 * @return
 	 */
-	public static String getUniqueLogFilename() {
+	private static String getUniqueLogFilename() {
 		return("iris_v"+IrisFrontend.IrisVersion+"_"+getDateTime()+".log");
 	}
 

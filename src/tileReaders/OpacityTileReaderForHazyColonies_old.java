@@ -29,7 +29,7 @@ public class OpacityTileReaderForHazyColonies_old {
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
 	 */
-	public static double varianceThreshold = 3e6;//5000;
+	private static double varianceThreshold = 3e6;//5000;
 
 	/**
 	 * This tile reader gets the size of the colony in pixels, as well as the sum of it's brightness.
@@ -260,7 +260,7 @@ public class OpacityTileReaderForHazyColonies_old {
 	 * @param tile
 	 * @return
 	 */
-	public static boolean isTileEmpty_simple(ImagePlus tile){
+	private static boolean isTileEmpty_simple(ImagePlus tile){
 		//sum up the pixel values (brightness) on the x axis
 		double[] sumOfBrightnessXaxis = sumOfRows(tile);
 		double variance = StdStats.varp(sumOfBrightnessXaxis);

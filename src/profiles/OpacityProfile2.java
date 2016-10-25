@@ -33,7 +33,7 @@ public class OpacityProfile2 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Opacity Profile (fixed grid)";
+	private static String profileName = "Opacity Profile (fixed grid)";
 
 
 	/**
@@ -45,7 +45,7 @@ public class OpacityProfile2 extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
+	private BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
 
 	/**

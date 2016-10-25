@@ -53,7 +53,7 @@ public class MorphologyProfilePA384 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Morphology&Color Profile";
+	private static String profileName = "Morphology&Color Profile";
 
 
 	/**
@@ -65,7 +65,7 @@ public class MorphologyProfilePA384 extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public ColorSettings settings = new ColorSettings(IrisFrontend.settings);
+	private ColorSettings settings = new ColorSettings(IrisFrontend.settings);
 
 
 
@@ -596,7 +596,7 @@ public class MorphologyProfilePA384 extends Profile {
 	 * @param colonyRoi
 	 * @return
 	 */
-	public static ByteProcessor[][] getInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
+	private static ByteProcessor[][] getInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
 
 		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
 

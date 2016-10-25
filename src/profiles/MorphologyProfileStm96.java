@@ -42,7 +42,7 @@ public class MorphologyProfileStm96 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Morphology Profile [Salmonella 96-plates]";
+	private static String profileName = "Morphology Profile [Salmonella 96-plates]";
 
 
 	/**
@@ -54,7 +54,7 @@ public class MorphologyProfileStm96 extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public ColorSettings settings = new ColorSettings(IrisFrontend.settings);
+	private ColorSettings settings = new ColorSettings(IrisFrontend.settings);
 
 
 
@@ -385,7 +385,7 @@ public class MorphologyProfileStm96 extends Profile {
 	 * @param segmentedImage
 	 * @param segmenterOutput
 	 */
-	public static void drawInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
+	private static void drawInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmenterOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
 
 
 		//first, get all the colony bounds into byte processors (one for each tile, having the exact tile size)
@@ -439,7 +439,7 @@ public class MorphologyProfileStm96 extends Profile {
 	 * @param colonyRoi
 	 * @return
 	 */
-	public static ByteProcessor[][] getInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
+	private static ByteProcessor[][] getInAgarGrowthBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, MorphologyTileReaderOutput [][] tileReaderOutputs){
 
 		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
 

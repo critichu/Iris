@@ -24,13 +24,13 @@ import com.google.gson.JsonSyntaxException;
  */
 public class UserSettings {
 
-	boolean SingleColony = false;
-	boolean DebugMode = false;
-	ProfileSettings profileSettings[] = new ProfileSettings[0];
-	public int ArrayFormat = 1536;
+	private boolean SingleColony = false;
+	private boolean DebugMode = false;
+	private ProfileSettings profileSettings[] = new ProfileSettings[0];
+	private int ArrayFormat = 1536;
 
 	public class ProfileSettings {
-		public String ProfileName = "";
+		private String ProfileName = "";
 		public RoatationSettings rotationSettings = new RoatationSettings();
 		public CroppingSettings croppingSettings = new CroppingSettings();
 		public SegmentationSettings segmentationSettings = new SegmentationSettings();
@@ -94,7 +94,7 @@ public class UserSettings {
 	 * @param inputStream
 	 * @return
 	 */
-	public static UserSettings loadUserSettings(InputStream inputStream){ 
+	private static UserSettings loadUserSettings(InputStream inputStream){ 
 
 		String jsonString = readStream(inputStream);
 
@@ -225,7 +225,7 @@ public class UserSettings {
 	 * @param is
 	 * @return
 	 */
-	public static String readStream(InputStream is) {
+	private static String readStream(InputStream is) {
 		StringBuilder sb = new StringBuilder(512);
 		try {
 			Reader r = new InputStreamReader(is, "UTF-8");

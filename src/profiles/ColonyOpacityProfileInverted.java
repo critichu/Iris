@@ -17,7 +17,7 @@ public class ColonyOpacityProfileInverted extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Colony Opacity Profile inverted";
+	private static String profileName = "Colony Opacity Profile inverted";
 
 
 	/**

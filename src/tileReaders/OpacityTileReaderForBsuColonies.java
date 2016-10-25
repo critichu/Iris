@@ -29,7 +29,7 @@ public class OpacityTileReaderForBsuColonies {
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
 	 */
-	public static double varianceThreshold = 5000;
+	private static double varianceThreshold = 5000;
 
 	/**
 	 * This tile reader gets the size of the colony in pixels, as well as the sum of it's brightness.

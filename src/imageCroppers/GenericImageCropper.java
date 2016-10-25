@@ -21,26 +21,26 @@ public class GenericImageCropper {
 	/**
 	 * the margin in which to look for the start of the first/last columns
 	 */
-	public static int plateBorderSearchAreaColumns = 100;
+	private static int plateBorderSearchAreaColumns = 100;
 
 	/**
 	 * the margin in which to look for the start of the first/last rows
 	 */
-	public static int plateBorderSearchAreaRows = 50;
+	private static int plateBorderSearchAreaRows = 50;
 
 
 	/**
 	 * how many rows/columns that were found to be above the average to skip before reporting that this is the plate border
 	 */
-	public static int skip = 20;
+	private static int skip = 20;
 
 
 	/**
 	 * These values correspond to the fraction of the in-plate image that will be used as
 	 * boundaries within which a search for a minimum will be performed.
 	 */
-	public static double searchStart = 0.035;
-	public static double searchEnd = 0.065;
+	private static double searchStart = 0.035;
+	private static double searchEnd = 0.065;
 
 
 	/**
@@ -290,7 +290,7 @@ public class GenericImageCropper {
 	 * @param list
 	 * @return
 	 */
-	static double getMean(ArrayList<Integer> list){
+	private static double getMean(ArrayList<Integer> list){
 
 		int sum = 0;
 

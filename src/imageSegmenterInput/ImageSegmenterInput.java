@@ -7,6 +7,6 @@ package imageSegmenterInput;
  * @author george
  *
  */
-public abstract class ImageSegmenterInput {
+abstract class ImageSegmenterInput {
 
 }

@@ -42,7 +42,7 @@ public class EcoliOpacityProfile96 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "E.coli Opacity Profile for 96 plates";
+	private static String profileName = "E.coli Opacity Profile for 96 plates";
 
 
 	/**
@@ -54,7 +54,7 @@ public class EcoliOpacityProfile96 extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
+	private BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
 
 	/**
@@ -385,7 +385,7 @@ public class EcoliOpacityProfile96 extends Profile {
 	 * @param list
 	 * @return
 	 */
-	static double getMean(ArrayList<Integer> list){
+	private static double getMean(ArrayList<Integer> list){
 
 		int sum = 0;
 

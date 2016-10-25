@@ -34,7 +34,7 @@ import javax.swing.text.StyleConstants;
  * @author George Kritikos
  *
  */
-public class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
+class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 
 	/**
 	 * 
@@ -42,12 +42,12 @@ public class IrisGUI extends JFrame implements ActionListener, PropertyChangeLis
 	private static final long serialVersionUID = 999066460213210379L;
 	private JPanel contentPane;
 	private JTextPane textPane;
-	public JProgressBar progressBar;
-	public static JButton btnOpenFolder;
+	private JProgressBar progressBar;
+	static JButton btnOpenFolder;
 	/**
 	 * This is the combo box used to select the profile
 	 */
-	public static JComboBox comboBox = null;
+	private static JComboBox comboBox = null;
 
 
 	/**

@@ -38,7 +38,7 @@ public class ColonyOpacityProfile extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Colony Opacity Profile";
+	static String profileName = "Colony Opacity Profile";
 
 
 	/**
@@ -50,7 +50,7 @@ public class ColonyOpacityProfile extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
+	private BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
 	/**
 	 * This function will analyze the picture using the basic profile

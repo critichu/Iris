@@ -57,7 +57,7 @@ public class BasicTileReaderInput extends TileReaderInput {
 	 * @param tileImage_
 	 * @param settings_
 	 */
-	public BasicTileReaderInput(ImagePlus tileImage_, BasicSettings settings_){
+	BasicTileReaderInput(ImagePlus tileImage_, BasicSettings settings_){
 		tileImage = tileImage_;
 		settings = settings_;
 	}
@@ -67,7 +67,7 @@ public class BasicTileReaderInput extends TileReaderInput {
 	 * @param tileImage_
 	 * @param settings_
 	 */
-	public BasicTileReaderInput(ImagePlus tileImage_, BasicSettings settings_, Point colonyCenter_){
+	private BasicTileReaderInput(ImagePlus tileImage_, BasicSettings settings_, Point colonyCenter_){
 		tileImage = tileImage_;
 		settings = settings_;
 		colonyCenter = new Point(colonyCenter_);

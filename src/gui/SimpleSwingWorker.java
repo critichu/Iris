@@ -10,7 +10,7 @@ import javax.swing.SwingWorker;
  * that exceptions are not swallowed.
  * found at: http://jonathangiles.net/blog/?p=341
  */
-public abstract class SimpleSwingWorker {
+abstract class SimpleSwingWorker {
 
 	private final SwingWorker<Void,Void> worker = 
                 new SwingWorker<Void,Void>() {

@@ -372,7 +372,7 @@ public class Toolbox {
 	 * @param colonyRoi
 	 * @return
 	 */
-	public static ByteProcessor[][] getColonyBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
+	private static ByteProcessor[][] getColonyBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
 
 		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
 
@@ -607,7 +607,7 @@ public class Toolbox {
 	 * @param originalPicture
 	 * @return
 	 */
-	public static ImagePlus cropImage(ImagePlus originalImage, Roi roi){
+	private static ImagePlus cropImage(ImagePlus originalImage, Roi roi){
 		originalImage.setRoi(roi);
 		originalImage.copy(false);//copy to the internal clipboard
 		//copy to a new picture
@@ -623,7 +623,7 @@ public class Toolbox {
 	 * @param list
 	 * @return
 	 */
-	public static double getMean(ArrayList<Integer> list){
+	private static double getMean(ArrayList<Integer> list){
 
 		int sum = 0;
 
@@ -639,7 +639,7 @@ public class Toolbox {
 	 * @param list
 	 * @return
 	 */
-	public static double getVariance(ArrayList<Integer> list){
+	private static double getVariance(ArrayList<Integer> list){
 		double mean = getMean(list);
 
 		double sum = 0;
@@ -960,7 +960,7 @@ public class Toolbox {
 	 * @param tileImage
 	 * @param string
 	 */
-	public static void show(ImagePlus image, String title) {
+	private static void show(ImagePlus image, String title) {
 
 		if(IrisFrontend.debug)
 		{
@@ -1217,7 +1217,7 @@ public class Toolbox {
 	 * @param croppedImage
 	 * @return
 	 */
-	public static double[] sumOfRows_double(ImagePlus croppedImage){
+	private static double[] sumOfRows_double(ImagePlus croppedImage){
 		int dimensions[] = croppedImage.getDimensions();
 
 		//make the sum of rows
@@ -1253,7 +1253,7 @@ public class Toolbox {
 	 * @param croppedImage
 	 * @return
 	 */
-	public static ArrayList<Integer> sumOfRows(ImagePlus croppedImage){
+	private static ArrayList<Integer> sumOfRows(ImagePlus croppedImage){
 		int dimensions[] = croppedImage.getDimensions();
 
 		//make the sum of rows
@@ -1290,7 +1290,7 @@ public class Toolbox {
 	 * @param croppedImage
 	 * @return
 	 */
-	public static ArrayList<Integer> sumOfColumns(ImagePlus croppedImage){
+	private static ArrayList<Integer> sumOfColumns(ImagePlus croppedImage){
 		int dimensions[] = croppedImage.getDimensions();
 
 		//make the sum of rows and columns
@@ -1478,7 +1478,7 @@ public class Toolbox {
 	 * @param inputImage
 	 * @return
 	 */
-	public static ImagePlus makeImageGrayscaleHSB(ImagePlus inputImage){
+	private static ImagePlus makeImageGrayscaleHSB(ImagePlus inputImage){
 		ImagePlus grayscaleImage = inputImage.duplicate();
 
 		ImageProcessor ip =  grayscaleImage.getProcessor();
@@ -1634,7 +1634,7 @@ public class Toolbox {
 	 * @param tileReaderOutputs
 	 * @return
 	 */
-	public static ByteProcessor[][] getColonyRoundBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
+	private static ByteProcessor[][] getColonyRoundBounds(ImagePlus croppedImage, BasicImageSegmenterOutput segmentationOutput, BasicTileReaderOutput [][] tileReaderOutputs){
 
 		ByteProcessor[][] colonyBounds = new ByteProcessor[tileReaderOutputs.length][tileReaderOutputs[0].length];
 
@@ -1678,7 +1678,7 @@ public class Toolbox {
 	 * @param tileImage
 	 * @return
 	 */
-	public static Color getBackgroundColor(ImagePlus tileImage){
+	private static Color getBackgroundColor(ImagePlus tileImage){
 
 		ColorProcessor colorProcessor = (ColorProcessor) tileImage.getProcessor();
 

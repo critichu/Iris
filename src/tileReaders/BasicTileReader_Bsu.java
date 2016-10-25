@@ -37,7 +37,7 @@ public class BasicTileReader_Bsu {
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
 	 */
-	public static double varianceThreshold = 2e4;
+	private static double varianceThreshold = 2e4;
 
 	/**
 	 * This simple tile readout gets the area (in pixels) of the colony in the tile.

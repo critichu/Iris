@@ -44,7 +44,7 @@ public class BasicProfile extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Stm growth profile";
+	private static String profileName = "Stm growth profile";
 
 
 	/**
@@ -55,7 +55,7 @@ public class BasicProfile extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
+	private BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
 	/**
 	 * This function will analyze the picture using the basic profile
@@ -422,7 +422,7 @@ public class BasicProfile extends Profile {
 	 * @param list
 	 * @return
 	 */
-	static double getMean(ArrayList<Integer> list){
+	private static double getMean(ArrayList<Integer> list){
 
 		int sum = 0;
 
@@ -438,7 +438,7 @@ public class BasicProfile extends Profile {
 	 * @param list
 	 * @return
 	 */
-	static double getVariance(ArrayList<Integer> list){
+	private static double getVariance(ArrayList<Integer> list){
 		double mean = getMean(list);
 
 		double sum = 0;
@@ -459,7 +459,7 @@ public class BasicProfile extends Profile {
 	 * @param originalPicture
 	 * @return
 	 */
-	public static ImagePlus cropImage(ImagePlus originalImage, Roi roi){
+	private static ImagePlus cropImage(ImagePlus originalImage, Roi roi){
 		originalImage.setRoi(roi);
 		originalImage.copy(false);//copy to the internal clipboard
 		//copy to a new picture

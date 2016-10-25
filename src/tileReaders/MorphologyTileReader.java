@@ -32,7 +32,7 @@ public class MorphologyTileReader {
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
 	 */
-	public static double varianceThreshold = 1e6;
+	private static double varianceThreshold = 1e6;
 
 	/**
 	 * This is the radius of the innermost circle scanning for morphology changes
@@ -42,20 +42,20 @@ public class MorphologyTileReader {
 	/**
 	 * This is the stepwise increase in circle radius
 	 */
-	public static int radiusStep = 5; //this is an empirically defined good value for the Candida 96-plate readout
+	private static int radiusStep = 5; //this is an empirically defined good value for the Candida 96-plate readout
 
 
 	/**
 	 * This defines the minimum brightness elevation required, 
 	 * in order for it to be considered as a structural element of the colony
 	 */
-	public static int minimumBrightnessStep = 5;  //this is an empirically defined good value for the Candida 96-plate readout
+	private static int minimumBrightnessStep = 5;  //this is an empirically defined good value for the Candida 96-plate readout
 
 
 	/**
 	 * The tile measurement will stop after this amount of circles
 	 */
-	public static int maximumNumberOfCircles = 50;
+	private static int maximumNumberOfCircles = 50;
 
 	/**
 	 * tile measurement will only measure this number of circles for the "fixed circles" output
@@ -78,7 +78,7 @@ public class MorphologyTileReader {
 	 * @param input
 	 * @return
 	 */
-	public static MorphologyTileReaderOutput processTile(OpacityTileReaderInput input){
+	private static MorphologyTileReaderOutput processTile(OpacityTileReaderInput input){
 
 		//0. create the output object
 		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();

@@ -357,7 +357,7 @@ public class OpacityTileReader {
 	 * @param inputArray
 	 * @return
 	 */
-	public static float getMedian(Float[] inputArray){
+	private static float getMedian(Float[] inputArray){
 		Arrays.sort(inputArray);
 		double median;
 		if (inputArray.length % 2 == 0)

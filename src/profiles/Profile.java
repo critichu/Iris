@@ -17,7 +17,7 @@ import tileReaderOutputs.TileReaderOutput;
  * @author george
  *
  */
-public abstract class Profile {
+abstract class Profile {
 	
 	/**
 	 * this holds the image given to this profile for processing

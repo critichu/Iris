@@ -29,7 +29,7 @@ import java.awt.Color;
  * 
  * @author <a href="mailto:info@geosoft.no">GeoSoft</a>
  */   
-public class ColorUtil
+class ColorUtil
 {
 	/**
 	 * Blend two colors.
@@ -154,7 +154,7 @@ public class ColorUtil
 	 * @param   r2, g2, b2  Second color.
 	 * @return  Distance bwetween colors.
 	 */
-	public static double colorDistance (double r1, double g1, double b1,
+	private static double colorDistance (double r1, double g1, double b1,
 			double r2, double g2, double b2)
 	{
 		double a = r2 - r1;
@@ -188,7 +188,7 @@ public class ColorUtil
 	 * @param color2  Second color.
 	 * @return        Distance between colors.
 	 */
-	public static double colorDistance (Color color1, Color color2)
+	static double colorDistance (Color color1, Color color2)
 	{
 		float rgb1[] = new float[3];
 		float rgb2[] = new float[3];    

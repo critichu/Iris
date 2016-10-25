@@ -46,7 +46,7 @@ public class ColorTileReaderHSB {
 	/**
 	 * this is the diameter from the center of the colony to measure "center color" in
 	 */
-	public static int diameter = 24;
+	private static int diameter = 24;
 
 
 
@@ -720,7 +720,7 @@ public class ColorTileReaderHSB {
 	 * @param colonyRoi
 	 * @return
 	 */
-	public static float getAveragePixelSaturation(ImagePlus tile, Roi colonyRoi){
+	private static float getAveragePixelSaturation(ImagePlus tile, Roi colonyRoi){
 		Float[] allRoiPixelsSaturation = Toolbox.getRoiPixels(tile, colonyRoi, 'S');
 
 		float saturationSum = 0;

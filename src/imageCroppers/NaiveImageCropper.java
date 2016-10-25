@@ -22,7 +22,7 @@ public abstract class NaiveImageCropper {
 	 * left and top are measured from the top left pixel of the picture
 	 * width and height are measured from the ROI starting point (left, top)
 	 */
-	public static Roi keepOnlyColoniesROI = new Roi(590, 380, 4130, 2730);
+	private static Roi keepOnlyColoniesROI = new Roi(590, 380, 4130, 2730);
 	
 	/**
 	 * This method will naively crop the plate in a hard-coded manner.

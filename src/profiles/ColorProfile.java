@@ -33,7 +33,7 @@ public class ColorProfile extends Profile{
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Colour Profile";
+	private static String profileName = "Colour Profile";
 
 
 	/**
@@ -45,7 +45,7 @@ public class ColorProfile extends Profile{
 	/**
 	 * This holds access to the settings object
 	 */
-	public ColorSettings settings = new ColorSettings(IrisFrontend.settings);
+	private ColorSettings settings = new ColorSettings(IrisFrontend.settings);
 
 
 

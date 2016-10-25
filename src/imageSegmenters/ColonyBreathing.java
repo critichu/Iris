@@ -167,7 +167,7 @@ public class ColonyBreathing {
 	 * @param bigPicture - the complete grayscaled picture
 	 * @return
 	 */
-	public static Roi colonyBreathe(Roi originalTileRectangle, ImagePlus bigPicture){
+	private static Roi colonyBreathe(Roi originalTileRectangle, ImagePlus bigPicture){
 
 		//first calculate the boundaries within which we will sum up brightnesses
 		int left = originalTileRectangle.getBounds().x;

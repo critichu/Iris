@@ -33,30 +33,30 @@ public class MorphologyTileReaderStm {
 	/**
 	 * Below this variance threshold, the tile will be flagged as empty by the brightness sum algorithm
 	 */
-	public static double varianceThreshold = 1e6;
+	private static double varianceThreshold = 1e6;
 
 	/**
 	 * This is the radius of the innermost circle scanning for morphology changes
 	 */
-	public static int initialRadius = 30; //this is an empirically defined good value for the Candida 96-plate readout
+	private static int initialRadius = 30; //this is an empirically defined good value for the Candida 96-plate readout
 
 	/**
 	 * This is the stepwise increase in circle radius
 	 */
-	public static int radiusStep = 5; //this is an empirically defined good value for the Candida 96-plate readout
+	private static int radiusStep = 5; //this is an empirically defined good value for the Candida 96-plate readout
 
 
 	/**
 	 * This defines the minimum brightness elevation required, 
 	 * in order for it to be considered as a structural element of the colony
 	 */
-	public static int minimumBrightnessStep = 5;  //this is an empirically defined good value for the Candida 96-plate readout
+	private static int minimumBrightnessStep = 5;  //this is an empirically defined good value for the Candida 96-plate readout
 
 
 	/**
 	 * The tile measurement will stop after this amount of circles
 	 */
-	public static int maximumNumberOfCircles = 50;
+	private static int maximumNumberOfCircles = 50;
 
 	/**
 	 * tile measurement will only measure this number of circles for the "fixed circles" output
@@ -87,7 +87,7 @@ public class MorphologyTileReaderStm {
 	 * @param input
 	 * @return
 	 */
-	public static MorphologyTileReaderOutput processTile(ColorTileReaderInput input){
+	private static MorphologyTileReaderOutput processTile(ColorTileReaderInput input){
 
 		//0. create the output object
 		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
@@ -743,7 +743,7 @@ public class MorphologyTileReaderStm {
 	 * @return the circle point coordinates  
 	 * @see http://en.wikipedia.org/wiki/Midpoint_circle_algorithm
 	 */
-	public static ArrayList<Point> getCircleCoordinates(Point center, int radius){
+	private static ArrayList<Point> getCircleCoordinates(Point center, int radius){
 		// Compute first the number of points
 		int octant_size = (int) Math.floor((Math.sqrt(2)*(radius-1)+4)/2);
 		int n_points = 8 * octant_size;

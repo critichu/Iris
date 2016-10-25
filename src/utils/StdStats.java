@@ -127,7 +127,7 @@ public final class StdStats {
    /**
      * Returns the average value in the array a[], NaN if no such value.
      */
-    public static double mean(double[] a) {
+    private static double mean(double[] a) {
         if (a.length == 0) return Double.NaN;
         double sum = sum(a);
         return sum / a.length;
@@ -136,7 +136,7 @@ public final class StdStats {
    /**
      * Returns the average value in the subarray a[lo..hi], NaN if no such value.
      */
-    public static double mean(double[] a, int lo, int hi) {
+    private static double mean(double[] a, int lo, int hi) {
         int length = hi - lo + 1;
         if (lo < 0 || hi >= a.length || lo > hi)
             throw new RuntimeException("Subarray indices out of bounds");
@@ -160,7 +160,7 @@ public final class StdStats {
    /**
      * Returns the sample variance in the array a[], NaN if no such value.
      */
-    public static double var(double[] a) {
+    private static double var(double[] a) {
         if (a.length == 0) return Double.NaN;
         double avg = mean(a);
         double sum = 0.0;
@@ -173,7 +173,7 @@ public final class StdStats {
    /**
      * Returns the sample variance in the subarray a[lo..hi], NaN if no such value.
      */
-    public static double var(double[] a, int lo, int hi) {
+    private static double var(double[] a, int lo, int hi) {
         int length = hi - lo + 1;
         if (lo < 0 || hi >= a.length || lo > hi)
             throw new RuntimeException("Subarray indices out of bounds");
@@ -189,7 +189,7 @@ public final class StdStats {
    /**
      * Returns the sample variance in the array a[], NaN if no such value.
      */
-    public static double var(int[] a) {
+    private static double var(int[] a) {
         if (a.length == 0) return Double.NaN;
         double avg = mean(a);
         double sum = 0.0;
@@ -230,7 +230,7 @@ public final class StdStats {
    /**
      * Returns the population variance in the subarray a[lo..hi], NaN if no such value.
      */
-    public static double varp(double[] a, int lo, int hi) {
+    private static double varp(double[] a, int lo, int hi) {
         int length = hi - lo + 1;
         if (lo < 0 || hi >= a.length || lo > hi)
             throw new RuntimeException("Subarray indices out of bounds");
@@ -282,7 +282,7 @@ public final class StdStats {
    /**
      * Returns the sum of all values in the array a[].
      */
-    public static double sum(double[] a) {
+    private static double sum(double[] a) {
         double sum = 0.0;
         for (int i = 0; i < a.length; i++) {
             sum += a[i];
@@ -293,7 +293,7 @@ public final class StdStats {
    /**
      * Returns the sum of all values in the subarray a[lo..hi].
      */
-    public static double sum(double[] a, int lo, int hi) {
+    private static double sum(double[] a, int lo, int hi) {
         if (lo < 0 || hi >= a.length || lo > hi)
             throw new RuntimeException("Subarray indices out of bounds");
         double sum = 0.0;

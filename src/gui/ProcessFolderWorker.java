@@ -46,7 +46,7 @@ import profiles.XgalProfile;
 public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 	//public IrisGUI parentJFrame;
-	public File directory;
+	File directory;
 
 
 

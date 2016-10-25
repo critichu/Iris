@@ -10,7 +10,7 @@ import java.io.FilenameFilter;
  * @author George Kritikos
  *
  */
-public class PicturesFilenameFilter implements FilenameFilter {
+class PicturesFilenameFilter implements FilenameFilter {
 
 	/**
 	 * This function is designed to accept every JPEG file in the given directory

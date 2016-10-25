@@ -14,7 +14,7 @@ import java.util.HashSet;
  * @author George Kritikos
  *
  */
-public class IrisConsole {
+class IrisConsole {
 
 
 	/**
@@ -85,7 +85,7 @@ public class IrisConsole {
 	}
 
 
-	public static void printUsage(){
+	private static void printUsage(){
 		System.out.println("Usage: Iris ProfileName FolderLocation\n");
 		System.out.println("Tip: call without any arguments to invoke GUI\n");
 	}

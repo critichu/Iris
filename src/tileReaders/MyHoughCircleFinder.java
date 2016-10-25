@@ -27,7 +27,7 @@ import tileReaderOutputs.BasicTileReaderOutput;
  * @author George Kritikos
  *
  */
-public class MyHoughCircleFinder {
+class MyHoughCircleFinder {
 
 	/**
 	 * This simple tile readout gets the area (in pixels) of the colony in the tile.
@@ -35,7 +35,7 @@ public class MyHoughCircleFinder {
 	 * @param input
 	 * @return
 	 */
-	public static BasicTileReaderOutput processTile(BasicTileReaderInput input){
+	static BasicTileReaderOutput processTile(BasicTileReaderInput input){
 
 
 		ImagePlus tileImage =  input.tileImage.duplicate();

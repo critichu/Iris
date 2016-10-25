@@ -285,7 +285,7 @@ public class CPRGImageCropper {
 	 * @param list
 	 * @return
 	 */
-	static double getMean(ArrayList<Integer> list){
+	private static double getMean(ArrayList<Integer> list){
 
 		int sum = 0;
 

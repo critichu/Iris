@@ -44,7 +44,7 @@ public class BasicProfileNoEmptyCheck extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	public static String profileName = "Ecoli growth profile -- no empty check";
+	private static String profileName = "Ecoli growth profile -- no empty check";
 
 
 	/**
@@ -55,7 +55,7 @@ public class BasicProfileNoEmptyCheck extends Profile {
 	/**
 	 * This holds access to the settings object
 	 */
-	public BasicSettings settings = new BasicSettings(IrisFrontend.settings);
+	private BasicSettings settings = new BasicSettings(IrisFrontend.settings);
 
 	/**
 	 * This function will analyze the picture using the basic profile
@@ -424,7 +424,7 @@ public class BasicProfileNoEmptyCheck extends Profile {
 	 * @param list
 	 * @return
 	 */
-	static double getMean(ArrayList<Integer> list){
+	private static double getMean(ArrayList<Integer> list){
 
 		int sum = 0;
 
@@ -440,7 +440,7 @@ public class BasicProfileNoEmptyCheck extends Profile {
 	 * @param list
 	 * @return
 	 */
-	static double getVariance(ArrayList<Integer> list){
+	private static double getVariance(ArrayList<Integer> list){
 		double mean = getMean(list);
 
 		double sum = 0;
@@ -461,7 +461,7 @@ public class BasicProfileNoEmptyCheck extends Profile {
 	 * @param originalPicture
 	 * @return
 	 */
-	public static ImagePlus cropImage(ImagePlus originalImage, Roi roi){
+	private static ImagePlus cropImage(ImagePlus originalImage, Roi roi){
 		originalImage.setRoi(roi);
 		originalImage.copy(false);//copy to the internal clipboard
 		//copy to a new picture

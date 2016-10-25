@@ -40,8 +40,8 @@ public class GenericImageCropper2 {
 	 * These values correspond to the fraction of the in-plate image that will be used as
 	 * boundaries within which a search for a minimum will be performed.
 	 */
-	public static double searchStart = 0.055;
-	public static double searchEnd = 0.065;
+	private static double searchStart = 0.055;
+	private static double searchEnd = 0.065;
 
 
 	/**
