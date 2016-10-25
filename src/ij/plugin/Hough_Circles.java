@@ -30,12 +30,11 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.AutoThresholder.Method;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import iris.utils.Toolbox;
 
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
-
-import utils.Toolbox;
 
 /**
  *   This ImageJ plugin shows the Hough Transform Space and search for
