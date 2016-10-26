@@ -40,7 +40,7 @@ class ColorUtil
 	 *                color1, 0.0 will return color2 and so on.
 	 * @return        Blended color.
 	 */
-	public static Color blend (Color color1, Color color2, double ratio)
+	private static Color blend (Color color1, Color color2, double ratio)
 	{
 		float r  = (float) ratio;
 		float ir = (float) 1.0 - r;
@@ -210,7 +210,7 @@ class ColorUtil
 	 * @param r,g,b  Color to check.
 	 * @return       True if this is a "dark" color, false otherwise.
 	 */
-	public static boolean isDark (double r, double g, double b)
+	private static boolean isDark (double r, double g, double b)
 	{
 		// Measure distance to white and black respectively
 		double dWhite = ColorUtil.colorDistance (r, g, b, 1.0, 1.0, 1.0);

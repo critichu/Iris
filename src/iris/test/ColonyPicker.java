@@ -27,9 +27,9 @@ import java.io.File;
  */
 public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 {
-	ImagePlus imp;
-	String imageFilename;
-	String colonyImageFilename;
+	private ImagePlus imp;
+	private String imageFilename;
+	private String colonyImageFilename;
 	double roiMinSizeThreshold = 50;
 	boolean userIsDone = true;
 	public boolean invokeIris = false;
@@ -190,7 +190,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	 * This function will be called upon mouse release
 	 * @return
 	 */
-	public ImagePlus saveColonyRoi_plugin() {
+	private ImagePlus saveColonyRoi_plugin() {
 
 
 		//check if this is an OvalRoi, Shape, or Rectangle			

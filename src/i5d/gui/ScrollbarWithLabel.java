@@ -65,7 +65,7 @@ public class ScrollbarWithLabel extends Panel implements Adjustable,
 
 	private final int orientation;
 
-	transient AdjustmentListener adjustmentListener;
+	private transient AdjustmentListener adjustmentListener;
 
 	public ScrollbarWithLabel(final int orientation, final int value,
 		final int visible, final int minimum, final int maximum, final String label)

@@ -43,10 +43,10 @@ import java.awt.image.ColorModel;
  */
 public class I5DVirtualStack extends ImageStack {
 
-	static final int INITIAL_SIZE = 100;
-	String path;
+	private static final int INITIAL_SIZE = 100;
+	private String path;
 	int nSlices;
-	String[] names;
+	private String[] names;
 
 	/** Creates a new, empty virtual stack. */
 	public I5DVirtualStack(final int width, final int height,

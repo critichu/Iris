@@ -208,7 +208,7 @@ public class Image5DCanvas extends ImageCanvas {
 	/* This method has default access rights in ImageCanvas. 
 	 * TODO: ask Wayne to make it protected.
 	 */
-	protected void adjustSourceRectI5d(final double newMag, int x, int y) {
+	private void adjustSourceRectI5d(final double newMag, int x, int y) {
 		// IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
 		int w = (int) Math.round(dstWidth / newMag);
 		if (w * newMag < dstWidth) w++;
@@ -355,7 +355,7 @@ public class Image5DCanvas extends ImageCanvas {
 		adaptChannelRois(true);
 	}
 
-	protected void adaptChannelCanvasses() {
+	private void adaptChannelCanvasses() {
 		final Image5DWindow win = (Image5DWindow) imp.getWindow();
 		if (win != null) {
 			win.adaptCanvasses(this);
@@ -365,7 +365,7 @@ public class Image5DCanvas extends ImageCanvas {
 	/* If <code>thisChannel</code> is true, hands on the current ROIto all other channels. 
 	 * If <code>thisChannel</code> is false, hands on the ROI of main canvas to all channels
 	 * including this one. */
-	protected void adaptChannelRois(final boolean thisChannel) {
+	private void adaptChannelRois(final boolean thisChannel) {
 		final Image5DWindow win = (Image5DWindow) imp.getWindow();
 		if (win != null) {
 			if (thisChannel) {
@@ -378,14 +378,14 @@ public class Image5DCanvas extends ImageCanvas {
 	}
 
 	/* Hands on the current cursor location and modifiers to all other channels. */
-	protected void adaptChannelMouse() {
+	private void adaptChannelMouse() {
 		final Image5DWindow win = (Image5DWindow) imp.getWindow();
 		if (win != null) {
 			win.adaptMouse(this);
 		}
 	}
 
-	protected void setThisChannelAsCurrent() {
+	private void setThisChannelAsCurrent() {
 		final Image5DWindow win = (Image5DWindow) imp.getWindow();
 		if (win != null) {
 			win.setChannelAsCurrent(this);

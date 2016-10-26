@@ -90,30 +90,30 @@ public class ChannelControl extends Panel implements ItemListener,
 	 */
 	private static final long serialVersionUID = -3537465383241321652L;
 
-	Image5DWindow win;
-	Image5D i5d;
-	ImageJ ij;
+	private Image5DWindow win;
+	private Image5D i5d;
+	private ImageJ ij;
 
-	Choice displayChoice;
-	int displayMode;
-	boolean displayGrayInTiles;
+	private Choice displayChoice;
+	private int displayMode;
+	private boolean displayGrayInTiles;
 
-	Panel selectorPanel;
-	ScrollbarWithLabel scrollbarWL; // Selects channel in gray and color mode.
-	ChannelSelectorOverlay channelSelectorOverlay; // Selects channels and in
+	private Panel selectorPanel;
+	private ScrollbarWithLabel scrollbarWL; // Selects channel in gray and color mode.
+	private ChannelSelectorOverlay channelSelectorOverlay; // Selects channels and in
 																									// overlay and tiled mode.
 
-	Panel tiledSelectorPanel; // contains allGrayBox and ChannelSelectorOverlay in
+	private Panel tiledSelectorPanel; // contains allGrayBox and ChannelSelectorOverlay in
 														// tiled mode
-	Checkbox allGrayInTilesBox; // Used to select if all single channels in tiled
+	private Checkbox allGrayInTilesBox; // Used to select if all single channels in tiled
 															// mode are displayed in gray.
 
-	Button colorButton;
-	boolean colorChooserDisplayed;
-	ChannelColorChooser cColorChooser;
+	private Button colorButton;
+	private boolean colorChooserDisplayed;
+	private ChannelColorChooser cColorChooser;
 
-	int nChannels;
-	int currentChannel;
+	private int nChannels;
+	private int currentChannel;
 
 	public static final int ONE_CHANNEL_GRAY = 0;
 	public static final int ONE_CHANNEL_COLOR = 1;
@@ -128,8 +128,8 @@ public class ChannelControl extends Panel implements ItemListener,
 	/** ImageJ preferences key to use for storing last used display mode. */
 	public static final String DISPLAY_MODE_PREF = "image5d.displayMode";
 
-	public static final String BUTTON_ACTIVATE_COLOR_CHOOSER = "Color";
-	public static final String BUTTON_DEACTIVATE_COLOR_CHOOSER = "Color";
+	private static final String BUTTON_ACTIVATE_COLOR_CHOOSER = "Color";
+	private static final String BUTTON_DEACTIVATE_COLOR_CHOOSER = "Color";
 
 	public ChannelControl(final Image5DWindow win) {
 		super(new BorderLayout(5, 5));
@@ -212,7 +212,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		// add ij as KeyListener itself
 	}
 
-	void addScrollbar() {
+	private void addScrollbar() {
 		nChannels = i5d.getNChannels();
 		if (scrollbarWL == null) {
 			scrollbarWL =
@@ -240,7 +240,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		selectorPanel.repaint();
 	}
 
-	void addChannelSelectorOverlay() {
+	private void addChannelSelectorOverlay() {
 		if (channelSelectorOverlay == null) {
 			channelSelectorOverlay = new ChannelSelectorOverlay(this);
 		}
@@ -252,7 +252,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		selectorPanel.repaint();
 	}
 
-	void addTiledSelectorPanel() {
+	private void addTiledSelectorPanel() {
 		if (channelSelectorOverlay == null) {
 			channelSelectorOverlay = new ChannelSelectorOverlay(this);
 		}
@@ -465,7 +465,7 @@ public class ChannelControl extends Panel implements ItemListener,
 	/**
 	 * Called by ChannelSelectorOverlay if current channel has been changed.
 	 */
-	public void channelChanged(final int newChannel) {
+	private void channelChanged(final int newChannel) {
 		currentChannel = newChannel;
 		win.channelChanged();
 		cColorChooser.channelChanged();
@@ -527,18 +527,18 @@ public class ChannelControl extends Panel implements ItemListener,
 		 */
 		private static final long serialVersionUID = -8138803830180530129L;
 
-		ChannelControl cControl;
+		private ChannelControl cControl;
 
-		Panel allNonePanel;
-		Button allButton;
-		Button noneButton;
+		private Panel allNonePanel;
+		private Button allButton;
+		private Button noneButton;
 
-		ScrollPane channelPane;
-		Panel channelPanel;
+		private ScrollPane channelPane;
+		private Panel channelPanel;
 
-		Checkbox[] channelDisplayed;
-		Checkbox[] channelActive;
-		CheckboxGroup channelActiveGroup;
+		private Checkbox[] channelDisplayed;
+		private Checkbox[] channelActive;
+		private CheckboxGroup channelActiveGroup;
 
 		int nChannels;
 
@@ -575,7 +575,7 @@ public class ChannelControl extends Panel implements ItemListener,
 
 		}
 
-		protected void buildChannelSelector() {
+		private void buildChannelSelector() {
 			// ScrollPane, which contains selectors for all channels in CENTER of
 			// control;
 			// ScrollPane doesn't take LayoutManager, so add a panel for this.
@@ -610,7 +610,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		/*        
 		 * 	Is called from constructor (via buildChannelSelector) and from updateChannelSelector().
 		 */
-		public void updateFromI5D() {
+		private void updateFromI5D() {
 			// If nChannels changed, build new channelPanel.
 			if (nChannels != i5d.getNChannels()) {
 				nChannels = i5d.getNChannels();
@@ -758,11 +758,11 @@ public class ChannelControl extends Panel implements ItemListener,
 		 * 
 		 */
 		private static final long serialVersionUID = -2987819237979841674L;
-		ChannelControl cControl;
-		Checkbox displayGrayBox;
+		private ChannelControl cControl;
+		private Checkbox displayGrayBox;
 		Button editColorButton;
 		Button editLUTButton;
-		ChannelColorCanvas cColorCanvas;
+		private ChannelColorCanvas cColorCanvas;
 
 		public ChannelColorChooser(final ChannelControl cControl) {
 			super(new BorderLayout(5, 5));
@@ -839,7 +839,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		/**
 		 * Called from ChannelControl when active channel changes.
 		 */
-		public void channelChanged() {
+		private void channelChanged() {
 			cColorCanvas.repaint();
 			displayGrayBox.setState(i5d.getChannelDisplayProperties(
 				cControl.currentChannel).isDisplayedGray());
@@ -936,7 +936,7 @@ public class ChannelControl extends Panel implements ItemListener,
 	 */
 		private static final long serialVersionUID = 3918313955836224104L;
 
-		ChannelColorChooser cColorChooser;
+		private ChannelColorChooser cColorChooser;
 
 		Image lutImage;
 		Image colorPickerImage;
@@ -949,7 +949,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		int cpNSats = 8;
 		int cpRectWidth = 10;
 		int cpRectHeight = 10;
-		int cpWidth;
+		private int cpWidth;
 		int cpHeight;
 
 //        int commonsWidth = 105;
@@ -961,7 +961,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		int vSpacer = 0;
 //        int vSpacer = 5;
 
-		int canvasWidth;
+		private int canvasWidth;
 		int canvasHeight;
 
 		public ChannelColorCanvas(final ChannelColorChooser cColorChooser) {
@@ -997,7 +997,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		/**
 		 * Draws the LUT of the currently displayed channel into a rectangle.
 		 */
-		void drawLUT() {
+		private void drawLUT() {
 			final Graphics g = lutImage.getGraphics();
 			final int[] rgb = new int[256];
 
@@ -1027,7 +1027,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		 * Draws the color picker image: a rectangle of small squares all with
 		 * different hue or saturation.
 		 */
-		void drawColorPicker() {
+		private void drawColorPicker() {
 			final Graphics g = colorPickerImage.getGraphics();
 
 			float hue = 0;

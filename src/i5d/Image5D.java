@@ -109,35 +109,35 @@ public class Image5D extends ImagePlus {
 	// All references to data of image size and larger should be set to null in
 	// Image5D.flush().
 
-	public static final String VERSION = "1.2.6-DEV";
+	private static final String VERSION = "1.2.6-DEV";
 
-	static final int nDefaultDimensions = 5;
-	protected int nDimensions = nDefaultDimensions;
+	private static final int nDefaultDimensions = 5;
+	private int nDimensions = nDefaultDimensions;
 
 	private final String[] dimensionLabels = { "x", "y", "ch", "z", "t" };
 
-	protected boolean isInitialized;
+	private boolean isInitialized;
 
 	// imageStack: the array that contains references to the data of all slices,
 	// channels, frames
-	protected ImageStack imageStack;
-	protected int imageStackSize;
+	private ImageStack imageStack;
+	private int imageStackSize;
 
 	private Object dummyImage;
 
 	// current position in dimension from 0 to dimensionSize-1
 	// (e.g. currentSlice = currentPosition[2]+1)
-	protected int[] currentPosition = new int[nDimensions];
+	private int[] currentPosition = new int[nDimensions];
 
-	protected ChannelImagePlus[] channelImps = new ChannelImagePlus[1];
+	private ChannelImagePlus[] channelImps = new ChannelImagePlus[1];
 	// Array of ImageProcessors. One for each channel.
 	// The one of the current channel is always the current ip from
 	// getProcessor().
-	protected ImageProcessor[] channelIPs = new ImageProcessor[1];
+	private ImageProcessor[] channelIPs = new ImageProcessor[1];
 
 	// To handle different color models, contrast settings, ... for different
 	// channels
-	protected int colorDimension = 2;
+	private int colorDimension = 2;
 	private ChannelCalibration[] chCalibration;
 	private ChannelDisplayProperties[] chDisplayProps;
 
@@ -145,31 +145,31 @@ public class Image5D extends ImagePlus {
 
 	// For dealing with display AWT image img. (method getImage())
 	int[] awtImagePixels;
-	boolean newPixels;
-	MemoryImageSource imageSource;
-	ColorModel imageColorModel;
+	private boolean newPixels;
+	private MemoryImageSource imageSource;
+	private ColorModel imageColorModel;
 	Image awtImage;
-	int[][] awtChannelPixels;
+	private int[][] awtChannelPixels;
 
 	// ChannelControl.ONE_CHANNEL_GRAY, ONE_CHANNEL_COLOR, OVERLAY, or TILED
-	protected int displayMode;
+	private int displayMode;
 
 	// True, when all channels should be displayed in grayscale. (used in
 	// store/restoreChannelProperties.
-	protected boolean displayAllGray;
+	private boolean displayAllGray;
 
 	// True, when checkbox "All Gray" is selected in tiled mode.
-	protected boolean displayGrayInTiles;
+	private boolean displayGrayInTiles;
 
-	protected boolean activated5d;
+	private boolean activated5d;
 
 	// grayColorModel is initialized to an 8-bit grayscale ImdexColorModel in the
 	// constructor.
 	// It is used for every channel in every instance of Image5D.
-	static IndexColorModel grayColorModel = ChannelDisplayProperties
+	private static IndexColorModel grayColorModel = ChannelDisplayProperties
 		.createModelFromColor(Color.white);
 
-	static final String outOfRange = "Argument out of range: ";
+	private static final String outOfRange = "Argument out of range: ";
 
 	/**
 	 * @param title
@@ -181,7 +181,7 @@ public class Image5D extends ImagePlus {
 	 *          array will be created. This is much faster, but changes to one
 	 *          position will apply to all positions.
 	 */
-	public Image5D(final String title, final int type, final int[] dimensions,
+	private Image5D(final String title, final int type, final int[] dimensions,
 		final boolean fill)
 	{
 		this(title, createProcessorFromDims(type, dimensions));
@@ -208,7 +208,7 @@ public class Image5D extends ImagePlus {
 	 * @param title
 	 * @param ip
 	 */
-	public Image5D(final String title, final ImageProcessor ip) {
+	private Image5D(final String title, final ImageProcessor ip) {
 		this(title, createStackFromProcessor(ip), 1, 1, 1);
 	}
 
@@ -234,7 +234,7 @@ public class Image5D extends ImagePlus {
 	 * @param nSlices
 	 * @param nFrames
 	 */
-	public Image5D(final String title, final ImageStack stack,
+	private Image5D(final String title, final ImageStack stack,
 		final int nChannels, final int nSlices, final int nFrames)
 	{
 		super(title, createZStackFromImageStack(stack, nChannels, nSlices, nFrames));
@@ -444,7 +444,7 @@ public class Image5D extends ImagePlus {
 	}
 
 	/* Draws the info in the ImageJ statusbar. */
-	protected int xSav, ySav;
+	private int xSav, ySav;
 
 	@Override
 	public void mouseMoved(final int x, final int y) {
@@ -460,7 +460,7 @@ public class Image5D extends ImagePlus {
 		IJ.showStatus(getStatusString(xSav, ySav));
 	}
 
-	protected String getStatusString(final int x, final int y) {
+	private String getStatusString(final int x, final int y) {
 		String str = getLocationAsString(x, y) + "; value = ";
 		if (displayMode == ChannelControl.ONE_CHANNEL_GRAY ||
 			displayMode == ChannelControl.ONE_CHANNEL_COLOR)
@@ -861,7 +861,7 @@ public class Image5D extends ImagePlus {
 	 * Returns the index in the imageStack corresponding to the specified
 	 * position.
 	 */
-	public int getImageStackIndex(final int channel, final int slice,
+	private int getImageStackIndex(final int channel, final int slice,
 		final int frame)
 	{
 		return ((frame - 1) * getNChannels() * getNSlices() + (slice - 1) *
@@ -897,7 +897,7 @@ public class Image5D extends ImagePlus {
 	 * @param channel
 	 * @param model
 	 */
-	public void setChannelColorModel(final int channel, final ColorModel model) {
+	private void setChannelColorModel(final int channel, final ColorModel model) {
 		checkChannel(channel);
 		if (!(model instanceof IndexColorModel)) throw new IllegalArgumentException(
 			"Only accepting IndexColorModels");
@@ -1453,7 +1453,7 @@ public class Image5D extends ImagePlus {
 	 * @param fill if true, create black image for each position, if false, link a
 	 *          common dummy image to each position
 	 */
-	public synchronized void expandDimension(final int dimension,
+	private synchronized void expandDimension(final int dimension,
 		final int newSize, final boolean fill)
 	{
 		if (imageStack.isVirtual()) return;
@@ -1619,34 +1619,34 @@ public class Image5D extends ImagePlus {
 	}
 
 //	 instance utility methods
-	protected int getCurrentSliceOffset() {
+	private int getCurrentSliceOffset() {
 		return (currentPosition[4] * getNSlices() * getNChannels() +
 			currentPosition[3] * getNChannels() + 1);
 	}
 
-	protected int getCurrentStackOffset() {
+	private int getCurrentStackOffset() {
 		return (currentPosition[4] * getNSlices() * getNChannels() +
 			currentPosition[2] + 1);
 	}
 
-	protected int getCurrentStackIncrement() {
+	private int getCurrentStackIncrement() {
 		return getNChannels();
 	}
 
 	// 1<=channel<=NChannels
-	protected void checkChannel(final int channel) {
+	private void checkChannel(final int channel) {
 		if (channel < 1 || channel > getNChannels()) throw new IllegalArgumentException(
 			"Invalid channel: " + channel);
 	}
 
 	// 1<=channel<=getNSlices
-	protected void checkSlice(final int slice) {
+	private void checkSlice(final int slice) {
 		if (slice < 1 || slice > getNSlices()) throw new IllegalArgumentException(
 			"Invalid slice: " + slice);
 	}
 
 	// 1<=channel<=getNFrames
-	protected void checkFrame(final int frame) {
+	private void checkFrame(final int frame) {
 		if (frame < 1 || frame > getNFrames()) throw new IllegalArgumentException(
 			"Invalid frame: " + frame);
 	}
@@ -1818,7 +1818,7 @@ public class Image5D extends ImagePlus {
 	 * boolean fill) in call to super(). Checks the number of dimensions and
 	 * creates an ImageProcessor.
 	 */
-	static protected ImageProcessor createProcessorFromDims(final int type,
+	static private ImageProcessor createProcessorFromDims(final int type,
 		final int[] dimensionSizes)
 	{
 		if (dimensionSizes.length != nDefaultDimensions) throw new IllegalArgumentException(
@@ -1846,7 +1846,7 @@ public class Image5D extends ImagePlus {
 	 * nChannels, int nSlices, int nFrames) in call to super(). Checks the
 	 * dimensions and creates the z-stack at first channel/frame.
 	 */
-	static protected ImageStack createZStackFromImageStack(
+	static private ImageStack createZStackFromImageStack(
 		final ImageStack imageStack, final int nChannels, final int nSlices,
 		final int nFrames)
 	{

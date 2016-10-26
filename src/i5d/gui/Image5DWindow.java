@@ -72,24 +72,24 @@ public class Image5DWindow extends StackWindow implements KeyListener {
 
 	private static final long serialVersionUID = -3196514227677416036L;
 
-	protected ChannelControl channelControl;
-	protected ScrollbarWithLabel[] scrollbarsWL;
-	protected Image5D i5d;
+	private ChannelControl channelControl;
+	private ScrollbarWithLabel[] scrollbarsWL;
+	private Image5D i5d;
 
-	protected Vector<Image5DCanvas> channelCanvasses =
+	private Vector<Image5DCanvas> channelCanvasses =
 		new Vector<Image5DCanvas>();
 
 	// Array for storing change of position in each dimension.
 	// 0: no change, 1 - dimensionSize : changed position
-	protected int[] positions;
+	private int[] positions;
 
-	protected int nDimensions = 5;
-	protected int[] dimensions;
+	private int nDimensions = 5;
+	private int[] dimensions;
 
-	protected boolean isInitialized = false;
+	private boolean isInitialized = false;
 
-	protected int displayMode;
-	protected boolean displayGrayInTiles;
+	private int displayMode;
+	private boolean displayGrayInTiles;
 
 	/**
 	 * @param imp
@@ -102,7 +102,7 @@ public class Image5DWindow extends StackWindow implements KeyListener {
 	 * @param imp
 	 * @param ic
 	 */
-	public Image5DWindow(final Image5D imp, final Image5DCanvas ic) {
+	private Image5DWindow(final Image5D imp, final Image5DCanvas ic) {
 		super(imp, ic);
 
 		if (ic == null) {
@@ -786,7 +786,7 @@ public class Image5DWindow extends StackWindow implements KeyListener {
 	 * it is a channel canvas and -1, if the canvas is null or does not belong to
 	 * this window.
 	 */
-	public int getCanvasChannelNumber(final Image5DCanvas i5dc) {
+	private int getCanvasChannelNumber(final Image5DCanvas i5dc) {
 		if (i5dc == ic) {
 			return 0;
 		}
@@ -820,7 +820,7 @@ public class Image5DWindow extends StackWindow implements KeyListener {
 		return maxWindow;
 	}
 
-	protected void drawRectangles() {
+	private void drawRectangles() {
 		final Graphics g = this.getGraphics();
 		final LayoutManager layout = getLayout();
 		if (layout != null && layout instanceof Image5DLayout) {

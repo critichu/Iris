@@ -48,23 +48,23 @@ import java.util.Vector;
  */
 public class Image5DLayout extends ImageLayout implements LayoutManager2 {
 
-	protected int hgap;
-	protected int vgap;
-	protected Image5DCanvas ic5d;
-	protected Vector<Image5DCanvas> imageCanvasses = new Vector<Image5DCanvas>();
-	protected Vector<Rectangle> imageRectangles = new Vector<Rectangle>();
+	private int hgap;
+	private int vgap;
+	private Image5DCanvas ic5d;
+	private Vector<Image5DCanvas> imageCanvasses = new Vector<Image5DCanvas>();
+	private Vector<Rectangle> imageRectangles = new Vector<Rectangle>();
 
-	protected int nCanvassesX = 0;
-	protected int nCanvassesY = 0;
+	private int nCanvassesX = 0;
+	private int nCanvassesY = 0;
 
-	protected Rectangle contentBounds = new Rectangle();
+	private Rectangle contentBounds = new Rectangle();
 
-	protected double targetAspect = 4.0 / 3.0;
+	private double targetAspect = 4.0 / 3.0;
 
 	public static final String CANVAS = "main", SLICE_SELECTOR = "slice",
 			FRAME_SELECTOR = "frame", CHANNEL_SELECTOR = "channel";
 
-	protected Component slice, frame, channel; // , main;
+	private Component slice, frame, channel; // , main;
 
 	/**
 	 * Creates a new ImageLayout with center alignment and 5 pixel horizontal and
@@ -341,7 +341,7 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
 //        return width;
 //    }
 
-	protected int getHorizontalCoreSize(final int canvasWidth) {
+	private int getHorizontalCoreSize(final int canvasWidth) {
 		// Take width of ImageCanvas.
 		// Give enough room for horizontal controls.
 		// Add vertical control(s).
@@ -379,7 +379,7 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
 //        return height;
 //    }
 
-	protected int getVerticalCoreSize(final int canvasHeight) {
+	private int getVerticalCoreSize(final int canvasHeight) {
 		// Take height of ImageCanvasses
 		// Add horizontal controls.
 		int height = 0;
@@ -395,7 +395,7 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
 	}
 
 	/* Get the combined height of slice and frame sliders, if present. */
-	protected int getHorizontalControlsHeight() {
+	private int getHorizontalControlsHeight() {
 		int height = 0;
 		if (slice != null) {
 			height += vgap + slice.getPreferredSize().height;
@@ -408,7 +408,7 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
 	}
 
 	/* Get the width of the ChannelSelector, if present. */
-	protected int getVerticalControlsWidth() {
+	private int getVerticalControlsWidth() {
 		int width = 0;
 
 		if (channel != null) {
@@ -419,7 +419,7 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
 	}
 
 	/** Calculates the grid of Canvasses in the Window for tiled display */
-	protected void getCanvasLayout() {
+	private void getCanvasLayout() {
 		final double width = ic5d.getImage().getWidth();
 		final double height = ic5d.getImage().getHeight();
 		final int n = imageCanvasses.size();
