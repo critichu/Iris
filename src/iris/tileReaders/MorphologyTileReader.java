@@ -356,7 +356,9 @@ public class MorphologyTileReader {
 				input.tileImage.setRoi(colonyRoi);
 			}
 
-			colonyCenter = new Point(colonyRoi.getBounds().width/2, colonyRoi.getBounds().height/2); 
+			colonyCenter = new Point(
+					colonyRoi.getBounds().width/2 + colonyRoi.getBounds().x, 
+					colonyRoi.getBounds().height/2 + colonyRoi.getBounds().y); 
 			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);		
 			output.circularity = 1; ///HACK: 1 means user-set ROI for now, need to change it to a proper circularity measurement
 		}
