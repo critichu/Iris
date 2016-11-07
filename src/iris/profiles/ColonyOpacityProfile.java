@@ -37,7 +37,7 @@ public class ColonyOpacityProfile extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	static String profileName = "Colony Opacity Profile";
+	static String profileName = "Colony growth";
 
 
 	/**

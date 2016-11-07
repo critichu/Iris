@@ -31,6 +31,7 @@ import iris.tileReaderOutputs.BasicTileReaderOutput;
 import iris.tileReaderOutputs.ColorTileReaderOutput;
 import iris.tileReaderOutputs.OpacityTileReaderOutput;
 import iris.tileReaders.BasicTileReaderHSB;
+import iris.tileReaders.BasicTileReaderHSB_darkColonies;
 import iris.tileReaders.ColorTileReaderHSB;
 import iris.tileReaders.LaplacianFilterTileReader;
 import iris.tileReaders.OpacityTileReader;
@@ -190,10 +191,6 @@ public class ColorProfileEcoli extends Profile{
 		//This is how you do it the HSB way		
 		ImagePlus grayscaleCroppedImage = Toolbox.getHSBgrayscaleImageBrightness(colourCroppedImage);
 
-		//get a copy of the picture thresholded using a local algorithm
-		ImagePlus BW_local_thresholded_picture = Toolbox.turnImageBW_Local_auto_mean(grayscaleCroppedImage, 65);
-
-
 		//
 		//--------------------------------------------------
 		//
@@ -299,7 +296,7 @@ public class ColorProfileEcoli extends Profile{
 		//retrieve the user-defined detection thresholds
 		float minimumValidColonyCircularity;
 		try{minimumValidColonyCircularity = userProfileSettings.detectionSettings.MinimumValidColonyCircularity;} 
-		catch(Exception e) {minimumValidColonyCircularity = (float)0.3;}
+		catch(Exception e) {minimumValidColonyCircularity = (float)0.4;}
 
 		int minimumValidColonySize;
 		try{minimumValidColonySize = userProfileSettings.detectionSettings.MinimumValidColonySize;} 
@@ -320,11 +317,37 @@ public class ColorProfileEcoli extends Profile{
 
 				//first get the colony size using one method
 
+
+				//v60 (or v66, it's the same)
+				basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
+						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				//v60 end
+
+
+				//v69 using Lucia's thresholds
+				if(basicTileReaderOutputs[i][j].colonySize==0 || basicTileReaderOutputs[i][j].circularity<0.4){
+					
+					//System.out.println(filename + " " + Integer.toString(i+1) + " " + Integer.toString(j+1));
+					
+					basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+
+
+					//if that didn't work, try the Laplacian Zero-crossings
+					if(basicTileReaderOutputs[i][j].colonySize==0){
+						basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
+								new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					}
+
+				}
+				//v69 end
+
+
+				/*
+				 * for the record, this is how v0.9.6.1 worked
 				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
 						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
-
-
-
+						
 				//try once more using the other
 				if(basicTileReaderOutputs[i][j].colonySize==0){
 					//					basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
@@ -334,14 +357,14 @@ public class ColorProfileEcoli extends Profile{
 							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
 				}
-				
-				
-				//colony QC
+				 */
+
+				//colony QC -- user thresholds
 				if(basicTileReaderOutputs[i][j].colonySize<minimumValidColonySize ||
 						basicTileReaderOutputs[i][j].circularity<minimumValidColonyCircularity){
 					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
 				}
-				
+
 
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
@@ -369,9 +392,17 @@ public class ColorProfileEcoli extends Profile{
 					opacityTileReaderOutputs[i][j].circularity=0;
 					opacityTileReaderOutputs[i][j].opacity=0;
 				}
-
-
+				
+				//colony QC -- remove colonies that are very close to the background
+				if(opacityTileReaderOutputs[i][j].opacity<=0 ){//|| opacityTileReaderOutputs[i][j].max10percentOpacity<=0){
+					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
+					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
+				}
+				
+				
 				//each generated tile image is cleaned up inside the tile reader
+				
 			}
 		}
 
@@ -424,8 +455,7 @@ public class ColorProfileEcoli extends Profile{
 				{
 					colony_flagged=true;
 				}
-
-
+			
 
 				//if we flagged the colony in any of the previous steps, remove it from the results
 				if(colony_flagged){

@@ -202,7 +202,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			ecoliOpacity96.analyzePicture(filename);
 		}
 		
-		else if(profileName.equals("Colony opacity")){
+		else if(profileName.equals("Colony growth")){
 			ColonyOpacityProfile colonyOpacity = new ColonyOpacityProfile();
 			colonyOpacity.analyzePicture(filename);
 		}
@@ -297,7 +297,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			profile.analyzePicture(filename);
 		}
 
-		else if(profileName.equals("Colony opacity inverted")){
+		else if(profileName.equals("Colony growth inverted")){
 			ColonyOpacityProfileInverted profile = new ColonyOpacityProfileInverted();
 			profile.analyzePicture(filename);
 		}

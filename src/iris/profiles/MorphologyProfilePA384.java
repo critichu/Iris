@@ -52,7 +52,7 @@ public class MorphologyProfilePA384 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	private static String profileName = "Morphology&Color Profile";
+	private static String profileName = "Morphology&Color profile";
 
 
 	/**
@@ -328,10 +328,10 @@ public class MorphologyProfilePA384 extends Profile {
 		MorphologyTileReaderOutput [][] morphologyReaderOutputs = new MorphologyTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 		ColorTileReaderOutput [][] colorReaderOutputs = new ColorTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 
-		
+
 		//colonies are smaller here, so we need to start with tiny circles
 		MorphologyTileReader.initialRadius = 15;
-		
+
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
@@ -339,11 +339,14 @@ public class MorphologyProfilePA384 extends Profile {
 				try{
 					//try 3 colony definition algorithms and pick the one who found the largest colony
 
-					basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
-							new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings)); 
+					
+					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+					try{basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+							new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));} catch(Exception e){}; 
 
-					BasicTileReaderOutput laplacianReaderOutput = LaplacianFilterTileReader.processTile(
-							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));	
+					BasicTileReaderOutput laplacianReaderOutput = new BasicTileReaderOutput();
+					try{laplacianReaderOutput = LaplacianFilterTileReader.processTile(
+							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));} catch(Exception e){};
 
 					BasicTileReaderOutput stmMorphologyReaderOutput = new BasicTileReaderOutput();
 					try{stmMorphologyReaderOutput = MorphologyTileReaderStm.processTileOverAgarOnly(colonyCenteredInput[i][j]);} catch(Exception e){};
@@ -452,10 +455,10 @@ public class MorphologyProfilePA384 extends Profile {
 				"morphology score fixed circles\t" +
 				"morphology score whole colony\t" +
 				"normalized morphology score\t" +
-//				"in agar size\t" +
-//				"in agar circularity\t" +
-//				"in agar opacity\t" + 
-//				"whole tile opacity\t" +
+				//				"in agar size\t" +
+				//				"in agar circularity\t" +
+				//				"in agar opacity\t" + 
+				//				"whole tile opacity\t" +
 				"colony color intensity\t" +
 				"biofilm area size\t" +
 				"biofilm color intensity\t" +
@@ -480,10 +483,10 @@ public class MorphologyProfilePA384 extends Profile {
 						+ Integer.toString(morphologyReaderOutputs[i][j].morphologyScoreFixedNumberOfCircles) + "\t"
 						+ Integer.toString(morphologyReaderOutputs[i][j].morphologyScoreWholeColony) + "\t"
 						+ String.format("%.3f", morphologyReaderOutputs[i][j].normalizedMorphologyScore) + "\t"
-//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarSize) + "\t"
-//						+ String.format("%.3f", morphologyReaderOutputs[i][j].inAgarCircularity) + "\t"
-//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarOpacity) + "\t"
-//						+ Integer.toString(morphologyReaderOutputs[i][j].wholeTileOpacity) + "\t"
+						//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarSize) + "\t"
+						//						+ String.format("%.3f", morphologyReaderOutputs[i][j].inAgarCircularity) + "\t"
+						//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarOpacity) + "\t"
+						//						+ Integer.toString(morphologyReaderOutputs[i][j].wholeTileOpacity) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySum) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].biofilmArea) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"

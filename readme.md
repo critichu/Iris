@@ -105,6 +105,11 @@ Here is an example of what you can do using this script:
 
 In case your colonies are not in a grid format (96, 384, 1536, or 6144), you can use the Iris' sister software: **ColonyPicker**. Just double-click on it's jar file, select an iris profile to quantify a colony, and your image file.
 
+
+![iris colonypicker instructions](http://critichu.github.io/Iris/images/colonyPicker.instructions.png)
+
+
+
 **How to use it:**
 
 * Picking a colony using round (oval) selection will tell Iris to get the features within those manually defined bounds.

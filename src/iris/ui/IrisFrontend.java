@@ -53,38 +53,14 @@ public class IrisFrontend {
 	 * This string array holds the names of all the profiles
 	 */
 	public static String[] profileCollection = {
-		//"Stm growth",
-		//"Ecoli growth -- no empty check",
-		//"Ecoli growth",
-		//"Ecoli opacity 96",
-		//"Ecoli opacity 384",
-		//"Ecoli opacity 1536",
-		"Colony opacity",
-		//"Ecoli opacity 384 - hazy colonies",
-		//"B.subtilis Opacity (HSB)",
+		"Colony growth",
+		"Colony growth inverted",
 		"B.subtilis sporulation",
-		//"CPRG 384",
 		"CPRG profile",
-		//"Biofilm formation",
-		//"Biofilm formation PA",
-		//"Biofilm formation Ecoli",
 		"Biofilm formation",
-		//"Biofilm formation Ecoli Natural Isolates",
-		//"Morphology Profile [Candida 96-plates]",
 		"Morphology profile",
-		//"Morphology Profile [Pseudomonas 96-plates]",
-		//"Morphology Profile [Pseudomonas 384-plates]",
 		"Morphology&Color profile",
-		//"Morphology Profile [Salmonella 96-plates]",
-		"Xgal assay",
-		//"Xgal assay 96",
-		//"Xgal assay 384",
-		//"Xgal assay 1536",
-		//"Growth profile inverted"
-		"Colony opacity inverted"
-		//"Biofilm formation - Simple Grid",
-		//"Opacity",
-		//"Opacity (fixed grid)"
+		"Xgal assay"
 	};
 
 	static String selectedProfile = IrisFrontend.profileCollection[0];
@@ -100,12 +76,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.6.1";
+	public static String IrisVersion = "0.9.6.6";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "b142b9c";
+	public static String IrisBuild = "277ddc3";
 
 
 	/**
