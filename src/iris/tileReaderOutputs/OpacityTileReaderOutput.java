@@ -37,6 +37,18 @@ public class OpacityTileReaderOutput extends BasicTileReaderOutput {
 	 * http://www.biomedcentral.com/1471-2180/14/171
 	 */
 	public int centerAreaOpacity = 0;
+	
+	
+	/**
+	 * this holds the sum of brightness values for the entire tile
+	 */
+	public int wholeTileOpacity = 0;
+	
+	
+	/**
+	 * this holds the number of pixels in the tile
+	 */
+	public int wholeTileSize = 0;
 
 	
 }

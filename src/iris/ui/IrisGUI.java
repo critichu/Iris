@@ -18,6 +18,7 @@ import java.util.HashSet;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -29,6 +30,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+
+import org.apache.commons.lang3.SystemUtils;
 
 /**
  * @author George Kritikos
@@ -316,29 +319,37 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 	 */
 	private File selectFolder() {
 
-		//create the filechooser object
-		System.setProperty("apple.awt.fileDialogForDirectories", "true");
-	    FileDialog fc = new FileDialog(this);
-	    fc.setTitle("please select a folder");
-	    fc.setVisible(true);
-	   
-	    
-	    String directoryPath = fc.getDirectory() + fc.getFile();
-	    File directory = new File(directoryPath);
-	    
-	    if(directory.exists())
-	    	return(directory);
-	    else
-	    	return(null);
+		if(SystemUtils.IS_OS_WINDOWS){
+			return(selectFolder_windows());
+		}
+		else {
+			//create the filechooser object
+			System.setProperty("apple.awt.fileDialogForDirectories", "true");
+		    FileDialog fc = new FileDialog(this);
+
+		    fc.setTitle("please select a folder");
+		    fc.setVisible(true);
+		   
+		    
+		    String directoryPath = fc.getDirectory() + fc.getFile();
+		    File directory = new File(directoryPath);
+		    
+		    if(directory.exists())
+		    	return(directory);
+		    else
+		    	return(null);
+		}
+		
 	    	
 	}
 	
 	
 	
 	/**
-	 * @return
+	 * uses the JFileChooser dialog that looks ancient on OSX
+	 * but it's the only thing that works on Windows
 	 */
-	/*private File selectFolder() {
+	private File selectFolder_windows() {
 
 		//create the filechooser object
 		final JFileChooser fc = new JFileChooser();
@@ -356,5 +367,5 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 		else{
 			return null;
 		}
-	}*/
+	}
 }

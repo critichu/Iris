@@ -326,6 +326,7 @@ public class MorphologyProfilePA384 extends Profile {
 		BasicTileReaderOutput[][] basicTileReaderOutputs = new BasicTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 		OpacityTileReaderOutput[][] opacityTileReaderOutputs = new OpacityTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 		MorphologyTileReaderOutput [][] morphologyReaderOutputs = new MorphologyTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
+		MorphologyTileReaderOutput [][] morphologyReaderOutputs_wholeTile = new MorphologyTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 		ColorTileReaderOutput [][] colorReaderOutputs = new ColorTileReaderOutput[settings.numberOfRowsOfColonies][settings.numberOfColumnsOfColonies];
 
 
@@ -415,6 +416,25 @@ public class MorphologyProfilePA384 extends Profile {
 					colorReaderOutputs[i][j] = new ColorTileReaderOutput();
 				}
 
+				try{
+					//in any case (e.g. even if no colony was found there), opacityTileReaderOutputs should contain the tile opacity
+					OpacityTileReaderOutput opacityWholeTileOutput = OpacityTileReader.getWholeTileOpacity(new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+							basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
+					opacityTileReaderOutputs[i][j].wholeTileOpacity = opacityWholeTileOutput.wholeTileOpacity;
+					opacityTileReaderOutputs[i][j].wholeTileSize = opacityWholeTileOutput.wholeTileSize;
+				} catch(Exception e){
+					opacityTileReaderOutputs[i][j].wholeTileOpacity = 0;
+					opacityTileReaderOutputs[i][j].wholeTileSize = 0;
+				}
+
+				try{
+				morphologyReaderOutputs_wholeTile[i][j] = MorphologyTileReader.getWholeTileMorphology(new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+						basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
+				} catch(Exception e){
+					morphologyReaderOutputs_wholeTile[i][j] = new MorphologyTileReaderOutput();
+				}
+
+
 				//each generated tile image is cleaned up inside the tile reader
 			}
 		}
@@ -460,13 +480,16 @@ public class MorphologyProfilePA384 extends Profile {
 				//				"in agar size\t" +
 				//				"in agar circularity\t" +
 				//				"in agar opacity\t" + 
-				//				"whole tile opacity\t" +
 				"colony color intensity\t" +
 				"biofilm area size\t" +
 				"biofilm color intensity\t" +
 				"size normalized color intensity\t" +
 				"brightness corrected size normalized color intensity\t" +
-				"average pixel saturation\n");
+				"average pixel saturation\t" +
+				"whole tile opacity\t" +
+				"whole tile size\t" + 
+				"whole tile morphology fixed circles\t" +
+				"whole tile morphology\n");
 
 		//for all rows
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
@@ -488,13 +511,16 @@ public class MorphologyProfilePA384 extends Profile {
 						//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarSize) + "\t"
 						//						+ String.format("%.3f", morphologyReaderOutputs[i][j].inAgarCircularity) + "\t"
 						//						+ Integer.toString(morphologyReaderOutputs[i][j].inAgarOpacity) + "\t"
-						//						+ Integer.toString(morphologyReaderOutputs[i][j].wholeTileOpacity) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySum) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].biofilmArea) + "\t"
 						+ Integer.toString(colorReaderOutputs[i][j].colorIntensitySumInBiofilmArea) + "\t"
 						+ String.format("%.3f", colorReaderOutputs[i][j].relativeColorIntensity) + "\t"
 						+ String.format("%.3f", brightnessCorrectedSizeNormalizedColorIntensity) + "\t"
-						+ String.format("%.3f", colorReaderOutputs[i][j].averagePixelSaturation) + "\n");
+						+ String.format("%.3f", colorReaderOutputs[i][j].averagePixelSaturation) + "\t"
+						+ Integer.toString(opacityTileReaderOutputs[i][j].wholeTileOpacity) + "\t"
+						+ Integer.toString(opacityTileReaderOutputs[i][j].wholeTileSize) + "\t"
+						+ Integer.toString(morphologyReaderOutputs_wholeTile[i][j].morphologyScoreFixedNumberOfCircles) + "\t"
+						+ Integer.toString(morphologyReaderOutputs_wholeTile[i][j].morphologyScoreWholeColony) + "\n");
 			}
 		}
 

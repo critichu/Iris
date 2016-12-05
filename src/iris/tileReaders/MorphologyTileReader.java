@@ -248,6 +248,7 @@ public class MorphologyTileReader {
 
 		//get a copy of this tile, before it gets thresholded
 		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
+		ImagePlus grayscaleTileCopy2 = input.tileImage.duplicate();
 		if(input.tileImage.getRoi()==null)
 			grayscaleTileCopy.setRoi(input.colonyRoi);
 		else
@@ -389,6 +390,12 @@ public class MorphologyTileReader {
 		output.colonyOpacity = getBiggestParticleOpacity(input.tileImage, output.colonyROI, Toolbox.getThreshold(input.tileImage, Method.Shanbhag));
 		//output.wholeTileOpacity = output.colonyOpacity; --> this is only for colonies with agar invasion 
 
+		//one last thing (e.g. useful in getting the in-agar growth) would be to get the total brightness in the tile
+		//40 is the background of our pictures in the August 2015 experiment setup
+		//but here I want to get the tile opacity without any subtraction, so I set the "background to subtract" to 0
+		//also remove any colony ROI so that we get the opacity for the whole tile given to this tile reader
+		grayscaleTileCopy2.deleteRoi();
+		output.wholeTileOpacity = Toolbox.getWholeTileOpacity(grayscaleTileCopy2, 0);
 
 
 		input.cleanup(); //clear the tile image here, since we don't need it anymore
@@ -492,7 +499,7 @@ public class MorphologyTileReader {
 		//one last thing for the in-agar growth would be to get the total brightness in the tile
 		//40 is the background of our pictures in the August 2015 experiment setup
 		//but here I want to get the tile opacity without any subtraction, so I set the "background to subtract" to 0
-		output.wholeTileOpacity = getWholeTileOpacity(grayscaleTileCopy, 0);
+		output.wholeTileOpacity = Toolbox.getWholeTileOpacity(grayscaleTileCopy, 0);
 
 
 		//
@@ -576,6 +583,49 @@ public class MorphologyTileReader {
 
 	}
 
+
+
+	/**
+	 * This tile reader will return the morphology in a tile using 
+	 * the tile center as the center of concentric circles 
+	 * irrespective of whether it finds a colony there or not
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static MorphologyTileReaderOutput getWholeTileMorphology(OpacityTileReaderInput input){
+
+
+		ImagePlus grayscaleTileCopy = input.tileImage.duplicate();
+		MorphologyTileReaderOutput output = new MorphologyTileReaderOutput();
+
+		//delete any existing colony ROI, and set it as the whole tile ROI
+		grayscaleTileCopy.deleteRoi();
+		Roi wholeTileRoi = new Roi(0, 0, grayscaleTileCopy.getWidth(), grayscaleTileCopy.getHeight());
+
+		//set as center of circles the tile center
+		Point tileCenter = new Point(input.tileImage.getWidth()/2, input.tileImage.getHeight()/2);
+
+
+		//get the elevation counts 
+		ArrayList<Integer> elevationCounts = getBiggestParticleElevationCounts(grayscaleTileCopy, wholeTileRoi, tileCenter);
+
+		if(elevationCounts.size()==0){
+			//check if we've hit empty space with the first circle already
+			output.morphologyScoreFixedNumberOfCircles=0;
+		}else {
+			//get the sum of the elevation counts for all circles except the previous circle
+			//that one is likely to get high elevation counts 
+			//just because colony edges tend to be really bright compared to the background
+			output.morphologyScoreFixedNumberOfCircles = sumElevationCounts_limited(elevationCounts, circlesToMeasure);
+			output.morphologyScoreWholeColony = sumElevationCounts(elevationCounts, circlesToIgnore );
+		}
+
+		grayscaleTileCopy.flush();
+
+		return(output);
+
+	}
 
 
 
@@ -1208,41 +1258,6 @@ public class MorphologyTileReader {
 
 
 
-	/**
-	 * This function calculates the sum of pixel brighness per tile, subtracting the given background value
-	 * (typically reported by the thresholding algorithm used to detect the colony) 
-	 * Then, it sums the brightness (0 to 255) value of each pixel in the image, as long as it's inside the colony.
-	 * The background level is determined using the Otsu algorithm and subtracted from each pixel before the sum is calculated.
-	 * @param grayscaleTileCopy
-	 * @return
-	 */
-	private static int getWholeTileOpacity(ImagePlus grayscaleTileCopy, int background_level) {
-
-
-		//4. get the pixel values of the image
-		ByteProcessor processor = (ByteProcessor) grayscaleTileCopy.getProcessor();
-		byte[] imageBytes = (byte[]) processor.getPixels();
-
-		int size = imageBytes.length;
-
-		int sumOfBrightness = 0;
-
-		for(int i=0;i<size;i++){
-			//since our pixelValue is unsigned, this is what we need to do to get it's actual (unsigned) value
-			int pixelValue = imageBytes[i]&0xFF;
-
-			//subtract the threshold and put the pixels in the sum
-			//every pixel inside the colony should normally be above the threshold
-			//but just in case, we'll just take 0 if a colony pixel turns out to be below the threshold
-			//Also all the pixels outside the Roi would have a negative value after subtraction 
-			//(they are already zero) because of the mask process
-
-			sumOfBrightness += Math.max(0, pixelValue-background_level);
-		}
-
-
-		return (sumOfBrightness);
-	}
 
 
 

@@ -173,6 +173,32 @@ public class OpacityTileReader {
 
 
 	/**
+	 * This tile reader gets the size of the colony in pixels, as well as the sum of it's brightness.
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static OpacityTileReaderOutput getWholeTileOpacity(OpacityTileReaderInput input){
+		
+		OpacityTileReaderOutput output = new OpacityTileReaderOutput();
+		
+		
+		//one last thing (e.g. useful in getting the in-agar growth) would be to get the total brightness in the tile
+		//40 is the background of our pictures in the August 2015 experiment setup
+		//but here I want to get the tile opacity without any subtraction, so I set the "background to subtract" to 0
+		//also remove any colony ROI so that we get the opacity for the whole tile given to this tile reader
+		input.tileImage.deleteRoi();
+		output.wholeTileOpacity = Toolbox.getWholeTileOpacity(input.tileImage, 0);
+		
+		output.wholeTileSize = input.tileImage.getWidth() * input.tileImage.getHeight();
+		
+		return(output);
+		
+	}
+
+
+
+	/**
 	 * This function will take as input a tile plus it's thresholded version from a previous run of a similar method.
 	 * It will perform particle analysis and measure the color in the thresholded area.
 	 * @param input
@@ -272,7 +298,7 @@ public class OpacityTileReader {
 		backgroundPixels.setBackgroundValue(0);
 
 		backgroundPixels.fill(backgroundPixels.getMask());
-//		(new ImagePlus("keep-background mask",backgroundPixels)).show();
+		//		(new ImagePlus("keep-background mask",backgroundPixels)).show();
 
 		FloatProcessor foregroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
 		foregroundPixels.setRoi(colonyROI);
@@ -280,7 +306,7 @@ public class OpacityTileReader {
 		foregroundPixels.setBackgroundValue(0);
 
 		foregroundPixels.fillOutside(colonyROI);
-//		(new ImagePlus("keep-foreground mask",foregroundPixels)).show();
+		//		(new ImagePlus("keep-foreground mask",foregroundPixels)).show();
 
 
 
