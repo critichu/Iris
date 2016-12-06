@@ -81,9 +81,9 @@ class IrisColonyPicker extends JFrame implements ActionListener, PropertyChangeL
 
 
 		//check if we have enough memory -- if so just run the IrisFrontend
-		//memory threshold here is 1.5GB
+		//memory threshold here is 1GB
 		long maxHeapSize = Runtime.getRuntime().maxMemory();
-		if(maxHeapSize>(long)1.5e9){
+		if(maxHeapSize>(long)1e9){
 			
 			
 
@@ -156,10 +156,19 @@ class IrisColonyPicker extends JFrame implements ActionListener, PropertyChangeL
 				}
 				String allArguments = strBuilder.toString();
 
+				/*
+				 * run on 1GB heap memory, unless it's a 64-bit system
+				 */				
+				String gigabytes = "1";
+				String systemArchitecture = System.getProperty("sun.arch.data.model");
+				if(systemArchitecture.equals("64")){
+					gigabytes = "2";
+				}
+				
 				ProcessBuilder pb = new ProcessBuilder(
 						"java",
 						"-jar",
-						"-Xmx2G",
+						"-Xmx"+gigabytes+"G",
 						pathToThisJar,
 						allArguments
 						);
