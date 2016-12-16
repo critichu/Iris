@@ -42,13 +42,13 @@ java -Xmx1g -jar iris.jar "profile name" "folder location”
 
 Valid profile names are the following:  
 
-* "Colony opacity",
+* "Colony growth",
 * "B.subtilis sporulation",
 * "CPRG profile",
 * "Biofilm formation",
 * "Morphology profile",
 * "Morphology&Color profile",
-* "Colony opacity inverted"
+* "Colony growth inverted"
 
 Here is a visual overview of those profiles, and the [Iris workflow](http://critichu.github.io/Iris/underTheHood.html):  
 
