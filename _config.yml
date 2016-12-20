@@ -1,0 +1,8 @@
+title: Iris
+description: enabling versatile high-throughput phenotyping in microbes
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-slate
+
+gems:
+  - jekyll-mentions
