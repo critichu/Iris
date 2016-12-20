@@ -1,4 +1,4 @@
-![iris logo](http://critichu.github.io/Iris/images/icon_256x256.png)
+![iris logo](http://critichu.github.io/Iris/images/icon_128x128.png)
 
 ### What does Iris do?
 Iris is an image processing software that automatically quantifies several features of microbial colonies in high throughput. While most available software can quantify colony size, Iris adds several more phenotypes.
