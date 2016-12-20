@@ -113,6 +113,7 @@ In case your colonies are not in a grid format (96, 384, 1536, or 6144), you can
 * Picking a colony using round (oval) selection will tell Iris to get the features within those manually defined bounds.
 * Using a rectangular selection surrounding one colony will get Iris to automatically detect the colony bounds and subsequently analyze this colony.
 
+![iris colony picker](http://critichu.github.io/Iris/images/colonyPicker.instructions.png)
 
 
 ***
