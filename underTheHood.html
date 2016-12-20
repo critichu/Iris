@@ -47,6 +47,42 @@
 
 <p><img src="http://critichu.github.io/Iris/images/process.overview.transparent.png" alt="iris workflow"></p>
 
+<h2 id="toc_1">Adjusting image analysis workflow parameters</h2>
+
+<p>This is done by editing a provided user settings file in JSON format. Iris needs to be re-run for any changes in the file to take effect.</p>
+
+<h3 id="toc_2">Global settings</h3>
+
+<p><img src="http://critichu.github.io/Iris/images/json.global.settings.png" alt="json global settings"> </p>
+
+<p><strong>ArrayFormat</strong><br>
+Colony array density.<br>
+Valid formats are:
+ 24, 96, 384, 1536, 6144</p>
+
+<p><strong>SingleColony</strong> mode is intended to be used when providing a folder with single-colony pictures. This mode will bypass cropping and segmentation steps, and feed the pictures directly on the TileReaders defined by the selected profile for tile processing (step #3 on schematic above).<br>
+If SingleColony mode is set, <em>ArrayFormat</em> is ignored.</p>
+
+<p><strong>DebugMode</strong> will provide a verbose output.  </p>
+
+<h3 id="toc_3">Profile settings</h3>
+
+<p>The JSON file provided in the distribution has examples for some profiles. To add profile-settings for other/new profiles, one can simply copy the settings from another profile (within the brackets) and edit the profile name.<br>
+Upon loading, Iris will report the profiles for which settings are defined in the user settings file.<br>
+<img src="http://critichu.github.io/Iris/images/json.profile.settings.png" alt="json profile settings"> </p>
+
+<p><strong>ProfileName</strong> the name of the profile to be adjusted.  </p>
+
+<p><strong>rotationSettings</strong> defines whether the image will be automatically detected for the colony array to be perfectly horizontal. Users may choose to bypass the automatic detection for a defined rotation (in degrees).  </p>
+
+<p><strong>croppingSettings</strong> defines if the image will be automatically cropped to keep just the colonies. Alternatively a fixed cropping area will be applied, based on the defined coordinates:<br>
+X, Y-start define the top left corner of the picture that includes the colonies.<br>
+X, Y-end define the width and height of the final cropped picture.  </p>
+
+<p><strong>segmentationSettings</strong> defines whether colony tile boundaries will be adjusted to include the entire colony (and the maximum adjustment distance in pixels).  </p>
+
+<p><strong>detectionSettings</strong> defines the minimum colony size and circularity thresholds under which the detected object will not be considered a colony.  </p>
+
 <h2 id="toc_1">Iris design</h2>
 
 <p>Iris was designed in a modular fashion; in other words, the above worflow steps are separate modules that one can plug in, modify, and replace at will.  </p>
