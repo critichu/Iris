@@ -12,7 +12,7 @@ That's easy, just follow this link to the latest binary distribution (.jar files
 
 ### What do I need to run Iris?
 Iris runs on Java. You can get the latest version by following this link:  
-[https://java.com/en/download] (https://java.com/en/download)
+[https://java.com/en/download](https://java.com/en/download)
 
 
 
