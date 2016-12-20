@@ -24,7 +24,8 @@ Next, click "open folder", and select a folder which holds the pictures to be pr
 You can abort the process at any time, by closing the program.
 
 
-#### Running Iris
+#### Running Iris  
+
 ##### Iris GUI  
 To run Iris as a window (GUI) application, open a command line window, cd into the folder the Iris JAR file is in, and run the following command:  
 
