@@ -3,20 +3,23 @@
  */
 package iris.settings;
 
-import iris.ui.IrisFrontend;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.HashSet;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+
+import iris.ui.IrisFrontend;
 
 /**
  * @author George Kritikos
@@ -27,7 +30,7 @@ public class UserSettings {
 	private boolean SingleColony = false;
 	private boolean DebugMode = false;
 	private ProfileSettings profileSettings[] = new ProfileSettings[0];
-	private int ArrayFormat = 1536;
+	public int ArrayFormat = 1536;
 
 	public class ProfileSettings {
 		private String ProfileName = "";
@@ -180,6 +183,32 @@ public class UserSettings {
 	}
 	
 	
+	/**
+	 * will return the settings for the current profile as a JSON file
+	 * @param profileName
+	 * @param includeGlobalSettings
+	 * @return
+	 */
+	public String getProfileSettingsAsString(String profileName){
+		
+		//make a userSettings object with only one set of profile settings: the ones requested
+		UserSettings oneProfileUserSettings = new UserSettings();
+		oneProfileUserSettings.ArrayFormat = this.ArrayFormat;
+		oneProfileUserSettings.DebugMode = this.DebugMode;
+		oneProfileUserSettings.SingleColony = this.SingleColony;
+		
+		oneProfileUserSettings.profileSettings = new ProfileSettings[1];
+		oneProfileUserSettings.profileSettings[0] = getProfileSettings(profileName);
+		
+		
+		//get the JSON string for this profile
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String oneProfileUserSettingsJsonString = gson.toJson(oneProfileUserSettings);
+		
+		return(oneProfileUserSettingsJsonString);
+		
+	}
+	
 	
 	/**
 	 * gets the subset of loaded settings that matched a known profile name
@@ -205,6 +234,26 @@ public class UserSettings {
 
 
 
+	/**
+	 * writes user settings to disk
+	 * @param thisSettings
+	 * @return
+	 */
+	public boolean writeUserSettings(){ 
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String settingsJsonString = gson.toJson(this);
+		
+		OutputStream outputStream = null;
+		try {
+			outputStream = new FileOutputStream(new File("iris.user.settings.json"));
+			outputStream.write(settingsJsonString.getBytes());
+			outputStream.close();
+		} catch (Exception e) {
+			return(false); //return null if file not found
+		}
+		return(true);
+	}
 
 
 	/**
@@ -212,11 +261,20 @@ public class UserSettings {
 	 * @param thisSettings
 	 * @return
 	 */
-	public static String writeUserSettings(UserSettings thisSettings){ 
+	public boolean writeUserSettings(UserSettings thisSettings, String filename){ 
 
-		Gson gson = new Gson();  
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		String settingsJsonString = gson.toJson(thisSettings);
-		return(settingsJsonString);
+		
+		OutputStream outputStream = null;
+		try {
+			outputStream = new FileOutputStream(new File(filename));
+			outputStream.write(settingsJsonString.getBytes());
+			outputStream.close();
+		} catch (Exception e) {
+			return(false); //return null if file not found
+		}
+		return(true);
 	}
 
 

@@ -3,6 +3,11 @@
  */
 package iris.profiles;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
@@ -32,11 +37,6 @@ import iris.tileReaders.CPRGColorTileReaderHSV;
 import iris.tileReaders.OpacityTileReader;
 import iris.ui.IrisFrontend;
 import iris.utils.Toolbox;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
@@ -315,11 +315,15 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 		for(int i=0;i<settings.numberOfRowsOfColonies;i++){
 			//for all columns
 			for (int j = 0; j < settings.numberOfColumnsOfColonies; j++) {
-				opacityReaderOutputs[i][j] = OpacityTileReader.processTile(
-						new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
-
+				try{
+					opacityReaderOutputs[i][j] = OpacityTileReader.processTile(
+							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				} catch(Exception e){
+					IrisFrontend.writeToLog(e.getStackTrace().toString());
+					opacityReaderOutputs[i][j] = new OpacityTileReaderOutput();
+				}
 				//each generated tile image is cleaned up inside the tile reader
-				
+
 				//colony QC
 				if(opacityReaderOutputs[i][j].colonySize<minimumValidColonySize ||
 						opacityReaderOutputs[i][j].circularity<minimumValidColonyCircularity){
@@ -328,11 +332,21 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 
 				//only run the CPRG color analysis if there is a colony in the tile
 				if(opacityReaderOutputs[i][j].colonySize>0){
-					cprgTileReaderOutputs[i][j] = CPRGColorTileReader.processTile(
-							new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], colorSettings));
+					try{
+						cprgTileReaderOutputs[i][j] = CPRGColorTileReader.processTile(
+								new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], colorSettings));
+					} catch(Exception e){
+						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						cprgTileReaderOutputs[i][j] = new CPRGTileReaderOutput();
+					}
 
-					cprgTileReaderOutputsHSV[i][j] = CPRGColorTileReaderHSV.processTile(
-							new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], colorSettings));
+					try{
+						cprgTileReaderOutputsHSV[i][j] = CPRGColorTileReaderHSV.processTile(
+								new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], colorSettings));
+					} catch(Exception e){
+						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						cprgTileReaderOutputsHSV[i][j] = new CPRGTileReaderOutput();
+					}
 				}
 				else{
 					cprgTileReaderOutputs[i][j] = new CPRGTileReaderOutput();

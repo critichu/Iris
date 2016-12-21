@@ -3,6 +3,17 @@
  */
 package iris.ui;
 
+import java.awt.Toolkit;
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import javax.swing.SwingWorker;
+
 import iris.profiles.BasicProfile;
 import iris.profiles.BasicProfileInverted;
 import iris.profiles.BasicProfileNoEmptyCheck;
@@ -26,17 +37,6 @@ import iris.profiles.MorphologyProfileStm96;
 import iris.profiles.OpacityProfile;
 import iris.profiles.OpacityProfile2;
 import iris.profiles.XgalProfile;
-
-import java.awt.Toolkit;
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
-import javax.swing.SwingWorker;
 
 /**
  * @author George Kritikos
@@ -67,8 +67,17 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		IrisFrontend.openLog(directory.getAbsolutePath());
 		IrisFrontend.writeToLog("--- Iris version " + IrisFrontend.IrisVersion + " log file\tbuild "+IrisFrontend.IrisBuild+" ---\n");
 		IrisFrontend.writeToLog("-- Started processing files at "+ new Date() + " --\n");
-		IrisFrontend.writeToLog("-----------------------------------------\n\n\n");
 
+		//write user settings
+		try{
+			IrisFrontend.writeToLog("-- Loaded user settings: -- \n\n");
+			String oneProfileUserSettings = IrisFrontend.userSettings.getProfileSettingsAsString(IrisFrontend.selectedProfile);
+			IrisFrontend.writeToLog(oneProfileUserSettings);
+		}catch(Exception e){
+			IrisFrontend.writeToLog("-- error writing user settings, check file iris.user.settings.json -- \n\n");
+		}
+		IrisFrontend.writeToLog("\n\n-----------------------------------------\n\n\n");
+		
 
 		//get a list of the files in the directory, keeping only image files
 		File[] filesInDirectory = directory.listFiles(new PicturesFilenameFilter());
@@ -77,10 +86,10 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 		int max = filesInDirectory.length;
 
 		for (File file : filesInDirectory) {
-			
+
 			if(!file.exists())
 				continue;
-			
+
 			if(file.isDirectory())
 				continue;
 
@@ -114,16 +123,16 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 
 
 		String filename = file.getAbsolutePath();
-		
+
 		//if we set it here, then it will be called both on GUI or console s/w invocation
 		if(IrisFrontend.singleColonyRun==true){
 			IrisFrontend.settings.numberOfRowsOfColonies = 1;
 			IrisFrontend.settings.numberOfColumnsOfColonies = 1;
-			
+
 			if(filename.contains("colony_")){
 				IrisFrontend.settings.userDefinedRoi=true;
 			}
-			
+
 		}
 
 		//publish("Now processing file " + "\n");
@@ -201,12 +210,12 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			EcoliOpacityProfile96 ecoliOpacity96 = new EcoliOpacityProfile96();
 			ecoliOpacity96.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Colony growth")){
 			ColonyOpacityProfile colonyOpacity = new ColonyOpacityProfile();
 			colonyOpacity.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.contains("Xgal assay")){
 			XgalProfile xgalProfile = new XgalProfile();
 			xgalProfile.analyzePicture(filename);			
@@ -216,17 +225,17 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			CPRGProfile384_ourCamera2 cprgProfile384_ourCamera2 = new CPRGProfile384_ourCamera2();
 			cprgProfile384_ourCamera2.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("CPRG profile")){
 			CPRGProfile384_ourCamera2 cprgProfile384_ourCamera2 = new CPRGProfile384_ourCamera2();
 			cprgProfile384_ourCamera2.analyzePicture(filename);
 		}
 
-//		else if(profileName.equals("Biofilm formation")){
-//			ColorProfile colorProfile = new ColorProfile();
-//			colorProfile.analyzePicture(filename);
-//		}
-		
+		//		else if(profileName.equals("Biofilm formation")){
+		//			ColorProfile colorProfile = new ColorProfile();
+		//			colorProfile.analyzePicture(filename);
+		//		}
+
 		else if(profileName.equals("Biofilm formation")){
 			ColorProfileEcoli colorProfileEcoli = new ColorProfileEcoli();
 			colorProfileEcoli.analyzePicture(filename);
@@ -266,7 +275,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			MorphologyProfileCandida96 morphologyProfile = new MorphologyProfileCandida96();
 			morphologyProfile.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Morphology profile")){
 			MorphologyProfileCandida96 morphologyProfile = new MorphologyProfileCandida96();
 			morphologyProfile.analyzePicture(filename);
@@ -281,7 +290,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			MorphologyProfilePA384 morphologyProfile = new MorphologyProfilePA384();
 			morphologyProfile.analyzePicture(filename);
 		}
-		
+
 		else if(profileName.equals("Morphology&Color profile")){//pseudomonas colonies but it'll work for more than that
 			MorphologyProfilePA384 morphologyProfile = new MorphologyProfilePA384();
 			morphologyProfile.analyzePicture(filename);
@@ -301,7 +310,7 @@ public class ProcessFolderWorker extends SwingWorker<String, String> {
 			ColonyOpacityProfileInverted profile = new ColonyOpacityProfileInverted();
 			profile.analyzePicture(filename);
 		}
-		
+
 
 
 

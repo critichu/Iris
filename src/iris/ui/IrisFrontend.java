@@ -3,9 +3,6 @@
  */
 package iris.ui;
 
-import iris.settings.BasicSettings;
-import iris.settings.UserSettings;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,6 +13,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+
+import iris.settings.BasicSettings;
+import iris.settings.UserSettings;
 
 /**
  * This class acts as the decision point between console and GUI versions
@@ -76,12 +76,12 @@ public class IrisFrontend {
 	/**
 	 * This string holds the software version that is defined here once to be used whenever it needs to be displayed.
 	 */
-	public static String IrisVersion = "0.9.6.6";
+	public static String IrisVersion = "0.9.7.1";
 
 	/**
 	 * This string holds the hash id of Iris versioning in Git
 	 */
-	public static String IrisBuild = "277ddc3";
+	public static String IrisBuild = "5a68e47";
 
 
 	/**
@@ -96,13 +96,6 @@ public class IrisFrontend {
 
 
 
-
-
-
-	/**
-	 * 
-	 * @param args	IrisJarFilename Profile Path [384/96] [DEBUG] 
-	 */
 	public static void main(String[] args) {
 
 		userSettings = UserSettings.loadUserSettings();
@@ -162,7 +155,7 @@ public class IrisFrontend {
 	/**
 	 * Does what it says in the box
 	 */
-	static void writeToLog(String text){
+	public static void writeToLog(String text){
 		try {
 			if(logFile!=null){
 				logFile.write(text);

@@ -3,6 +3,11 @@
  */
 package iris.tileReaders;
 
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Roi;
@@ -21,11 +26,6 @@ import iris.tileReaderInputs.OpacityTileReaderInput;
 import iris.tileReaderOutputs.OpacityTileReaderOutput;
 import iris.ui.IrisFrontend;
 import iris.utils.Toolbox;
-
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 /**
  * @author George Kritikos
@@ -383,6 +383,10 @@ public class OpacityTileReader {
 	 * @return
 	 */
 	private static float getMedian(Float[] inputArray){
+		
+		if(inputArray.length==0)
+			return(0);
+		
 		Arrays.sort(inputArray);
 		double median;
 		if (inputArray.length % 2 == 0)

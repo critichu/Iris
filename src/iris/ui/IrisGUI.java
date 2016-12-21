@@ -50,7 +50,9 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 	/**
 	 * This is the combo box used to select the profile
 	 */
-	private static JComboBox comboBox = null;
+	public static JComboBox comboBox = null;
+	public static JComboBox comboBox_format = null;
+	public DropdownItemChangeListener itemChangeListener = new DropdownItemChangeListener();
 
 
 	/**
@@ -89,6 +91,10 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 					System.out.println("\tnumber of rows:\t"+IrisFrontend.settings.numberOfRowsOfColonies);
 					System.out.println("\tnumber of columns:\t"+IrisFrontend.settings.numberOfColumnsOfColonies);
 
+					//remove item listener so that it doesn't overwrite the settings upon load
+					IrisGUI.comboBox_format.removeItemListener(frame.itemChangeListener);
+					IrisGUI.comboBox_format.setSelectedItem(new Integer(IrisFrontend.userSettings.ArrayFormat));
+					IrisGUI.comboBox_format.addItemListener(frame.itemChangeListener);
 
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -151,20 +157,26 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 		btnOpenFolder = new JButton("open folder");
 		btnOpenFolder.addActionListener(this);
 
-		btnOpenFolder.setBounds(258, 6, 117, 29);
+		btnOpenFolder.setBounds(289, 6, 117, 29);
 		contentPane.add(btnOpenFolder);
 
 		comboBox = new JComboBox(IrisFrontend.profileCollection);
 		comboBox.setSelectedIndex(0);
-		comboBox.setBounds(77, 7, 166, 27);
+		comboBox.setBounds(43, 6, 166, 29);
 		comboBox.addActionListener(this);
 		contentPane.add(comboBox);
+
+		comboBox_format = new JComboBox(new Integer[] {24, 96, 384, 1536, 6144});
+		comboBox_format.setSelectedIndex(2);
+		comboBox_format.setBounds(208, 6, 82, 29);
+		//comboBox_format.addActionListener(this);
+		contentPane.add(comboBox_format);
+		comboBox_format.addItemListener(this.itemChangeListener);
 
 		//add a custom listener to comboBox clicks
 		//this one will adjust the height of the comboBox
 		BoundsPopupMenuListener listener = new BoundsPopupMenuListener(true, false);
 		comboBox.addPopupMenuListener( listener );
-		//comboBox.setPrototypeDisplayValue("ItemWWW");
 
 
 
@@ -309,11 +321,19 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 			IrisFrontend.selectedProfile = (String) comboBox.getSelectedItem();
 		}
 
+		/*
+		if(e.getSource()==comboBox_format){
+
+			IrisFrontend.userSettings.ArrayFormat = ((Integer) comboBox_format.getSelectedItem()).intValue();
+			if(IrisFrontend.userSettings.writeUserSettings()){
+				System.out.println("\n\nformat settings updated");
+			}
+		}*/
+
 	}
 
 
 
-	
 	/**
 	 * @return
 	 */
@@ -325,26 +345,26 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 		else {
 			//create the filechooser object
 			System.setProperty("apple.awt.fileDialogForDirectories", "true");
-		    FileDialog fc = new FileDialog(this);
+			FileDialog fc = new FileDialog(this);
 
-		    fc.setTitle("please select a folder");
-		    fc.setVisible(true);
-		   
-		    
-		    String directoryPath = fc.getDirectory() + fc.getFile();
-		    File directory = new File(directoryPath);
-		    
-		    if(directory.exists())
-		    	return(directory);
-		    else
-		    	return(null);
+			fc.setTitle("please select a folder");
+			fc.setVisible(true);
+
+
+			String directoryPath = fc.getDirectory() + fc.getFile();
+			File directory = new File(directoryPath);
+
+			if(directory.exists())
+				return(directory);
+			else
+				return(null);
 		}
-		
-	    	
+
+
 	}
-	
-	
-	
+
+
+
 	/**
 	 * uses the JFileChooser dialog that looks ancient on OSX
 	 * but it's the only thing that works on Windows

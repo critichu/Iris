@@ -3,6 +3,11 @@
  */
 package iris.profiles;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+
 import fiji.threshold.Auto_Local_Threshold;
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,11 +42,6 @@ import iris.tileReaders.LaplacianFilterTileReader;
 import iris.tileReaders.OpacityTileReader;
 import iris.ui.IrisFrontend;
 import iris.utils.Toolbox;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
 /**
  * @author George Kritikos
  *
@@ -319,24 +319,38 @@ public class ColorProfileEcoli extends Profile{
 
 
 				//v60 (or v66, it's the same)
-				basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
-						new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				try{
+					basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
+							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+				} catch (Exception e){
+					IrisFrontend.writeToLog(e.getStackTrace().toString());
+					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+				}
 				//v60 end
 
 
 				//v69 using Lucia's thresholds
 				if(basicTileReaderOutputs[i][j].colonySize==0 || basicTileReaderOutputs[i][j].circularity<0.4){
-					
-					//System.out.println(filename + " " + Integer.toString(i+1) + " " + Integer.toString(j+1));
-					
-					basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
-							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 
+					//System.out.println(filename + " " + Integer.toString(i+1) + " " + Integer.toString(j+1));
+
+					try{
+						basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+								new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					} catch (Exception e){
+						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+					}
 
 					//if that didn't work, try the Laplacian Zero-crossings
 					if(basicTileReaderOutputs[i][j].colonySize==0){
-						basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
-								new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+						try{
+							basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
+									new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+						} catch(Exception e){
+							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+						}
 					}
 
 				}
@@ -347,7 +361,7 @@ public class ColorProfileEcoli extends Profile{
 				 * for the record, this is how v0.9.6.1 worked
 				basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
 						new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
-						
+
 				//try once more using the other
 				if(basicTileReaderOutputs[i][j].colonySize==0){
 					//					basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
@@ -369,17 +383,26 @@ public class ColorProfileEcoli extends Profile{
 				//only run the color analysis if there is a colony in the tile
 				if(basicTileReaderOutputs[i][j].colonySize>0){
 					//colour
-					colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
-							new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], 
-									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, 
-									basicTileReaderOutputs[i][j].colonyCenter, settings));
-
+					try{
+						colourTileReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
+								new ColorTileReaderInput3(colourCroppedImage, segmentationOutput.ROImatrix[i][j], 
+										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, 
+										basicTileReaderOutputs[i][j].colonyCenter, settings));
+					} catch(Exception e){
+						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
+					}
+					
 					//opacity -- to check if colony darkness correlates with colour information -- true means opacities can get negative
 					//this is a fix for very dark colonies
-					opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
-							new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
-									basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
-
+					try{
+						opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
+								new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
+					} catch(Exception e){
+						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
+					}
 				}
 				else{
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
@@ -392,17 +415,17 @@ public class ColorProfileEcoli extends Profile{
 					opacityTileReaderOutputs[i][j].circularity=0;
 					opacityTileReaderOutputs[i][j].opacity=0;
 				}
-				
+
 				//colony QC -- remove colonies that are very close to the background
 				if(opacityTileReaderOutputs[i][j].opacity<=0 ){//|| opacityTileReaderOutputs[i][j].max10percentOpacity<=0){
 					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
 					colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
 					opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 				}
-				
-				
+
+
 				//each generated tile image is cleaned up inside the tile reader
-				
+
 			}
 		}
 
@@ -455,7 +478,7 @@ public class ColorProfileEcoli extends Profile{
 				{
 					colony_flagged=true;
 				}
-			
+
 
 				//if we flagged the colony in any of the previous steps, remove it from the results
 				if(colony_flagged){

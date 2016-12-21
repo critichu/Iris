@@ -3,6 +3,10 @@
  */
 package iris.tileReaders;
 
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Roi;
@@ -18,10 +22,6 @@ import iris.tileReaderInputs.BasicTileReaderInput;
 import iris.tileReaderOutputs.BasicTileReaderOutput;
 import iris.ui.IrisFrontend;
 import iris.utils.Toolbox;
-
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * @author George Kritikos
@@ -303,6 +303,10 @@ public class LaplacianFilterTileReader {
 	 * @return
 	 */
 	private static float getMedian(Float[] inputArray){
+		
+		if(inputArray.length==0)
+			return(0);
+		
 		Arrays.sort(inputArray);
 		double median;
 		if (inputArray.length % 2 == 0)
