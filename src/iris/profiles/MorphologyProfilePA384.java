@@ -385,7 +385,7 @@ public class MorphologyProfilePA384 extends Profile {
 									new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
 											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
 						} catch(Exception e){ 
-							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 							morphologyReaderOutputs[i][j] = new MorphologyTileReaderOutput(); 
 						}
 
@@ -396,7 +396,7 @@ public class MorphologyProfilePA384 extends Profile {
 									new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], 
 											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, basicTileReaderOutputs[i][j].colonyCenter, settings));
 						} catch(Exception e){ 
-							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 							colorReaderOutputs[i][j] = new ColorTileReaderOutput();
 						}
 
@@ -406,7 +406,7 @@ public class MorphologyProfilePA384 extends Profile {
 									new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
 											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
 						} catch(Exception e){ 
-							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 							opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput(); 
 						}
 

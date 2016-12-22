@@ -178,21 +178,21 @@ public class OpacityTileReader {
 	 * @return
 	 */
 	public static OpacityTileReaderOutput getWholeTileOpacity(OpacityTileReaderInput input){
-		
+
 		OpacityTileReaderOutput output = new OpacityTileReaderOutput();
-		
-		
+
+
 		//one last thing (e.g. useful in getting the in-agar growth) would be to get the total brightness in the tile
 		//40 is the background of our pictures in the August 2015 experiment setup
 		//but here I want to get the tile opacity without any subtraction, so I set the "background to subtract" to 0
 		//also remove any colony ROI so that we get the opacity for the whole tile given to this tile reader
 		input.tileImage.deleteRoi();
 		output.wholeTileOpacity = Toolbox.getWholeTileOpacity(input.tileImage, 0);
-		
+
 		output.wholeTileSize = input.tileImage.getWidth() * input.tileImage.getHeight();
-		
+
 		return(output);
-		
+
 	}
 
 
@@ -291,31 +291,35 @@ public class OpacityTileReader {
 	private static int totalColonyBrightnessMinusBackground(
 			ImagePlus tileImage, Roi colonyROI) {
 
-		FloatProcessor backgroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
-		backgroundPixels.setRoi(colonyROI);
-		backgroundPixels.setValue(0);
-		backgroundPixels.setBackgroundValue(0);
+		try{
+			FloatProcessor backgroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
+			backgroundPixels.setRoi(colonyROI);
+			backgroundPixels.setValue(0);
+			backgroundPixels.setBackgroundValue(0);
 
-		backgroundPixels.fill(backgroundPixels.getMask());
-		//		(new ImagePlus("keep-background mask",backgroundPixels)).show();
+			backgroundPixels.fill(backgroundPixels.getMask());
+			//		(new ImagePlus("keep-background mask",backgroundPixels)).show();
 
-		FloatProcessor foregroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
-		foregroundPixels.setRoi(colonyROI);
-		foregroundPixels.setValue(0);
-		foregroundPixels.setBackgroundValue(0);
+			FloatProcessor foregroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
+			foregroundPixels.setRoi(colonyROI);
+			foregroundPixels.setValue(0);
+			foregroundPixels.setBackgroundValue(0);
 
-		foregroundPixels.fillOutside(colonyROI);
-		//		(new ImagePlus("keep-foreground mask",foregroundPixels)).show();
-
-
-
-
-		int backgroundMedian = getBackgroundMedian(backgroundPixels);
-
-		int sumColonyBrightness = sumPixelOverBackgroundBrightness(foregroundPixels, backgroundMedian);
+			foregroundPixels.fillOutside(colonyROI);
+			//		(new ImagePlus("keep-foreground mask",foregroundPixels)).show();
 
 
-		return(sumColonyBrightness);
+
+
+			int backgroundMedian = getBackgroundMedian(backgroundPixels);
+
+			int sumColonyBrightness = sumPixelOverBackgroundBrightness(foregroundPixels, backgroundMedian);
+
+
+			return(sumColonyBrightness);
+		} catch (Exception e){
+			return(0);
+		}
 	}
 
 
@@ -382,10 +386,10 @@ public class OpacityTileReader {
 	 * @return
 	 */
 	private static float getMedian(Float[] inputArray){
-		
+
 		if(inputArray.length==0)
 			return(0);
-		
+
 		Arrays.sort(inputArray);
 		double median;
 		if (inputArray.length % 2 == 0)

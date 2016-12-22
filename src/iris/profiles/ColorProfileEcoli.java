@@ -266,7 +266,7 @@ public class ColorProfileEcoli extends Profile{
 		//6. colony breathing
 
 		//let the tile boundaries "breathe"
-		if(userProfileSettings==null){//default behavior
+ 		if(userProfileSettings==null){//default behavior
 			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		}
 		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
@@ -323,7 +323,7 @@ public class ColorProfileEcoli extends Profile{
 					basicTileReaderOutputs[i][j] = BasicTileReaderHSB_darkColonies.processTile(
 							new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 				} catch (Exception e){
-					IrisFrontend.writeToLog(e.getStackTrace().toString());
+					IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
 				}
 				//v60 end
@@ -338,7 +338,7 @@ public class ColorProfileEcoli extends Profile{
 						basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
 								new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 					} catch (Exception e){
-						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 						basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
 					}
 
@@ -348,7 +348,7 @@ public class ColorProfileEcoli extends Profile{
 							basicTileReaderOutputs[i][j] = LaplacianFilterTileReader.processTile(
 									new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
 						} catch(Exception e){
-							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 							basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
 						}
 					}
@@ -389,7 +389,7 @@ public class ColorProfileEcoli extends Profile{
 										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, 
 										basicTileReaderOutputs[i][j].colonyCenter, settings));
 					} catch(Exception e){
-						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 						colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
 					}
 
@@ -400,7 +400,7 @@ public class ColorProfileEcoli extends Profile{
 								new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
 										basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
 					} catch(Exception e){
-						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 						opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
 					}
 				}

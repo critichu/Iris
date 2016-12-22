@@ -33,6 +33,8 @@ import javax.swing.text.StyleConstants;
 
 import org.apache.commons.lang3.SystemUtils;
 
+import iris.settings.UserSettings;
+
 /**
  * @author George Kritikos
  *
@@ -302,6 +304,11 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 	public void actionPerformed(ActionEvent e) {
 
 		if(e.getSource()==btnOpenFolder){
+			
+			//first update user settings from disk
+			IrisFrontend.userSettings = UserSettings.loadUserSettings();
+			UserSettings.applyUserSettings(IrisFrontend.userSettings);
+			System.out.println("\n\nupdated user settings\n");
 
 			//make user select folder here
 			File directory = selectFolder();

@@ -319,7 +319,7 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 					opacityReaderOutputs[i][j] = OpacityTileReader.processTile(
 							new OpacityTileReaderInput(croppedImage, segmentationOutput.ROImatrix[i][j], settings));
 				} catch(Exception e){
-					IrisFrontend.writeToLog(e.getStackTrace().toString());
+					IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 					opacityReaderOutputs[i][j] = new OpacityTileReaderOutput();
 				}
 				//each generated tile image is cleaned up inside the tile reader
@@ -336,7 +336,7 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 						cprgTileReaderOutputs[i][j] = CPRGColorTileReader.processTile(
 								new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], colorSettings));
 					} catch(Exception e){
-						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 						cprgTileReaderOutputs[i][j] = new CPRGTileReaderOutput();
 					}
 
@@ -344,7 +344,7 @@ public class CPRGProfile384_ourCamera2 extends Profile {
 						cprgTileReaderOutputsHSV[i][j] = CPRGColorTileReaderHSV.processTile(
 								new ColorTileReaderInput(colourCroppedImage, segmentationOutput.ROImatrix[i][j], colorSettings));
 					} catch(Exception e){
-						IrisFrontend.writeToLog(e.getStackTrace().toString());
+						IrisFrontend.writeToLog(Toolbox.getStackTrace(e));
 						cprgTileReaderOutputsHSV[i][j] = new CPRGTileReaderOutput();
 					}
 				}

@@ -34,22 +34,22 @@ public class LaplacianFilterTileReader {
 
 		ImagePlus tileImageCopy = input.tileImage.duplicate();
 		tileImageCopy.setRoi(input.tileImage.getRoi());
-		
+
 		//0. create the output object
 		BasicTileReaderOutput output = new BasicTileReaderOutput();
 
-		
+
 
 
 		if(!IrisFrontend.settings.userDefinedRoi){
-			
+
 			//median filter radius
 			double radius = 2.0;
 			//laplacian filter scale 
 			double scale = 4.0;
 			//gaussian radius (sigma)
 			double sigma = 1.0;
-			
+
 			//normally here we would check if the tile is empty, but we're gonna give Laplacian Filter a chance
 
 			//this is the input image
@@ -165,7 +165,7 @@ public class LaplacianFilterTileReader {
 			//input.cleanup(); //clear the tile image here, since we don't need it anymore
 			//laplacianDifference.flush();
 			int colonyOpacity = totalColonyBrightnessMinusBackground(tileImageCopy, output.colonyROI);
-			
+
 
 			//check if the tile is empty
 			boolean debug = false;
@@ -183,12 +183,12 @@ public class LaplacianFilterTileReader {
 					return(output);
 				}
 			}
-			
+
 			//I will double-check here if this tile reader returns the whole tile
 			if(output.colonySize == input.tileImage.getWidth()*input.tileImage.getHeight()){
 				return(new BasicTileReaderOutput());
 			}
-			
+
 
 			return(output);//returns the biggest result
 		}
@@ -212,32 +212,36 @@ public class LaplacianFilterTileReader {
 	 */
 	private static int totalColonyBrightnessMinusBackground(
 			ImagePlus tileImage, Roi colonyROI) {
-		
-		FloatProcessor backgroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
-		backgroundPixels.setRoi(colonyROI);
-		backgroundPixels.setValue(0);
-		backgroundPixels.setBackgroundValue(0);
-		
-		backgroundPixels.fill(backgroundPixels.getMask());
-//		(new ImagePlus("keep-background mask",backgroundPixels)).show();
-		
-		FloatProcessor foregroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
-		foregroundPixels.setRoi(colonyROI);
-		foregroundPixels.setValue(0);
-		foregroundPixels.setBackgroundValue(0);
-		
-		foregroundPixels.fillOutside(colonyROI);
-//		(new ImagePlus("keep-foreground mask",foregroundPixels)).show();
-		
-		
-		
-		
-		int backgroundMedian = getBackgroundMedian(backgroundPixels);
-		
-		int sumColonyBrightness = sumPixelOverBackgroundBrightness(foregroundPixels, backgroundMedian);
-		
-		
-		return(sumColonyBrightness);
+
+		try{
+			FloatProcessor backgroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
+			backgroundPixels.setRoi(colonyROI);
+			backgroundPixels.setValue(0);
+			backgroundPixels.setBackgroundValue(0);
+
+			backgroundPixels.fill(backgroundPixels.getMask());
+			//		(new ImagePlus("keep-background mask",backgroundPixels)).show();
+
+			FloatProcessor foregroundPixels = (FloatProcessor) tileImage.getProcessor().convertToFloat().duplicate();
+			foregroundPixels.setRoi(colonyROI);
+			foregroundPixels.setValue(0);
+			foregroundPixels.setBackgroundValue(0);
+
+			foregroundPixels.fillOutside(colonyROI);
+			//		(new ImagePlus("keep-foreground mask",foregroundPixels)).show();
+
+
+
+
+			int backgroundMedian = getBackgroundMedian(backgroundPixels);
+
+			int sumColonyBrightness = sumPixelOverBackgroundBrightness(foregroundPixels, backgroundMedian);
+
+
+			return(sumColonyBrightness);
+		}catch(Exception e){
+			return(0);
+		}
 	}
 
 	/**
@@ -260,18 +264,18 @@ public class LaplacianFilterTileReader {
 			else
 				nonZeroPixels.add(thisPixel);
 		}
-		
+
 		int sum = 0;
 		for(Float thisPixel : nonZeroPixels){
 			sum += Math.round(thisPixel)-backgroundMedian;
 		}
-	
+
 
 		return(sum);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * @param ip
 	 * @return
@@ -296,17 +300,17 @@ public class LaplacianFilterTileReader {
 
 		return(Math.round(getMedian(nonZeroPixels.toArray(new Float[nonZeroPixels.size()]))));
 	}
-	
+
 	/**
 	 * just gets the median, nothing to see here
 	 * @param inputArray
 	 * @return
 	 */
 	private static float getMedian(Float[] inputArray){
-		
+
 		if(inputArray.length==0)
 			return(0);
-		
+
 		Arrays.sort(inputArray);
 		double median;
 		if (inputArray.length % 2 == 0)

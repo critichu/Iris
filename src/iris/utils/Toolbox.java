@@ -10,6 +10,9 @@ import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.io.FileReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1860,7 +1863,18 @@ public class Toolbox {
 		segmentationInput.settings.maximumDistanceBetweenRows = (int) Math.round(nominalDistanceBetweenRows*1.5);
 
 	}
-
+	
+	/**
+	 * will return a stackTrace message that can be written on a log file
+	 * @param aThrowable
+	 * @return
+	 */
+	public static String getStackTrace(Throwable aThrowable) {
+	    Writer result = new StringWriter();
+	    PrintWriter printWriter = new PrintWriter(result);
+	    aThrowable.printStackTrace(printWriter);
+	    return result.toString();
+	  }
 
 
 
