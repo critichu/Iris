@@ -175,9 +175,7 @@ public class ColorProfileEcoli extends Profile{
 		else if(!userProfileSettings.croppingSettings.UseFixedCropping){
 			colourCroppedImage = GenericImageCropper2.cropPlate(rotatedImage);
 		}
-		//flush the original pictures, we won't be needing them anymore
-		rotatedImage.flush();
-		originalImage.flush();
+
 
 
 
@@ -198,6 +196,7 @@ public class ColorProfileEcoli extends Profile{
 
 		//5. segment the cropped picture
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(grayscaleCroppedImage, settings);
+		Toolbox.updateMinMaxRowColumnDistance(segmentationInput);
 		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 
@@ -221,6 +220,9 @@ public class ColorProfileEcoli extends Profile{
 			segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 		}
+		//flush the original pictures, we won't be needing them anymore
+		rotatedImage.flush();
+		originalImage.flush();
 
 		//check if something went wrong
 		if(segmentationOutput.errorOccurred){
@@ -392,7 +394,7 @@ public class ColorProfileEcoli extends Profile{
 						IrisFrontend.writeToLog(e.getStackTrace().toString());
 						colourTileReaderOutputs[i][j] = new ColorTileReaderOutput();
 					}
-					
+
 					//opacity -- to check if colony darkness correlates with colour information -- true means opacities can get negative
 					//this is a fix for very dark colonies
 					try{

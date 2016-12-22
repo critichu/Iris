@@ -3,6 +3,20 @@
  */
 package iris.utils;
 
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import com.opencsv.CSVReader;
+
 import fiji.threshold.Auto_Local_Threshold;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -20,6 +34,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import iris.imageSegmenterInput.BasicImageSegmenterInput;
 import iris.imageSegmenterOutput.BasicImageSegmenterOutput;
 import iris.settings.ColorSettings;
 import iris.tileReaderInputs.BasicTileReaderInput;
@@ -27,20 +42,6 @@ import iris.tileReaderInputs.ColorTileReaderInput;
 import iris.tileReaderOutputs.BasicTileReaderOutput;
 import iris.tileReaders.BasicTileReader_Bsu;
 import iris.ui.IrisFrontend;
-
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import com.opencsv.CSVReader;
 
 /**
  * This class holds methods that are not profile-specific
@@ -175,7 +176,7 @@ public class Toolbox {
 		if(IrisFrontend.settings.userDefinedRoi){
 			imageToThreshold.setRoi(originalImage.getRoi());
 		}
-		
+
 		return(imageToThreshold);
 	}
 
@@ -249,8 +250,8 @@ public class Toolbox {
 		//create a new image with the original title and the brightness HSB channel of the input image
 		ByteProcessor bpBri = new ByteProcessor(width,height,bSource);
 		ImagePlus grayscaleImage = new ImagePlus(originalImage.getTitle(), bpBri);
-		
-		
+
+
 		if(IrisFrontend.settings.userDefinedRoi){
 			grayscaleImage.setRoi(originalImage.getRoi());
 		}
@@ -1810,7 +1811,7 @@ public class Toolbox {
 	}
 
 
-	
+
 
 	/**
 	 * This function calculates the sum of pixel brighness per tile, subtracting the given background value
@@ -1846,6 +1847,18 @@ public class Toolbox {
 
 
 		return (sumOfBrightness);
+	}
+
+	/**
+	 * This will update the minimum and maximum distance between rows and columns, to adapt to the given array format.
+	 * This method uses the image width to calculate minimum  and maximum allowed row/column spacing
+	 * @param segmentationInput
+	 */
+	public static void updateMinMaxRowColumnDistance(BasicImageSegmenterInput segmentationInput) {
+		double nominalDistanceBetweenRows =  (double) segmentationInput.imageToSegment.getWidth() / (double) segmentationInput.settings.numberOfColumnsOfColonies; 
+		segmentationInput.settings.minimumDistanceBetweenRows = (int) Math.round(nominalDistanceBetweenRows*0.75);
+		segmentationInput.settings.maximumDistanceBetweenRows = (int) Math.round(nominalDistanceBetweenRows*1.5);
+
 	}
 
 

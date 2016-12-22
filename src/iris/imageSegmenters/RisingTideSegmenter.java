@@ -3,6 +3,9 @@
  */
 package iris.imageSegmenters;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Calibration;
@@ -14,9 +17,6 @@ import iris.imageSegmenterInput.BasicImageSegmenterInput;
 import iris.imageSegmenterOutput.BasicImageSegmenterOutput;
 import iris.settings.BasicSettings;
 import iris.ui.IrisFrontend;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * This class holds methods that implement the rising tide algorithm
@@ -54,6 +54,7 @@ public class RisingTideSegmenter {
 		//get input values
 		ImagePlus croppedImage = input.imageToSegment;
 		BasicSettings settings = input.settings;
+
 
 		//set up an output object
 		BasicImageSegmenterOutput output = new BasicImageSegmenterOutput();

@@ -2,3 +2,4 @@
 /jars
 /dependencies
 *.class
+/.DS_Store
