@@ -135,8 +135,7 @@ public class OpacityTileReader {
 			output.max10percentOpacity = getLargestTenPercentOpacityMedian(grayscaleTileCopy, colonyRoi);
 			output.centerAreaOpacity = getCenterAreaOpacity(grayscaleTileCopy, output.colonyCenter, diameter);
 			output.colonyROI = colonyRoi;
-		} 
-
+		}
 		else { //user defined colony
 			colonyRoi = (OvalRoi) input.tileImage.getRoi();
 			output.colonySize = (int) Toolbox.getRoiArea(input.tileImage);

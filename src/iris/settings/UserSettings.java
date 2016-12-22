@@ -77,6 +77,7 @@ public class UserSettings {
 
 	/**
 	 * this will parse the JSON file inside the jar into a stream, and load that stream into a userSettings object
+	 * if it fails, it will create a new usersettings object with no default global settings and no profile settings
 	 * @return
 	 */
 	public static UserSettings loadUserSettings(){
@@ -84,9 +85,9 @@ public class UserSettings {
 		try {
 			inputStream = new FileInputStream(new File("iris.user.settings.json"));
 		} catch (FileNotFoundException e) {
-//			System.err.println("no user settings file found, using default settings");
-//			return(new UserSettings());
-			return(null); //return null if file not found
+			System.err.println("\nno user settings file found, using default settings\n");
+			return(new UserSettings());
+//			return(null); //return null if file not found
 		}
 		return(loadUserSettings(inputStream));
 	}

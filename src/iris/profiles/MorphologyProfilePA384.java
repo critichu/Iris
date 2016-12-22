@@ -342,78 +342,81 @@ public class MorphologyProfilePA384 extends Profile {
 
 
 					basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
-					try{basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
-							new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));} catch(Exception e){}; 
+					try{
+						basicTileReaderOutputs[i][j] = BasicTileReaderHSB.processTile(
+								new BasicTileReaderInput(BW_local_thresholded_picture, segmentationOutput.ROImatrix[i][j], settings));
+					} catch(Exception e){}; 
 
-							BasicTileReaderOutput laplacianReaderOutput = new BasicTileReaderOutput();
-							try{
-								laplacianReaderOutput = LaplacianFilterTileReader.processTile(
-										new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));} catch(Exception e){};
+					BasicTileReaderOutput laplacianReaderOutput = new BasicTileReaderOutput();
+					try{
+						laplacianReaderOutput = LaplacianFilterTileReader.processTile(
+								new BasicTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], settings));
+					} catch(Exception e){};
 
-										BasicTileReaderOutput stmMorphologyReaderOutput = new BasicTileReaderOutput();
-										try{stmMorphologyReaderOutput = MorphologyTileReaderStm.processTileOverAgarOnly(colonyCenteredInput[i][j]);} catch(Exception e){};
+					BasicTileReaderOutput stmMorphologyReaderOutput = new BasicTileReaderOutput();
+					try{stmMorphologyReaderOutput = MorphologyTileReaderStm.processTileOverAgarOnly(colonyCenteredInput[i][j]);} catch(Exception e){};
 
-										if(basicTileReaderOutputs[i][j].colonySize<laplacianReaderOutput.colonySize && laplacianReaderOutput.circularity>minimumValidColonyCircularity){
-											basicTileReaderOutputs[i][j] = laplacianReaderOutput;
-										}
-										if(basicTileReaderOutputs[i][j].colonySize<stmMorphologyReaderOutput.colonySize && stmMorphologyReaderOutput.circularity>minimumValidColonyCircularity){
-											basicTileReaderOutputs[i][j] = stmMorphologyReaderOutput;
-										}
+					if(basicTileReaderOutputs[i][j].colonySize<laplacianReaderOutput.colonySize && laplacianReaderOutput.circularity>minimumValidColonyCircularity){
+						basicTileReaderOutputs[i][j] = laplacianReaderOutput;
+					}
+					if(basicTileReaderOutputs[i][j].colonySize<stmMorphologyReaderOutput.colonySize && stmMorphologyReaderOutput.circularity>minimumValidColonyCircularity){
+						basicTileReaderOutputs[i][j] = stmMorphologyReaderOutput;
+					}
 
-										//if colony smaller than user-defined minimum
-										if(basicTileReaderOutputs[i][j].colonySize<minimumValidColonySize){
-											basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
-										}
-
-
-										//set the known colony centers
-										if(colonyCenteredInput[i][j].colonyCenter!=null)
-											basicTileReaderOutputs[i][j].colonyCenter = new Point(colonyCenteredInput[i][j].colonyCenter);
+					//if colony smaller than user-defined minimum
+					if(basicTileReaderOutputs[i][j].colonySize<minimumValidColonySize){
+						basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+					}
 
 
-
-										//only get morphology and color if there was a colony there
-										if(basicTileReaderOutputs[i][j].colonySize>0){
-
-											//get morphology for that colony
-
-											try{
-												morphologyReaderOutputs[i][j] = MorphologyTileReader.processDefinedColonyTile(
-														new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
-																basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
-											} catch(Exception e){ 
-												IrisFrontend.writeToLog(e.getStackTrace().toString());
-												morphologyReaderOutputs[i][j] = new MorphologyTileReaderOutput(); 
-											}
-
-											//get color for that colony
-
-											try{
-												colorReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
-														new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], 
-																basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, basicTileReaderOutputs[i][j].colonyCenter, settings));
-											} catch(Exception e){ 
-												IrisFrontend.writeToLog(e.getStackTrace().toString());
-												colorReaderOutputs[i][j] = new ColorTileReaderOutput();
-											}
-
-											//opacity -- to check if colony darkness correlates with colour information -- true means opacities can get negative
-											try{
-												opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
-														new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
-																basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
-											} catch(Exception e){ 
-												IrisFrontend.writeToLog(e.getStackTrace().toString());
-												opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput(); 
-											}
+					//set the known colony centers
+					if(colonyCenteredInput[i][j].colonyCenter!=null)
+						basicTileReaderOutputs[i][j].colonyCenter = new Point(colonyCenteredInput[i][j].colonyCenter);
 
 
-										} else {
-											basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
-											opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
-											morphologyReaderOutputs[i][j] = new MorphologyTileReaderOutput();
-											colorReaderOutputs[i][j] = new ColorTileReaderOutput();
-										}
+
+					//only get morphology and color if there was a colony there
+					if(basicTileReaderOutputs[i][j].colonySize>0){
+
+						//get morphology for that colony
+
+						try{
+							morphologyReaderOutputs[i][j] = MorphologyTileReader.processDefinedColonyTile(
+									new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings));
+						} catch(Exception e){ 
+							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							morphologyReaderOutputs[i][j] = new MorphologyTileReaderOutput(); 
+						}
+
+						//get color for that colony
+
+						try{
+							colorReaderOutputs[i][j] = ColorTileReaderHSB.processDefinedColonyTile(
+									new ColorTileReaderInput3(colorCroppedImage, segmentationOutput.ROImatrix[i][j], 
+											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, basicTileReaderOutputs[i][j].colonyCenter, settings));
+						} catch(Exception e){ 
+							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							colorReaderOutputs[i][j] = new ColorTileReaderOutput();
+						}
+
+						//opacity -- to check if colony darkness correlates with colour information -- true means opacities can get negative
+						try{
+							opacityTileReaderOutputs[i][j] = OpacityTileReader.processDefinedColonyTile(
+									new OpacityTileReaderInput(grayscaleCroppedImage, segmentationOutput.ROImatrix[i][j], 
+											basicTileReaderOutputs[i][j].colonyROI, basicTileReaderOutputs[i][j].colonySize, settings), true);
+						} catch(Exception e){ 
+							IrisFrontend.writeToLog(e.getStackTrace().toString());
+							opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput(); 
+						}
+
+
+					} else {
+						basicTileReaderOutputs[i][j] = new BasicTileReaderOutput();
+						opacityTileReaderOutputs[i][j] = new OpacityTileReaderOutput();
+						morphologyReaderOutputs[i][j] = new MorphologyTileReaderOutput();
+						colorReaderOutputs[i][j] = new ColorTileReaderOutput();
+					}
 				}
 
 				catch(Exception e){

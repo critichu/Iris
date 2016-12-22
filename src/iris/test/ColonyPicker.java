@@ -3,17 +3,6 @@
  */
 package iris.test;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.gui.OvalRoi;
-import ij.gui.Roi;
-import ij.gui.WaitForUserDialog;
-import ij.io.FileInfo;
-import ij.plugin.PlugIn;
-import ij.process.ImageProcessor;
-import iris.ui.ProcessFolderWorker;
-import iris.utils.Toolbox;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Rectangle;
@@ -21,13 +10,27 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.gui.OvalRoi;
+import ij.gui.Overlay;
+import ij.gui.Roi;
+import ij.gui.WaitForUserDialog;
+import ij.io.FileInfo;
+import ij.plugin.PlugIn;
+import ij.plugin.frame.RoiManager;
+import ij.process.ImageProcessor;
+import iris.ui.ProcessFolderWorker;
+import iris.utils.Toolbox;
+
 /**
  * @author George Kritikos
  *
  */
 public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 {
-	private ImagePlus imp;
+	private ImagePlus loadedImage;
+	Roi userSelectedRoi;
 	private String imageFilename;
 	private String colonyImageFilename;
 	double roiMinSizeThreshold = 50;
@@ -59,9 +62,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	 */
 
 	@Override
-	public void keyPressed(KeyEvent e) {
-
-	}
+	public void keyPressed(KeyEvent e) {}
 
 	@Override
 	public void keyTyped(KeyEvent e) {}
@@ -79,7 +80,16 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 				saveColonyRoi_plugin();
 
 				if(invokeIris){
+					
+					RoiManager roiManager = new RoiManager(true);
 					ProcessFolderWorker.processSingleFile(new File(colonyImageFilename));
+					roiManager.moveRoisToOverlay(loadedImage);
+					
+					Overlay overlay = loadedImage.getOverlay();
+					if(overlay!=null)
+						overlay.clear();
+					
+					paintUserSelectedRoi();
 				}
 
 			} catch (Exception e1) {
@@ -89,7 +99,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 		//user hit escape
 		if(keyCode==KeyEvent.VK_ESCAPE){
-			imp.close();
+			loadedImage.close();
 			System.exit(0);
 		}
 
@@ -118,14 +128,14 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 		//single file -- interactive mode
 		if(arg0.equals("") || !fileOrFolder.exists()){
-			imp = IJ.openImage();
+			loadedImage = IJ.openImage();
 			WaitForUserDialog instructionsDialog = new WaitForUserDialog("Instructions", "Define colony areas, hit space to verify selection.\nRectangular selection: let iris detect the colony\nRound selection: manually-defined colony\n\nHit escape when done");
 			instructionsDialog.show();
 		}
 
 		//single file -- batch mode
 		else if(fileOrFolder.isFile()){
-			imp = IJ.openImage(fileOrFolder.getPath());
+			loadedImage = IJ.openImage(fileOrFolder.getPath());
 		}
 
 		/*
@@ -158,20 +168,20 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 
 
-		if(imp==null){
+		if(loadedImage==null){
 			System.err.println("cannot open image");
 			return;
 		}
 
-		imp.show();
+		loadedImage.show();
 
 		//get filename and directory information
-		FileInfo originalFileInfo = imp.getOriginalFileInfo();
+		FileInfo originalFileInfo = loadedImage.getOriginalFileInfo();
 		imageFilename = new String( originalFileInfo.directory + "/" + originalFileInfo.fileName);
 
 		//		imp.getCanvas().addMouseListener(this);
-		imp.getCanvas().removeKeyListener(IJ.getInstance()); // to stop imageJ from getting any keyboard input
-		imp.getCanvas().addKeyListener(this);
+		loadedImage.getCanvas().removeKeyListener(IJ.getInstance()); // to stop imageJ from getting any keyboard input
+		loadedImage.getCanvas().addKeyListener(this);
 		IJ.setTool("oval");
 		userIsDone = false;
 	}
@@ -193,14 +203,13 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	private ImagePlus saveColonyRoi_plugin() {
 
 
-		//check if this is an OvalRoi, Shape, or Rectangle			
-		//OvalRoi selectedRoi = (OvalRoi) imp.getRoi();
-		Roi selectedRoi = (Roi) imp.getRoi();
-		imp.getProcessor().setBackgroundValue(255); //set background to black 255 is black b/c this has an inverted look-up table
+		//check if this is an OvalRoi, Shape, or Rectangle
+		userSelectedRoi = (Roi) loadedImage.getRoi();
+		loadedImage.getProcessor().setBackgroundValue(255); //set background to black 255 is black b/c this has an inverted look-up table
 
 		//if the selectedRoi is not big enough then quit
 		//or too large? -- too large filter is not implemented, large might mean different things for different applications
-		if(Toolbox.getRoiArea(imp)<roiMinSizeThreshold){
+		if(Toolbox.getRoiArea(loadedImage)<roiMinSizeThreshold){
 			return(null);
 		}
 
@@ -210,17 +219,15 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 		//width and height are equal to the width and height of the tile picture 
 		String colonyImageFilenameDecoration = new String(
-				Integer.toString(selectedRoi.getBounds().x) + "_" +
-						Integer.toString(selectedRoi.getBounds().y));// + "_" +
-		//						Integer.toString(selectedRoi.getBounds().width) + "_" +
-		//						Integer.toString(selectedRoi.getBounds().height));
+				Integer.toString(userSelectedRoi.getBounds().x) + "_" +
+						Integer.toString(userSelectedRoi.getBounds().y));
 
-		if(imp.getRoi().getClass().equals(OvalRoi.class)){
+		if(loadedImage.getRoi().getClass().equals(OvalRoi.class)){
 			colonyImageFilename = new String(
 					colonyImageDirectory + File.separator + 
 					"colony_" + colonyImageFilenameDecoration + ".jpg" );
 		}
-		else if(imp.getRoi().getClass().equals(Roi.class)){
+		else if(loadedImage.getRoi().getClass().equals(Roi.class)){
 			colonyImageFilename = new String(
 					colonyImageDirectory + File.separator + 
 					"tile_" + colonyImageFilenameDecoration + ".jpg" );
@@ -231,7 +238,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 
 		//convert ROI to the bounding rect
-		imp.setRoi(new Rectangle(selectedRoi.getBounds()));
+		loadedImage.setRoi(new Rectangle(userSelectedRoi.getBounds()));
 
 
 		/*
@@ -243,39 +250,52 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 		 */
 
 		//and this is how it works faster/better/easier in Java
-		imp.copy();
+		loadedImage.copy();
 		ImagePlus colonyImage = ImagePlus.getClipboard();
 
 		//reset ROI back to the one the user selected
-		imp.deleteRoi();
-		imp.setRoi(selectedRoi);
+		loadedImage.deleteRoi();
+		loadedImage.setRoi(userSelectedRoi);
 
 		//apply the same ROI to the colony image
-		if(selectedRoi.getClass().equals(OvalRoi.class)){//oval selection
+		if(userSelectedRoi.getClass().equals(OvalRoi.class)){//oval selection
 			colonyImage.setRoi(new OvalRoi(
 					0, 0,
-					selectedRoi.getBounds().width,
-					selectedRoi.getBounds().height));
-			imp.setOverlay(imp.getRoi(), Color.cyan, 1, new Color(0, 0, 0, 0));
+					userSelectedRoi.getBounds().width,
+					userSelectedRoi.getBounds().height));
+			loadedImage.setOverlay(loadedImage.getRoi(), Color.cyan, 1, new Color(0, 0, 0, 0));
 
 		}
-		else if(selectedRoi.getClass().equals(Roi.class)){//rectangular selection
+		else if(userSelectedRoi.getClass().equals(Roi.class)){//rectangular selection
 			colonyImage.setRoi(new Roi(
 					0, 0,
-					selectedRoi.getBounds().width,
-					selectedRoi.getBounds().height));
-			imp.setOverlay(selectedRoi.getBounds(), Color.cyan, new BasicStroke(1));
+					userSelectedRoi.getBounds().width,
+					userSelectedRoi.getBounds().height));
+			loadedImage.setOverlay(userSelectedRoi.getBounds(), Color.cyan, new BasicStroke(1));
 		}
 
 
 		IJ.saveAs(colonyImage, "Jpeg", colonyImageFilename);
 
-
-
-
-
-
 		return(colonyImage);
+	}
+
+
+	/**
+	 * use an overlay to paint the current user-verified selection with cyan on the image
+	 */
+	public void paintUserSelectedRoi(){
+		
+		//removes any existing overlay
+		if(loadedImage.getOverlay()!=null)
+			loadedImage.getOverlay().clear();
+		
+		if(userSelectedRoi.getClass().equals(OvalRoi.class)){//oval selection
+			loadedImage.setOverlay(userSelectedRoi, Color.cyan, 1, new Color(0, 0, 0, 0));
+		}
+		else if(userSelectedRoi.getClass().equals(Roi.class)){//rectangular selection
+			loadedImage.setOverlay(userSelectedRoi.getBounds(), Color.cyan, new BasicStroke(1));
+		}
 	}
 
 
@@ -286,7 +306,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 	@Deprecated
 	public Roi saveColonyRoi_standalone() {
 
-		Roi selectedRoi = (OvalRoi) imp.getRoi();
+		Roi selectedRoi = (OvalRoi) loadedImage.getRoi();
 
 		if(selectedRoi==null){
 			return(null);
@@ -294,7 +314,7 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 		//if the selectedRoi is not big enough then quit
 		//or too large? -- too large filter is not implemented, large might mean different things for different applications
-		if(Toolbox.getRoiArea(imp)<roiMinSizeThreshold){
+		if(Toolbox.getRoiArea(loadedImage)<roiMinSizeThreshold){
 			return(null);
 		}
 
@@ -313,13 +333,13 @@ public class ColonyPicker implements PlugIn, KeyListener//, MouseListener
 
 
 
-		imp.setRoi(selectedRoi);
-		imp.copy();
+		loadedImage.setRoi(selectedRoi);
+		loadedImage.copy();
 
 
 
 
-		ImageProcessor ip = imp.getProcessor().duplicate();
+		ImageProcessor ip = loadedImage.getProcessor().duplicate();
 		ip.setRoi(selectedRoi);
 		ip.setColor(0);
 		ip.setBackgroundValue(0);

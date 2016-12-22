@@ -92,8 +92,13 @@ class IrisGUI extends JFrame implements ActionListener, PropertyChangeListener {
 					System.out.println("\tnumber of columns:\t"+IrisFrontend.settings.numberOfColumnsOfColonies);
 
 					//remove item listener so that it doesn't overwrite the settings upon load
+					//if loading settings failed, revert to 384 format
 					IrisGUI.comboBox_format.removeItemListener(frame.itemChangeListener);
-					IrisGUI.comboBox_format.setSelectedItem(new Integer(IrisFrontend.userSettings.ArrayFormat));
+					try{
+						IrisGUI.comboBox_format.setSelectedItem(new Integer(IrisFrontend.userSettings.ArrayFormat));
+					}catch(Exception e){
+						IrisGUI.comboBox_format.setSelectedItem(new Integer(384));
+					}
 					IrisGUI.comboBox_format.addItemListener(frame.itemChangeListener);
 
 				} catch (Exception e) {
