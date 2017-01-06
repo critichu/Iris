@@ -564,7 +564,7 @@ public class Toolbox {
 		imageConverter.convertToGray8();
 
 		//convert to b/w
-		turnImageBW_Otsu_auto(imageSubset);
+		turnImageBW_Otsu(imageSubset);
 
 
 		//3. iterate over different angles
