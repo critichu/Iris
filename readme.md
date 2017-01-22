@@ -12,6 +12,10 @@ That's easy, just follow this link to the latest binary distribution (.jar files
 
 [Here](https://www.dropbox.com/sh/q9zhksibaey8epd/AADF5mHx2-fgjB4Qt3cpmNr8a?dl=1) you can find some example files to play around with (includes example output)
 
+### What do I need to run Iris?
+Iris runs on Java. You can get the latest version by following this link:  
+[https://java.com/en/download] (https://java.com/en/download)
+
 
 
 ### Using Iris
@@ -42,13 +46,14 @@ java -Xmx1g -jar iris.jar "profile name" "folder location”
 
 Valid profile names are the following:  
 
-* "Colony opacity",
+* "Colony growth",
+* "Colony growth inverted",
 * "B.subtilis sporulation",
 * "CPRG profile",
 * "Biofilm formation",
 * "Morphology profile",
 * "Morphology&Color profile",
-* "Colony opacity inverted"
+* "Xgal assay"
 
 Here is a visual overview of those profiles, and the [Iris workflow](http://critichu.github.io/Iris/underTheHood.html):  
 
@@ -105,11 +110,6 @@ Here is an example of what you can do using this script:
 
 In case your colonies are not in a grid format (96, 384, 1536, or 6144), you can use the Iris' sister software: **ColonyPicker**. Just double-click on it's jar file, select an iris profile to quantify a colony, and your image file.
 
-
-![iris colonypicker instructions](http://critichu.github.io/Iris/images/colonyPicker.instructions.png)
-
-
-
 **How to use it:**
 
 * Picking a colony using round (oval) selection will tell Iris to get the features within those manually defined bounds.
@@ -158,6 +158,8 @@ Iris makes use of the following open source projects:
 I thought you'd never ask.  Lets take a [look under the hood](http://critichu.github.io/Iris/underTheHood.html)
 
 
+## How can I adjust Iris parameters?
+This is documented in the next page: [look under the hood](http://critichu.github.io/Iris/underTheHood.html)
 
 ## Support or Contact
 Since Iris is still under active development, I would greatly appreciate any comments regarding it's performance and/or issues you might encounter.
