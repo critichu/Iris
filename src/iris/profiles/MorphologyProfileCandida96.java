@@ -3,6 +3,11 @@
  */
 package iris.profiles;
 
+import java.awt.Color;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
@@ -24,11 +29,6 @@ import iris.tileReaderOutputs.MorphologyTileReaderOutput;
 import iris.tileReaders.MorphologyTileReader;
 import iris.ui.IrisFrontend;
 import iris.utils.Toolbox;
-
-import java.awt.Color;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 /**
  * This profile is calibrated for use in measuring the colony sizes of E. coli or Salmonella 1536 plates
@@ -236,7 +236,7 @@ public class MorphologyProfileCandida96 extends Profile {
 
 		if(segmentationOutput.errorOccurred){
 
-			System.err.println("\nOpacity profile: unable to process picture " + justFilename);
+			System.err.println("\n" + profileName + ": unable to process picture " + justFilename);
 
 			System.err.print("Image segmentation algorithm failed:\n");
 
