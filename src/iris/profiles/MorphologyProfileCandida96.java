@@ -20,7 +20,6 @@ import iris.imageCroppers.NaiveImageCropper3;
 import iris.imageSegmenterInput.BasicImageSegmenterInput;
 import iris.imageSegmenterOutput.BasicImageSegmenterOutput;
 import iris.imageSegmenters.ColonyBreathing;
-import iris.imageSegmenters.RisingTideSegmenter;
 import iris.imageSegmenters.SimpleImageSegmenter;
 import iris.settings.BasicSettings;
 import iris.settings.UserSettings.ProfileSettings;
@@ -41,7 +40,7 @@ public class MorphologyProfileCandida96 extends Profile {
 	/**
 	 * the user-friendly name of this profile (will appear in the drop-down list of the GUI) 
 	 */
-	private static String profileName = "Morphology Profile";
+	private static String profileName = "Morphology profile";
 
 
 	/**
@@ -213,23 +212,23 @@ public class MorphologyProfileCandida96 extends Profile {
 		//first change the settings, to get a 96 plate segmentation
 		SimpleImageSegmenter.offset = 10;
 		BasicImageSegmenterInput segmentationInput = new BasicImageSegmenterInput(BWimageToSegment, settings);
-		//BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
+		BasicImageSegmenterOutput segmentationOutput = SimpleImageSegmenter.segmentPicture_width(segmentationInput);
 
-		segmentationInput.settings.maximumDistanceBetweenRows = 500;
-		segmentationInput.settings.minimumDistanceBetweenRows = 200;
-		BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
+		//segmentationInput.settings.maximumDistanceBetweenRows = 500;
+		//segmentationInput.settings.minimumDistanceBetweenRows = 200;
+		//BasicImageSegmenterOutput segmentationOutput = RisingTideSegmenter.segmentPicture(segmentationInput);
 
 
 
 		if(userProfileSettings==null){//default behavior
-			//let the tile boundaries "breathe"
-			ColonyBreathing.breathingSpace = 100;//20;
-			segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
-			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
+			//dont let the tile boundaries "breathe"
+			//ColonyBreathing.breathingSpace = 100;//20;
+			//segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
+			//segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		}
 		else if(userProfileSettings.segmentationSettings.ColonyBreathing){
-			segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
 			ColonyBreathing.breathingSpace = userProfileSettings.segmentationSettings.ColonyBreathingSpace;
+			segmentationInput = new BasicImageSegmenterInput(croppedImage.duplicate(), settings);
 			segmentationOutput = ColonyBreathing.segmentPicture(segmentationOutput, segmentationInput);
 		}
 

@@ -39,7 +39,7 @@ class PicturesFilenameFilter implements FilenameFilter {
 		if((new File(dir, filename)).isDirectory()){
 			return(false);
 		}
-		if(filename.contains(".jpg") || filename.contains(".JPG") || filename.contains(".png") || filename.contains(".tif")){ //png is a hack to also process screenshots
+		if(filename.contains(".jpg") || filename.contains(".jpeg") || filename.contains(".JPG") || filename.contains(".png") || filename.contains(".tif")){ //png is a hack to also process screenshots
 			return(true);
 		}
 		return(false);
